@@ -1,0 +1,30 @@
+{% extends 'base.html' %} {% block content %}
+<span class="title"><h1>{% block title %} Uploads{% endblock %}</h1></span>
+
+<!-- File Upload Form -->
+<div class="upload-container">
+  <form
+    action="{{ url_for('uploads.upload') }}"
+    method="POST"
+    enctype="multipart/form-data"
+  >
+    <label for="file">Choose a file:</label>
+    <input type="file" id="file" name="file" required />
+    <button type="submit">Upload</button>
+  </form>
+</div>
+
+<!-- List of Uploaded Files -->
+<h2>Uploaded Files:</h2>
+<ul class="file-list">
+  {% for file in files %}
+  <li>
+    <a href="{{ url_for('uploads.download', name=file.path) }}" target="_blank"
+      >{{ file.path }}</a
+    >
+    <img src="data:image/png;base64,{{ imgs[file.id] }}" />
+    <img src="{{ url_for('uploads.download', name=file.path) }}" />
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,3 +1,4 @@
 Flask
 Flask-SQLAlchemy
 pydicom
+opencv-python-headless
