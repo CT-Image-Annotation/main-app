@@ -9,6 +9,18 @@ from app.models.ImageModel import ImageModel
 from app.services.FileService import FileService
 bp = Blueprint("uploads", __name__)
 
+def read_and_process(name):
+        img = cv2.imread(os.path.join(current_app.config['UPLOAD_FOLDER'], name))
+       
+        # random processing
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        ret, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+        img = thresh
+
+        _, buffer = cv2.imencode('.png', img)
+        res = base64.b64encode(buffer).decode('utf-8')
+        return res
+
 @bp.route('/', methods=['GET', 'POST'])
 def upload():
     if request.method == 'POST':
@@ -26,7 +38,8 @@ def upload():
         return redirect(request.url)
 
     files = ImageModel.query.all()
-    imgs = { file.id : base64.b64encode(cv2.imread(os.path.join(current_app.config['UPLOAD_FOLDER'], file.path))).decode('utf-8') for file in files}
+    
+    imgs = { file.id : read_and_process(file.path) for file in files}
     
     return render_template("uploads.html", files=files, imgs = imgs)
 

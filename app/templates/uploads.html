@@ -23,7 +23,6 @@
       >{{ file.path }}</a
     >
     <img src="data:image/png;base64,{{ imgs[file.id] }}" />
-    <img src="{{ url_for('uploads.download', name=file.path) }}" />
   </li>
   {% endfor %}
 </ul>
