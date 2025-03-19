@@ -28,8 +28,9 @@ class FileService(Base):
 
         if(resource.mime == "application/dicom"):
             DicomService.save(resource)
+        else:
+            resource.file = FileService.load(resource.path)
 
-        resource.file = FileService.load(resource.path)
         return resource
     
     @staticmethod
@@ -44,6 +45,6 @@ class FileService(Base):
     
     @staticmethod
     def load(path):
-        with open(os.path.join(current_app.config['UPLOAD_FOLDER'], path), "r") as f:
+        with open(os.path.join(current_app.config['UPLOAD_FOLDER'], path), "rb") as f:
             file = f.read()
         return file
