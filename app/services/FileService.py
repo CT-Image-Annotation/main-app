@@ -20,18 +20,30 @@ class FileService(Base):
             type=type,
             mime=file.mimetype,
             path=path
-            )#.save()
-
+            )
         db.session.add(resource)
         db.session.commit()
 
         file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], path))
-        
+
         if(resource.mime == "application/dicom"):
             DicomService.save(resource)
 
+        resource.file = FileService.load(resource.path)
         return resource
     
     @staticmethod
     def find(resource_id):
         return Resource.query.filter_by(id=resource_id)
+    
+    @staticmethod
+    def read(resource_id):
+        resource = FileService.find(resource_id)
+        resource.file = FileService.load(resource.path)
+        return resource
+    
+    @staticmethod
+    def load(path):
+        with open(os.path.join(current_app.config['UPLOAD_FOLDER'], path), "r") as f:
+            file = f.read()
+        return file
