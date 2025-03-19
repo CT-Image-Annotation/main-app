@@ -1,5 +1,5 @@
 
-from app.models.UserModel import UserModel
+from app.models.User import User
 from app.services.BaseService import Base
 from flask import session
 from app.extensions import db
@@ -9,7 +9,7 @@ class UserService(Base):
     def login(request):
         username = request.get("username")
         password = request.get("password")
-        user = UserModel.query.filter_by(username=username, password=password).first()
+        user = User.query.filter_by(username=username, password=password).first()
         if user:
             session['user_id'] = user.id
         return user
@@ -19,12 +19,12 @@ class UserService(Base):
         username = request.get("username")
         password = request.get("password")
         
-        username_taken = UserModel.query.filter_by(username=username).first()
+        username_taken = User.query.filter_by(username=username).first()
         
         if username_taken:
             return False
         else:
-            user = UserModel(username=username,password=password)
+            user = User(username=username,password=password)
             db.session.add(user)
             db.session.commit()
             session['user_id'] = user.id
