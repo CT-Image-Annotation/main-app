@@ -14,5 +14,8 @@ pip install -r requirements.txt
 Then ensure .env file is correct and
 
 ```bash
+flask db init
+flask db migrate -m "init"
+flask db upgrade
 flask run
 ```

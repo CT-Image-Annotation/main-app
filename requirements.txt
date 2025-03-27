@@ -2,3 +2,4 @@ Flask
 Flask-SQLAlchemy
 pydicom
 opencv-python-headless
+Flask-Migrate
