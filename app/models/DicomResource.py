@@ -7,12 +7,12 @@ class DicomResource(BaseModel):
     resource_id = db.Column(db.Integer, db.ForeignKey('resources.id'), nullable=False, primary_key=True)
     resource = db.relationship('Resource', backref='dicom_resources', uselist=False)
 
-    BodyPartExamined = db.Column(db.String(255))
-    SliceThickness = db.Column(db.String(255))
-    Modality = db.Column(db.String(255))
+    body_part_examined = db.Column(db.String(255))
+    slice_thickness = db.Column(db.String(255))
+    modality = db.Column(db.String(255))
 
-    PatientID = db.Column(db.String(255))
-    PatientAge = db.Column(db.String(255))
-    PatientSex = db.Column(db.String(255))
+    patient_id = db.Column(db.String(255))
+    patient_age = db.Column(db.String(255))
+    patient_sex = db.Column(db.String(255))
 
-    SeriesDescription = db.Column(db.String(255))
+    series_description = db.Column(db.String(255))

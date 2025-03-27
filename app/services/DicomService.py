@@ -14,13 +14,13 @@ class DicomService(Base):
 
         dicomResource = DicomResource(
             resource_id = resource.id,
-            BodyPartExamined = dicom.get("BodyPartExamined"),
-            SliceThickness = dicom.get("SliceThickness"),
-            Modality = dicom.get("Modality"),
-            PatientID = dicom.get("PatientID"),
-            PatientAge = dicom.get("PatientAge"),
-            PatientSex = dicom.get("PatientSex"),
-            SeriesDescription = dicom.get("SeriesDescription"),
+            body_part_examined = dicom.get("body_part_examined"),
+            slice_thickness = dicom.get("slice_thickness"),
+            modality = dicom.get("modality"),
+            patient_id = dicom.get("patient_id"),
+            patient_age = dicom.get("patient_age"),
+            patient_sex = dicom.get("patient_sex"),
+            series_description = dicom.get("series_description"),
         )
 
         db.session.add(dicomResource)
