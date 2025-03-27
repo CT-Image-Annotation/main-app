@@ -2,14 +2,14 @@
 import os
 from uuid import uuid4
 
-from flask import current_app, make_response
+from flask import current_app, session
 from app.models.Resource import Resource
+from app.services.AnnotationService import AnnotationService
 from app.services.BaseService import Base
 from app.extensions import db
 from werkzeug.utils import secure_filename
 
 from app.services.DicomService import DicomService
-
 
 class FileService(Base):
     @staticmethod
@@ -19,7 +19,9 @@ class FileService(Base):
             name=secure_filename(file.filename),
             type=type,
             mime=file.mimetype,
-            path=path
+            path=path,
+            owner_id = session.get('user_id'),
+            owner_type = "user"
             )
         db.session.add(resource)
         db.session.commit()
