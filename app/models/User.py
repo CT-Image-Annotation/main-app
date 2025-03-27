@@ -15,13 +15,14 @@ class User(BaseModel):
         primaryjoin="and_(User.id == foreign(Dataset.owner_id), Dataset.owner_type == 'user')"
     )
 
-
     resources = db.relationship(
         'Resource', 
         backref='owner', 
         lazy=True, 
         primaryjoin="and_(User.id == foreign(Resource.owner_id), Resource.owner_type == 'user')"
     )
+
+    teams = db.relationship('Team', secondary=TeamUser, backref='users')
 
     def __repr__(self):
         return f"User(id={self.id})"
