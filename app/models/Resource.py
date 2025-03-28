@@ -12,7 +12,7 @@ class Resource(BaseModel):
     owner_id = db.Column(db.Integer, nullable=False)
     owner_type = db.Column(db.String(4), nullable=False)
 
-    dataset_id = db.Column(db.Integer, db.ForeignKey('dataset.id'), nullable=True)
+    dataset_id = db.Column(db.Integer, db.ForeignKey('datasets.id'), nullable=True)
 
     annotations = db.relationship('Annotation', backref='resource', lazy=True)
 
