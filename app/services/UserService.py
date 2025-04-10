@@ -29,3 +29,7 @@ class UserService(Base):
             db.session.commit()
             session['user_id'] = user.id
         return {user}
+    
+    @staticmethod
+    def read(user_id):
+        return User.query.filter_by(id=user_id).first()

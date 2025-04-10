@@ -11,14 +11,14 @@ class User(BaseModel):
     datasets = db.relationship(
         'Dataset', 
         backref='owner', 
-        lazy=True, 
+        lazy="dynamic", 
         primaryjoin="and_(User.id == foreign(Dataset.owner_id), Dataset.owner_type == 'user')"
     )
 
     resources = db.relationship(
         'Resource', 
         backref='owner', 
-        lazy=True, 
+        lazy="dynamic", 
         primaryjoin="and_(User.id == foreign(Resource.owner_id), Resource.owner_type == 'user')"
     )
 

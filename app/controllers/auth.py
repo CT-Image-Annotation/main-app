@@ -27,3 +27,12 @@ def register():
 def logout():
     session.clear()
     return redirect(url_for('landing.index'))
+
+@bp.route("/profile", methods=["GET"])
+def profile():
+    if not session.get('user_id'):
+        return redirect(url_for("auth.login"))
+    
+    user = UserService.read(session.get('user_id'))
+    imageCount = user.resources.count()
+    return render_template("auth/profile.html", user=user, imageCount = imageCount)
