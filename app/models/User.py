@@ -29,3 +29,12 @@ class User(BaseModel):
     
     def __str__(self):
         return f"User(id={self.id})"
+    
+    def serialize(self):
+        return {
+            "user_id": self.id,
+            "username": self.username,
+            "datasets": [r.serialize() for r in self.datasets.all()],
+            "resources": [r.serialize() for r in self.resources.all()],
+            "teams": self.teams,
+        }

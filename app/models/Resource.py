@@ -18,3 +18,15 @@ class Resource(BaseModel):
 
     def __repr__(self):
         return f"<Resource {self.id} ({self.type})>"
+    
+    def serialize(self):
+        return {
+            "resource_id": self.id,
+            "type": self.type,
+            "name": self.name,
+            "mime": self.mime,
+            "owner_id": self.owner_id,
+            "owner_type": self.owner_type,
+            "dataset_id": self.dataset_id,
+            "annotations": {},
+        }

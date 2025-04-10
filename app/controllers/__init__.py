@@ -4,6 +4,7 @@ from .landing import bp as landing_bp
 from .dashboard import bp as dashboard_bp
 from .datasets import bp as datasets_bp
 from .uploads import bp as uploads_bp
+from .api import bp as api_bp
 
 
 def register_controllers(app: Flask):
@@ -14,5 +15,8 @@ def register_controllers(app: Flask):
     
     
     app.register_blueprint(uploads_bp, url_prefix="/uploads")
+
+    app.register_blueprint(api_bp, url_prefix="/API")
+
 
     

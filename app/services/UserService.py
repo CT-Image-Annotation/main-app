@@ -33,3 +33,10 @@ class UserService(Base):
     @staticmethod
     def read(user_id):
         return User.query.filter_by(id=user_id).first()
+    
+    @staticmethod
+    def update(user_id):
+        pass
+
+    def delete(user_id):
+        return User.query.filter_by(id=user_id).delete()
