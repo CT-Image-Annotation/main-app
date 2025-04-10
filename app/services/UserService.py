@@ -39,4 +39,6 @@ class UserService(Base):
         pass
 
     def delete(user_id):
-        return User.query.filter_by(id=user_id).delete()
+         db.session.delete(User.query.get(user_id))
+         db.session.commit()
+         return True
