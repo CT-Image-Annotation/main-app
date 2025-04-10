@@ -11,16 +11,15 @@ class DicomService(Base):
     @staticmethod
     def save(resource):
         dicom = pydicom.dcmread(os.path.join(current_app.config['UPLOAD_FOLDER'], resource.path))
-
         dicomResource = DicomResource(
             resource_id = resource.id,
-            body_part_examined = dicom.get("body_part_examined"),
-            slice_thickness = dicom.get("slice_thickness"),
-            modality = dicom.get("modality"),
-            patient_id = dicom.get("patient_id"),
-            patient_age = dicom.get("patient_age"),
-            patient_sex = dicom.get("patient_sex"),
-            series_description = dicom.get("series_description"),
+            body_part_examined = dicom.get("BodyPartExamined"),
+            slice_thickness = dicom.get("SliceThickness"),
+            modality = dicom.get("Modality"),
+            patient_id = dicom.get("PatientID"),
+            patient_age = dicom.get("PatientAge"),
+            patient_sex = dicom.get("PatientSex"),
+            series_description = dicom.get("SeriesDescription"),
         )
 
         db.session.add(dicomResource)
@@ -28,3 +27,6 @@ class DicomService(Base):
 
         return dicomResource
 
+    @staticmethod
+    def read(resource_id):
+        return DicomResource.query.get(resource_id)

@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, make_response, request, session
 
 from app.services.DatasetService import DatasetService
+from app.services.FileService import FileService
 from app.services.UserService import UserService
 bp = Blueprint("api", __name__)
 
@@ -57,5 +58,26 @@ def deleteDataset(dataset_id):
     return {}, 204
 
 # IMAGE
+@bp.route("/image/create", methods=["POST"])
+def createImage(request):
+    params = request.form if request.form else request.get_json()
+    image = FileService.create(params)
+    if not image:
+        return {}, 400
+    
+    return jsonify(image.serialize()), 201
+
+@bp.route("/image/<int:image_id>", methods=["GET"])
+def readImage(image_id):
+    return jsonify(FileService.read(resource_id=image_id).serialize()), 200
+
+@bp.route("/image", methods=["POST"])
+def updateImage():
+    pass
+
+@bp.route("/image/<int:image_id>", methods=["DELETE"])
+def deleteImage(image_id):
+    FileService.delete(image_id)
+    return {}, 204
 
 # ANNOTATION

@@ -16,3 +16,19 @@ class DicomResource(BaseModel):
     patient_sex = db.Column(db.String(255))
 
     series_description = db.Column(db.String(255))
+
+    def serialize(self):
+        base = self.resource.serialize() if self.resource else {}
+
+        dicom_fields = {
+            "body_part_examined": self.body_part_examined,
+            "slice_thickness": self.slice_thickness,
+            "modality": self.modality,
+            "patient_id": self.patient_id,
+            "patient_age": self.patient_age,
+            "patient_sex": self.patient_sex,
+            "series_description": self.series_description
+        }
+
+        base.update(dicom_fields)
+        return base
