@@ -8,10 +8,9 @@ from app.extensions import db
 
 class DatasetService(Base):
     @staticmethod
-    def create(name, owner_id, owner_type):
-        dataset = Dataset(name=name, owner_id=owner_id, owner_type=owner_type)
-        Team.query.get(0)
-        TeamUser.query.get((0,0))
+    def create(params):
+        dataset = Dataset(name=params.get("name"), owner_id=params.get("owner_id"), owner_type=params.get("owner_type"))
+
         db.session.add(dataset)
         db.session.commit()
         return dataset
@@ -23,3 +22,9 @@ class DatasetService(Base):
     @staticmethod
     def read_all(owner_id, owner_type):
         return Dataset.query.filter_by(owner_id=owner_id, owner_type=owner_type).order_by("updated_at").all()
+
+    @staticmethod
+    def delete(dataset_id):
+        db.session.delete(Dataset.query.get(dataset_id))
+        db.session.commit()
+        return True
