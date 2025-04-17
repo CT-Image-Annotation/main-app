@@ -1,5 +1,6 @@
 from app.extensions import db
 from app.models.BaseModel import BaseModel
+from app.models.Resource import Resource
 
 class DicomResource(BaseModel):
     __tablename__ = 'dicom_resources'
@@ -32,3 +33,31 @@ class DicomResource(BaseModel):
 
         base.update(dicom_fields)
         return base
+    
+    @property
+    def name(self):
+        return self.resource.name
+
+    @property
+    def path(self):
+        return self.resource.path
+
+    @property
+    def mime(self):
+        return self.resource.mime
+
+    @property
+    def owner_id(self):
+        return self.resource.owner_id
+
+    @property
+    def owner_type(self):
+        return self.resource.owner_type
+
+    @property
+    def dataset_id(self):
+        return self.resource.dataset_id
+
+    @property
+    def annotations(self):
+        return self.resource.annotations

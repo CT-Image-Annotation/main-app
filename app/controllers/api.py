@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, make_response, request, session
 
+from app.services.AnnotationService import AnnotationService
 from app.services.DatasetService import DatasetService
 from app.services.FileService import FileService
 from app.services.UserService import UserService
@@ -8,7 +9,7 @@ bp = Blueprint("api", __name__)
 
 # USER
 @bp.route("/user/create", methods=["POST"])
-def createUser(request):
+def createUser():
     params = request.form if request.form else request.get_json()
     user = UserService.register(params)
     if not user:
@@ -59,8 +60,9 @@ def deleteDataset(dataset_id):
 
 # IMAGE
 @bp.route("/image/create", methods=["POST"])
-def createImage(request):
-    params = request.form if request.form else request.get_json()
+def createImage():
+    params = dict(request.form) if request.form else request.get_json()
+    params["file"] = request.files.get("file")
     image = FileService.create(params)
     if not image:
         return {}, 400
@@ -81,3 +83,25 @@ def deleteImage(image_id):
     return {}, 204
 
 # ANNOTATION
+@bp.route("/annotation/create", methods=["POST"])
+def createAnnotation():
+    params = dict(request.form) if request.form else request.get_json()
+    params["file"] = request.files.get("file")
+    annotation = AnnotationService.create(params)
+    if not annotation:
+        return {},400
+    
+    return jsonify(annotation.serialize()), 201
+
+@bp.route("/annotation/<int:annotation_id>", methods=["GET"])
+def readAnnotation(annotation_id):
+    return jsonify(AnnotationService.read(annotation_id=annotation_id).serialize()), 200
+
+@bp.route("/annotation", methods=["POST"])
+def updateAnnotation():
+    pass
+
+@bp.route("/annotation/<int:annotation_id>", methods=["DELETE"])
+def deleteAnnotation(annotation_id):
+    FileService.delete(annotation_id)
+    return {}, 204

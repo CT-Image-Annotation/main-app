@@ -46,7 +46,7 @@ def upload():
         
         return redirect(request.url)
 
-    files = Resource.query.all()
+    files = Resource.query.filter_by(type="AImage")
     
     imgs = { file.id : read_and_process(file.path, file.mime) for file in files}
     

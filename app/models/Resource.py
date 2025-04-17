@@ -14,7 +14,7 @@ class Resource(BaseModel):
 
     dataset_id = db.Column(db.Integer, db.ForeignKey('datasets.id'), nullable=True)
 
-    annotations = db.relationship('Annotation', backref='resource', lazy=True)
+    annotations = db.relationship('Annotation', foreign_keys='Annotation.resource_id', back_populates='resource', lazy="dynamic")
 
     def __repr__(self):
         return f"<Resource {self.id} ({self.type})>"
@@ -25,8 +25,10 @@ class Resource(BaseModel):
             "type": self.type,
             "name": self.name,
             "mime": self.mime,
+            "path": self.path,
             "owner_id": self.owner_id,
             "owner_type": self.owner_type,
             "dataset_id": self.dataset_id,
-            "annotations": {},
+            "annotations": [r.serialize() for r in self.annotations.all()],
+            "created_at": self.created_at
         }

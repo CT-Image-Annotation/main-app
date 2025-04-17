@@ -4,7 +4,6 @@ from uuid import uuid4
 
 from flask import current_app, session
 from app.models.Resource import Resource
-from app.services.AnnotationService import AnnotationService
 from app.services.BaseService import Base
 from app.extensions import db
 from werkzeug.utils import secure_filename
