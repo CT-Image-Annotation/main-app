@@ -1,0 +1,99 @@
+/* app/static/css/app.css */
+
+/* Page background & typography */
+body {
+    font-family: Helvetica, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+  }
+  
+  /* Central white “card” container */
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  
+  /* Shared header bar with buttons */
+  .header {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  /* Reusable button style */
+  .button {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #007bff;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    margin: 5px;
+  }
+  .button:hover {
+    background: #0056b3;
+  }
+  
+  /* Go‑back link in corner */
+  .go-back {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+  }
+  
+  /* Workspace layout */
+  .workspace {
+    display: flex;
+    gap: 20px;
+  }
+  
+  /* Filter panel */
+  .filters {
+    width: 30%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 10px;
+  }
+  .filters form {
+    margin: 0;
+  }
+  .filters button {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  /* Image area */
+  .image-container {
+    width: 70%;
+    text-align: center;
+  }
+  
+  /* Process‑history list */
+  .process-log {
+    margin-top: 20px;
+    text-align: left;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  /* Canvas container for drawing page */
+  #canvasContainer {
+    position: relative;
+    margin: 0 auto;
+    border: 1px solid #ccc;
+  }
+  #backgroundCanvas {
+    display: block;
+  }
+  #drawingCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  

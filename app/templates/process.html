@@ -1,46 +1,47 @@
 {% extends 'base.html' %}
-{% block title %}Process {{ file.path }}{% endblock %}
+{% block title %}Workspace – {{ file.path }}{% endblock %}
 
 {% block content %}
-  <h1>Process “{{ file.path }}”</h1>
-  <input type="color" id="colorPicker" value="#ff0000" style="margin-bottom:10px"/>
-  <br/>
-  <canvas id="drawingCanvas" width="600" height="400"></canvas>
-  <img id="originalImage" src="data:image/png;base64,{{ img }}" style="display:none"/>
+  <div class="container">
+    <a href="{{ url_for('uploads.upload') }}" class="button go-back">Go Back</a>
 
-  <p><a href="{{ url_for('uploads.download', path=file.path) }}">Download original</a></p>
+    <div class="header">
+     <a href="{{ url_for('uploads.download_processed', file_id=file.id) }}" class="button">
+       Download
+     </a>
+      <a href="{{ url_for('uploads.reset', file_id=file.id) }}" class="button">Reset</a>
+     <a href="{{ url_for('uploads.undo',   file_id=file.id) }}" class="button">Undo</a>
+    </div>
 
-  <script>
-    const canvas = document.getElementById("drawingCanvas");
-    const ctx = canvas.getContext("2d");
-    const colorPicker = document.getElementById("colorPicker");
-    const imgElement = document.getElementById("originalImage");
-    let currentColor = colorPicker.value;
+    <div class="workspace">
+      <form
+        action="{{ url_for('uploads.apply_filter', file_id=file.id) }}"
+        method="post"
+        class="filters"
+      >
+        {% for name in filter_names %}
+          <button
+            name="filter_name"
+            value="{{ name }}"
+            {% if name not in allowed_filters %}disabled{% endif %}
+          >
+            {{ name }}
+          </button>
+        {% endfor %}
+      </form>
 
-    // draw original into canvas
-    imgElement.onload = () => {
-      ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
-    };
-    // pick color
-    colorPicker.addEventListener("input", e => currentColor = e.target.value);
+      <div class="image-container">
+        <img src="data:image/png;base64,{{ img }}" style="max-width:100%;" />
+      </div>
+    </div>
 
-    // drawing state
-    let drawing = false, lastX = 0, lastY = 0;
-
-    canvas.addEventListener("mousedown", e => {
-      drawing = true;
-      lastX = e.offsetX; lastY = e.offsetY;
-    });
-    canvas.addEventListener("mousemove", e => {
-      if (!drawing) return;
-      ctx.beginPath();
-      ctx.strokeStyle = currentColor;
-      ctx.moveTo(lastX, lastY);
-      ctx.lineTo(e.offsetX, e.offsetY);
-      ctx.stroke();
-      lastX = e.offsetX; lastY = e.offsetY;
-    });
-    canvas.addEventListener("mouseup", () => drawing = false);
-    canvas.addEventListener("mouseout", () => drawing = false);
-  </script>
+    <div class="process-log">
+      <h3>Process History:</h3>
+      <ul>
+        {% for step in processes %}
+          <li>{{ step }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
 {% endblock %}
