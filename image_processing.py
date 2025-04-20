@@ -22,3 +22,36 @@ def process_image(file_bytes):
         return None
 
     return base64.b64encode(buffer).decode('utf-8')
+
+class ImageOptimizer:
+    def __init__(self):
+        pass
+
+    def resize_image(self, image, max_width, max_height):
+        """
+        Resize the image while maintaining aspect ratio if the width or height exceeds the given maximums.
+        """
+        height, width = image.shape[:2]
+        # Compute scale factors for width and height.
+        scale_w = max_width / width if width > max_width else 1
+        scale_h = max_height / height if height > max_height else 1
+        # Use the smaller scale factor to maintain aspect ratio.
+        scale = min(scale_w, scale_h)
+        if scale < 1:
+            new_width = int(width * scale)
+            new_height = int(height * scale)
+            resized = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+            return resized
+        return image
+
+    def compress_image(self, image, quality):
+        """
+        Compress the image by encoding it as a JPEG with the given quality, and then decoding it back.
+        This effectively reduces file size.
+        """
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
+        success, encoded_image = cv2.imencode('.jpg', image, encode_param)
+        if success:
+            decompressed = cv2.imdecode(encoded_image, cv2.IMREAD_COLOR)
+            return decompressed
+        return image
