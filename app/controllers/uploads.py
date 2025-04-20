@@ -2,10 +2,12 @@ import base64
 import os
 import cv2
 import numpy as np
-from flask import Blueprint, current_app, render_template, send_from_directory,request, redirect, flash
+from flask import Blueprint, current_app, render_template, send_from_directory,request, redirect, flash, session, url_for
 from app.models.Resource import Resource
 from app.services.FileService import FileService
 import pydicom
+
+
 bp = Blueprint("uploads", __name__)
 
 def read_and_process(path, type):
@@ -31,7 +33,15 @@ def read_and_process(path, type):
         return res
 
 @bp.route('/', methods=['GET', 'POST'])
+
+
+
 def upload():
+    # ➤ Require login
+    if not session.get('user_id'):
+        return redirect(url_for('auth.login'))
+
+
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
@@ -42,8 +52,16 @@ def upload():
             flash('No selected file')
             return redirect(request.url)
         
-        FileService.upload(file, type="AImage")
         
+        FileService.upload(file, type="AImage")
+        # pass the current user’s ID & ownership type
+        FileService.upload(
+            file,
+            type="AImage",
+            owner_id=session['user_id'],
+            owner_type='user'
+        )
+
         return redirect(request.url)
 
     files = Resource.query.filter_by(type="AImage")
