@@ -10,5 +10,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     #UPLOAD_FOLDER = "/home/ai/Projects/ct/main-app/uploads" #DISARMED TO ALLOW FOR TESTING AND USE IN WINDOWS REMOVE LATER
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
-
+    
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 

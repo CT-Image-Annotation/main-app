@@ -1,5 +1,17 @@
 Flask
 Flask-SQLAlchemy
-pydicom
-opencv-python-headless
 Flask-Migrate
+
+# image I/O & processing
+opencv-python-headless
+pydicom
+
+# numerical & data libraries
+numpy
+pandas
+
+# image-drawing (PIL)
+Pillow
+
+# GMM / machine-learning
+scikit-learn

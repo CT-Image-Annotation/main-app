@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Process {{ file.path }}{% endblock %}
+
+{% block content %}
+  <h1>Process “{{ file.path }}”</h1>
+  <input type="color" id="colorPicker" value="#ff0000" style="margin-bottom:10px"/>
+  <br/>
+  <canvas id="drawingCanvas" width="600" height="400"></canvas>
+  <img id="originalImage" src="data:image/png;base64,{{ img }}" style="display:none"/>
+
+  <p><a href="{{ url_for('uploads.download', path=file.path) }}">Download original</a></p>
+
+  <script>
+    const canvas = document.getElementById("drawingCanvas");
+    const ctx = canvas.getContext("2d");
+    const colorPicker = document.getElementById("colorPicker");
+    const imgElement = document.getElementById("originalImage");
+    let currentColor = colorPicker.value;
+
+    // draw original into canvas
+    imgElement.onload = () => {
+      ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+    };
+    // pick color
+    colorPicker.addEventListener("input", e => currentColor = e.target.value);
+
+    // drawing state
+    let drawing = false, lastX = 0, lastY = 0;
+
+    canvas.addEventListener("mousedown", e => {
+      drawing = true;
+      lastX = e.offsetX; lastY = e.offsetY;
+    });
+    canvas.addEventListener("mousemove", e => {
+      if (!drawing) return;
+      ctx.beginPath();
+      ctx.strokeStyle = currentColor;
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+      lastX = e.offsetX; lastY = e.offsetY;
+    });
+    canvas.addEventListener("mouseup", () => drawing = false);
+    canvas.addEventListener("mouseout", () => drawing = false);
+  </script>
+{% endblock %}

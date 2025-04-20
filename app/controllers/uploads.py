@@ -32,10 +32,16 @@ def read_and_process(path, type):
         res = base64.b64encode(buffer).decode('utf-8')
         return res
 
+
+@bp.route('/process/<int:file_id>')
+def process(file_id):
+    # fetch the Resource or 404
+    file = Resource.query.get_or_404(file_id)
+    # prepare the base64 image for drawing
+    img_data = read_and_process(file.path, file.mime)
+    return render_template('process.html', file=file, img=img_data)
+ 
 @bp.route('/', methods=['GET', 'POST'])
-
-
-
 def upload():
     # ➤ Require login
     if not session.get('user_id'):
@@ -54,13 +60,13 @@ def upload():
         
         
         FileService.upload(file, type="AImage")
-        # pass the current user’s ID & ownership type
-        FileService.upload(
-            file,
-            type="AImage",
-            owner_id=session['user_id'],
-            owner_type='user'
-        )
+        # # pass the current user’s ID & ownership type
+        # FileService.upload(
+        #     file,
+        #     type="AImage",
+        #     owner_id=session['user_id'],
+        #     owner_type='user'
+        # )
 
         return redirect(request.url)
 
