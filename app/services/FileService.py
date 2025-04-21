@@ -46,7 +46,7 @@ class FileService(Base):
 
     @staticmethod
     def find(resource_id):
-        return Resource.query.filter_by(id=resource_id)
+        return Resource.query.get(resource_id)
 
     @staticmethod
     def load(path):
