@@ -22,3 +22,5 @@ torchvision
 torchaudio
 scikit-image
 segment-anything
+
+gdown
