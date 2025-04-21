@@ -1,11 +1,23 @@
 from flask import Blueprint, jsonify, make_response, request, session
 
 from app.services.AnnotationService import AnnotationService
+from app.services.BoundingBoxSegmentationService import BoundingBoxSegmentationService
 from app.services.DatasetService import DatasetService
 from app.services.FileService import FileService
 from app.services.UserService import UserService
 bp = Blueprint("api", __name__)
 
+
+@bp.route("/ai", methods=["GET"])
+def ai():
+    user = UserService.currentUser()
+    # dataset = DatasetService.read_all(user.id, "user")[0]
+    resource = user.resources[0]
+    image_buffer = FileService.load(resource.path)
+
+    box_coords = [[10, 20, 10, 20]]
+
+    return BoundingBoxSegmentationService.segmentBox(image_buffer, box_coords)
 
 # USER
 @bp.route("/user/create", methods=["POST"])

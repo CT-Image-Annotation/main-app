@@ -15,3 +15,10 @@ Pillow
 
 # GMM / machine-learning
 scikit-learn
+
+# AI
+torch
+torchvision
+torchaudio
+scikit-image
+segment-anything
