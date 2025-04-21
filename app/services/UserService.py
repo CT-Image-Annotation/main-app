@@ -38,7 +38,17 @@ class UserService(Base):
     def update(user_id):
         pass
 
+    @staticmethod
     def delete(user_id):
          db.session.delete(User.query.get(user_id))
          db.session.commit()
          return True
+    
+    @staticmethod
+    def currentUser():
+        user_id = session.get("user_id")
+
+        if not user_id:
+            return None
+        
+        return UserService.read(user_id)
