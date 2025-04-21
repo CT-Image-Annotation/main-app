@@ -1,10 +1,11 @@
-from flask import Blueprint, jsonify, make_response, request, session
-
+from flask import Blueprint, jsonify, make_response, request, session, Response
+from PIL import Image
 from app.services.AnnotationService import AnnotationService
 from app.services.BoundingBoxSegmentationService import BoundingBoxSegmentationService
 from app.services.DatasetService import DatasetService
 from app.services.FileService import FileService
 from app.services.UserService import UserService
+import io
 bp = Blueprint("api", __name__)
 
 
@@ -12,12 +13,22 @@ bp = Blueprint("api", __name__)
 def ai():
     user = UserService.currentUser()
     # dataset = DatasetService.read_all(user.id, "user")[0]
-    resource = user.resources[0]
+    resource = user.resources[1]
     image_buffer = FileService.load(resource.path)
 
-    box_coords = [[10, 20, 10, 20]]
+    box_coords = [[75, 75, 240, 420]]
 
-    return BoundingBoxSegmentationService.segmentBox(image_buffer, box_coords)
+    pil_image = Image.fromarray(BoundingBoxSegmentationService.segmentBox(image_buffer, box_coords))
+    
+    # Save the image to a BytesIO object in PNG format
+    img_io = io.BytesIO()
+    pil_image.save(img_io, 'PNG')
+    img_io.seek(0)  # Go to the beginning of the BytesIO buffer
+    
+    # Return the image as a response
+    return Response(img_io, mimetype='image/png')
+
+    return 
 
 # USER
 @bp.route("/user/create", methods=["POST"])

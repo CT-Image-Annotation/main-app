@@ -1,7 +1,9 @@
 import cv2
+from flask import current_app
 import numpy as np
 import torch
 from skimage import transform
+import os
 from segment_anything import sam_model_registry
 import torch.nn.functional as F
 from app.services.BaseService import Base
@@ -11,7 +13,7 @@ class BoundingBoxSegmentationService(Base):
     def segmentBox(image_buffer, box_coords):
         image_bgr = cv2.imdecode(np.frombuffer(image_buffer, np.uint8), cv2.IMREAD_COLOR)
 
-        segmenter = BoundingBoxSegmenter()
+        segmenter = BoundingBoxSegmenter(os.path.join(current_app.config['MEDSAM_PATH'], "work_dir/MedSAM/medsam_vit_b.pth"))
         return segmenter.apply_medsam_segmentation(image_bgr, box_coords)
 
 class BoundingBoxSegmenter:
