@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, make_response, request, session, Response
+from flask import Blueprint, jsonify, request, session, Response
 from PIL import Image
 from app.services.AnnotationService import AnnotationService
 from app.services.BoundingBoxSegmentationService import BoundingBoxSegmentationService
@@ -11,12 +11,20 @@ bp = Blueprint("api", __name__)
 
 @bp.route("/ai", methods=["GET"])
 def ai():
-    user = UserService.currentUser()
-    # dataset = DatasetService.read_all(user.id, "user")[0]
-    resource = user.resources[1]
+    resource_id = request.args.get("resource_id", type=int)
+    xmin = request.args.get("xmin", type=int)
+    ymin = request.args.get("ymin", type=int)
+    xmax = request.args.get("xmax", type=int)
+    ymax = request.args.get("ymax", type=int)
+
+    if None in [resource_id, xmin, ymin, xmax, ymax]:
+        return {"error": "Missing parameters"}, 400
+    
+    resource = FileService.find(resource_id)
+
     image_buffer = FileService.load(resource.path)
 
-    box_coords = [[75, 75, 240, 420]]
+    box_coords = [[xmin, ymin, xmax, ymax]] #[[75, 75, 240, 420]]
 
     pil_image = Image.fromarray(BoundingBoxSegmentationService.segmentBox(image_buffer, box_coords))
     
