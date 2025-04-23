@@ -8,6 +8,7 @@ from app.extensions import db
 from app.models.Resource import Resource
 from app.services.BaseService import Base
 from app.services.DicomService import DicomService
+from app.services.UserService import UserService
 
 
 class FileService(Base):
@@ -105,3 +106,11 @@ class FileService(Base):
             os.remove(filepath)
 
         return True
+
+    @staticmethod
+    def getUserFiles(type = "AImage"):
+        user = UserService.currentUser()
+        if not user:
+            return []
+        
+        return user.resources.filter_by(type=type).all()
