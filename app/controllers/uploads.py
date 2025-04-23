@@ -73,14 +73,14 @@ def process(file_id):
     img_b64 = base64.b64encode(buf).decode('utf-8')
 
     allowed = get_allowed_filters()
-
     return render_template(
         'process.html',
         file=file,
         img=img_b64,
         filter_names=FILTER_NAMES,
         allowed_filters=allowed,
-        processes=global_processes
+        processes=global_processes,
+        files = FileService.getUserFiles()
     )
 
 @bp.route('/process/<int:file_id>/apply', methods=['POST'])
@@ -166,7 +166,7 @@ def upload():
         FileService.upload(f, type="AImage")
         return redirect(request.url)
 
-    files = Resource.query.filter_by(type="AImage")
+    files = FileService.getUserFiles(type="AImage")#Resource.query.filter_by(type="AImage")
     imgs = { f.id: read_and_process(f.path, f.mime) for f in files }
     return render_template("uploads.html", files=files, imgs=imgs)
 
