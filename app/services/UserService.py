@@ -35,9 +35,12 @@ class UserService(Base):
         return User.query.filter_by(id=user_id).first()
     
     @staticmethod
-    def update(user_id):
-        pass
-
+    def update(user):
+        # user is an instance of models.User that’s already been modified
+        db.session.add(user)
+        db.session.commit()
+        return user
+    
     @staticmethod
     def delete(user_id):
          db.session.delete(User.query.get(user_id))

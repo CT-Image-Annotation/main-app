@@ -1,6 +1,26 @@
-{% extends 'base.html' %} {% block content %}
-<span class="title"><h1>{% block title %} Home Page{% endblock %}</h1></span>
-<div class="content">
-  <h2>Hi</h2>
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:800px; margin:60px auto; padding:40px; text-align:center;">
+  <h1 class="title" style="margin-bottom:20px;">Web-based CT Image Annotation Tool</h1>
+  <p style="font-size:1.1rem; line-height:1.6; margin:0 auto; max-width:700px;">
+    Simplify CT scan annotation for medical professionals. Draw freehand on 2D slices, leverage algorithmic
+    tools for 3D boundary extrapolation, and manage annotated images—all through an intuitive web interface
+    without specialized hardware or software setup.
+  </p>
+
+  <h2 style="margin-top:30px;">Key Use Cases</h2>
+  <ul style="list-style-position: inside; margin:10px auto; padding:0; max-width:600px; text-align:left;">
+    <li>Freehand and region-based tracing on CT slices with undo/redo support.</li>
+    <li>Automatic 3D boundary interpolation from 2D sketches.</li>
+    <li>Version-controlled annotations with export to JSON, XML, or DICOM.</li>
+    <li>Collaborative review environment for multiple physicians.</li>
+  </ul>
+
+  <div class="actions" style="margin-top:40px;">
+    <a href="{{ url_for('auth.login') }}" class="button">Log In</a>
+  </div>
 </div>
 {% endblock %}

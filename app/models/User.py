@@ -7,7 +7,9 @@ class User(BaseModel):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(30))
     password = db.Column(db.String(30))
-
+    profile_photo = db.Column(db.String(256), nullable=True)    # stores the filename or URL
+    specialty     = db.Column(db.String(100), nullable=True)
+    
     datasets = db.relationship(
         'Dataset', 
         backref='owner', 

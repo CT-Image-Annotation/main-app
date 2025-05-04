@@ -1,14 +1,102 @@
-{% extends 'base.html' %} {% block content %}
-<span class="title"><h1>{% block title %} Login {% endblock %}</h1></span>
-<div class="content">
-  <form action="{{ url_for('auth.register') }}" method="POST">
-    <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required />
+{% extends 'base.html' %}
 
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required />
+{% block title %}Physician Portal Registration{% endblock %}
 
-    <button type="submit">Register</button>
+{% block head %}{{ super() }}
+<style>
+  /* Password field wrapper for icon positioning */
+  .password-group {
+    position: relative;
+  }
+  .password-group input {
+    padding-right: 2.5rem;
+  }
+  .password-group .toggle-password {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-block;
+    font-size: 1.1rem;
+    user-select: none;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    z-index: 2;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 400px; margin: 60px auto;">
+  <div class="header">
+    <h1>Create Your Account</h1>
+    <p>Register with your professional credentials to access patient MRI and CT scan records.</p>
+  </div>
+
+  <form id="registerForm" action="{{ url_for('auth.register') }}" method="POST" style="text-align: center;">
+    <div class="form-group">
+      <label for="username" style="display: block; margin-bottom: 8px;">Username</label>
+      <input type="text" id="username" name="username" placeholder="e.g. dr.jones" required />
+    </div>
+
+    <div class="form-group password-group">
+      <label for="password" style="display: block; margin-bottom: 8px;">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter password" required />
+      <span class="toggle-password" data-target="password" title="Show/Hide Password">👁️</span>
+    </div>
+
+    <div class="form-group password-group">
+      <label for="confirm_password" style="display: block; margin-bottom: 8px;">Confirm Password</label>
+      <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required />
+      <span class="toggle-password" data-target="confirm_password" title="Show/Hide Password">👁️</span>
+    </div>
+
+    <div id="pwError" style="color: #d9534f; margin-top: 10px;"></div>
+
+    <div class="form-actions" style="margin-top: 20px;">
+      <button type="submit" class="button">Register</button>
+      <a href="{{ url_for('auth.login') }}" class="button">Back to Login</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-messages" style="text-align: center; margin-top: 20px; list-style: none; padding: 0;">
+          {% for category, message in messages %}
+            <li class="flash {{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
   </form>
 </div>
+
+<script>
+  // Password match validation
+  document.getElementById('registerForm').addEventListener('submit', function(e) {
+    var pw = document.getElementById('password').value;
+    var cpw = document.getElementById('confirm_password').value;
+    var errorEl = document.getElementById('pwError');
+    if (pw !== cpw) {
+      e.preventDefault();
+      errorEl.textContent = 'Passwords do not match. Please ensure both fields are identical.';
+    } else {
+      errorEl.textContent = '';
+    }
+  });
+
+  // Toggle password visibility
+  document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+    toggle.addEventListener('click', function() {
+      var targetId = this.getAttribute('data-target');
+      var input = document.getElementById(targetId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        this.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        this.textContent = '👁️';
+      }
+    });
+  });
+</script>
 {% endblock %}

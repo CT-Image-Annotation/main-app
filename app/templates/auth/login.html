@@ -1,26 +1,85 @@
-{% extends 'base.html' %} {% block content %}
-<span class="title"><h1>{% block title %} Login {% endblock %}</h1></span>
-<div class="content">
-  <form action="{{ url_for('auth.login') }}" method="POST">
-    <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required />
+{% extends 'base.html' %}
 
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required />
+{% block title %}Physician Portal Login{% endblock %}
 
-    <button type="submit">Login</button>
-    <a href="{{ url_for('auth.register') }}">
-      <button type="button">Register</button>
-    </a>
+{% block head %}{{ super() }}
+  <style>
+    /* Password field wrapper for icon positioning */
+    .password-group {
+      position: relative;
+    }
+    .password-group input {
+      padding-right: 2.5rem;
+    }
+    .password-group .toggle-password {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: inline-block;
+      font-size: 1.1rem;
+      user-select: none;
+      cursor: pointer !important;
+      pointer-events: auto !important;
+      z-index: 2;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 400px; margin: 60px auto;">
+  <div class="header">
+    <h1>Medical Imaging Access</h1>
+    <p>Securely log in to view patient MRI and CT scan records.</p>
+  </div>
+
+  <form id="loginForm" action="{{ url_for('auth.login') }}" method="POST" style="text-align: center;">
+    <div class="form-group">
+      <label for="username" style="display: block; margin-bottom: 8px;">Username</label>
+      <input type="text" id="username" name="username" placeholder="e.g. dr.jones" required />
+    </div>
+
+    <div class="form-group password-group">
+      <label for="password" style="display: block; margin-bottom: 8px;">Password</label>
+      <input type="password" id="password" name="password" placeholder="Your password" required />
+      <span class="toggle-password" data-target="password" title="Show/Hide Password">👁️</span>
+    </div>
+
+    <div class="form-actions" style="margin-top: 20px;">
+      <button type="submit" class="button">Log In</button>
+      <a href="{{ url_for('auth.register') }}" class="button">Sign Up</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-messages" style="text-align: center; margin-top: 20px;">
+          {% for category, message in messages %}
+            {% if category == 'error' %}
+              <li class="flash error">Incorrect username or password. Please try again.</li>
+            {% else %}
+              <li class="flash {{ category }}">{{ message }}</li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
   </form>
-
-  {% with messages = get_flashed_messages(with_categories=true) %} {% if
-  messages %}
-  <ul>
-    {% for category, message in messages %}
-    <li class="{{ category }}">{{ message }}</li>
-    {% endfor %}
-  </ul>
-  {% endif %} {% endwith %}
 </div>
+
+<script>
+  // Toggle password visibility
+  document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+    toggle.addEventListener('click', function() {
+      var targetId = this.getAttribute('data-target');
+      var input = document.getElementById(targetId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        this.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        this.textContent = '👁️';
+      }
+    });
+  });
+</script>
 {% endblock %}
