@@ -6,43 +6,45 @@ from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models.Resource import Resource
-from app.services.BaseService import Base
 from app.services.DicomService import DicomService
 from app.services.UserService import UserService
 
-
-class FileService(Base):
+class FileService:
     @staticmethod
-    def upload(file, type):
+    def upload(file, type, dataset_id=None):
+        """
+        Save an uploaded file; optionally associate it with a dataset.
+        """
         # Secure original filename and extract extension
         original_name = secure_filename(file.filename)
         _, ext = os.path.splitext(original_name)
         # Generate unique filename with same extension
         unique_name = f"{uuid4()}{ext}"
 
-        # Create resource record with owner info
+        # Create resource record with owner and dataset info
         resource = Resource(
-            name=original_name,
+            name=file.filename,
             type=type,
             mime=file.mimetype,
             path=unique_name,
             owner_id=session.get('user_id'),
-            owner_type="user"
+            dataset_id=dataset_id
         )
         db.session.add(resource)
         db.session.commit()
 
-        # Ensure upload folder exists
-        os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
-        # Save file to disk under the generated name
-        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], unique_name))
+        # Determine save folder (root or dataset subfolder)
+        base_folder = current_app.config['UPLOAD_FOLDER']
+        if dataset_id:
+            base_folder = os.path.join(base_folder, str(dataset_id))
+        os.makedirs(base_folder, exist_ok=True)
 
-        # If DICOM, delegate to DicomService; otherwise preload file bytes
+        # Save file to disk under the generated name
+        file.save(os.path.join(base_folder, unique_name))
+
+        # DICOM processing
         if resource.mime == "application/dicom":
             DicomService.save(resource)
-        else:
-            resource.file = FileService.load(resource.path)
-
         return resource
 
     @staticmethod
@@ -50,67 +52,57 @@ class FileService(Base):
         return Resource.query.get(resource_id)
 
     @staticmethod
-    def load(path):
-        with open(os.path.join(current_app.config['UPLOAD_FOLDER'], path), "rb") as f:
+    def load(path, dataset_id=None):
+        # Load binary data from disk
+        base_folder = current_app.config['UPLOAD_FOLDER']
+        if dataset_id:
+            base_folder = os.path.join(base_folder, str(dataset_id))
+        full_path = os.path.join(base_folder, path)
+        with open(full_path, "rb") as f:
             return f.read()
 
     @staticmethod
-    def create(params):
-        file = params.get("file")
-        original_name = secure_filename(file.filename)
-        _, ext = os.path.splitext(original_name)
-        unique_name = f"{uuid4()}{ext}"
-
-        resource = Resource(
-            name=original_name,
-            type=params.get("type"),
-            mime=file.mimetype,
-            path=unique_name,
-            owner_id=params.get("owner_id"),
-            owner_type=params.get("owner_type"),
-            dataset_id=params.get("dataset_id")
-        )
-        db.session.add(resource)
-        db.session.commit()
-
-        os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
-        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], unique_name))
-
-        if resource.mime == "application/dicom":
-            return DicomService.save(resource)
+    def read(resource_id):
+        resource = Resource.query.get(resource_id)
+        if resource and resource.mime == "application/dicom":
+            return DicomService.read(resource_id)
         return resource
 
     @staticmethod
-    def read(resource_id):
-        image = Resource.query.get(resource_id)
-        if image.mime == "application/dicom":
-            return DicomService.read(resource_id)
-        return image
-
-    @staticmethod
     def update():
+        # Not implemented
         pass
 
     @staticmethod
     def delete(resource_id):
         resource = Resource.query.get(resource_id)
+        if not resource:
+            return False
+        # Delete DICOM if applicable
         if resource.mime == "application/dicom":
             dicom_res = DicomService.read(resource_id)
             db.session.delete(dicom_res)
 
+        # Remove DB record
         db.session.delete(resource)
         db.session.commit()
 
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], resource.path)
+        # Remove file from disk
+        base_folder = current_app.config['UPLOAD_FOLDER']
+        if resource.dataset_id:
+            base_folder = os.path.join(base_folder, str(resource.dataset_id))
+        filepath = os.path.join(base_folder, resource.path)
         if os.path.exists(filepath):
             os.remove(filepath)
 
         return True
 
     @staticmethod
-    def getUserFiles(type = "AImage"):
+    def getUserFiles(type="AImage", dataset_id=None):
         user = UserService.currentUser()
         if not user:
             return []
-        
-        return user.resources.filter_by(type=type).all()
+        query = user.resources.filter_by(type=type)
+        if dataset_id is not None:
+            query = query.filter_by(dataset_id=dataset_id)
+        return query.all()

@@ -1,174 +1,60 @@
-{% extends 'base.html' %} {% block title %}Workspace – {{ file.path }}{%
-endblock %} {% block content %}
-<div class="main-wrapper" style="display: flex">
-  <!-- Left Sidebar -->
-  <div class="left-panel" style="width: 250px; padding: 10px">
-    <h4>Files</h4>
-    <ul class="file-list">
-      {% for file in files %}
-      <li data-file-id="{{ file.id }}">
-        <a
-          href="{{ url_for('uploads.process', file_id=file.id) }}"
-          class="file-link"
-        >
-          {{ file.name }}
-        </a>
-      </li>
-      {% endfor %}
-    </ul>
+{% extends 'base.html' %}
+
+{% block title %}Workspace – {{ file.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px; margin:40px auto;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>Workspace – {{ file.name }}</h1>
+    <a href="{{ url_for('uploads.datasets_index') }}" class="button go-back">Back to Uploads</a>
   </div>
 
-  <!-- Main Content -->
-  <div class="container" style="flex: 1">
-    <div class="container">
-      <a href="{{ url_for('uploads.upload') }}" class="button go-back"
-        >Go Back</a
+  <div class="viewer" style="margin-top:20px; text-align:center;">
+    <img src="data:image/png;base64,{{ img }}" alt="Processed image" style="max-width:100%; height:auto;">
+  </div>
+
+  <form action="{{ url_for('uploads.apply_filter', file_id=file.id) }}" method="POST" style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+    {% for name in filter_names %}
+      <button
+        type="submit"
+        name="filter_name"
+        value="{{ name }}"
+        {% if name not in allowed_filters %}disabled{% endif %}
+        class="button filter-btn"
+        style="margin:5px;"
       >
+        {{ name }}
+      </button>
+    {% endfor %}
+  </form>
 
-      <div class="header">
-        <a
-          href="{{ url_for('uploads.download_processed', file_id=file.id) }}"
-          class="button"
-        >
-          Download
-        </a>
-        <a href="{{ url_for('uploads.reset', file_id=file.id) }}" class="button"
-          >Reset</a
-        >
-        <a
-          href="{{ url_for('uploads.undo',   file_id=file.id) }}"
-          class="button"
-          >Undo</a
-        >
-      </div>
+  <div style="margin-top:20px;">
+    <form action="{{ url_for('uploads.undo', file_id=file.id) }}" method="GET" style="display:inline;">
+      <button type="submit" class="button">Undo</button>
+    </form>
+    <form action="{{ url_for('uploads.reset', file_id=file.id) }}" method="GET" style="display:inline; margin-left:10px;">
+      <button type="submit" class="button">Reset</button>
+    </form>
+    <form action="{{ url_for('uploads.download_processed', file_id=file.id) }}" method="GET" style="display:inline; margin-left:10px;">
+      <button type="submit" class="button">Download</button>
+    </form>
+  </div>
 
-      <div class="workspace">
-        <form
-          action="{{ url_for('uploads.apply_filter', file_id=file.id) }}"
-          method="post"
-          class="filters"
+  <div style="margin-top:30px;">
+    <h2>Other Files</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+      {% for f in files %}
+      <a href="{{ url_for('uploads.process', file_id=f.id) }}">
+        <img
+          src="{{ url_for('uploads.serve_dataset_file',
+                          ds_id=file.dataset_id,
+                          filename=f.path) }}"
+          alt="{{ f.name }}"
+          style="width:80px; height:80px; object-fit:cover; border:2px solid #ccc;"
         >
-          {% for name in filter_names %}
-          <button
-            name="filter_name"
-            value="{{ name }}"
-            {%
-            if
-            name
-            not
-            in
-            allowed_filters
-            %}disabled{%
-            endif
-            %}
-          >
-            {{ name }}
-          </button>
-          {% endfor %}
-        </form>
-
-        <div
-          class="image-container"
-          style="position: relative; display: inline-block"
-        >
-          <img
-            id="base-image"
-            src="data:image/png;base64,{{ img }}"
-            style="max-width: 100%; display: block"
-            data-file-id="{{file.id}}"
-          />
-          <canvas
-            id="annotation-canvas"
-            style="position: absolute; top: 0; left: 0"
-          ></canvas>
-        </div>
-      </div>
-      <div id="results-container" style="margin-top: 20px;"></div>
-
-      <div class="process-log">
-        <h3>Process History:</h3>
-        <ul>
-          {% for step in processes %}
-          <li>{{ step }}</li>
-          {% endfor %}
-        </ul>
-      </div>
+      </a>
+    {% endfor %}
     </div>
   </div>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const canvas = document.getElementById("annotation-canvas");
-      const img = document.getElementById("base-image");
-      const ctx = canvas.getContext("2d");
-      let boundingBoxes = [];
-      const file_id = document.getElementById("base-image").dataset.fileId;
-      // Resize canvas to match image
-      canvas.width = img.clientWidth;
-      canvas.height = img.clientHeight;
-
-      let drawing = false;
-      let points = [];
-
-      canvas.addEventListener("mousedown", (e) => {
-        drawing = true;
-        points = [];
-        ctx.beginPath();
-        const { x, y } = getMousePos(e);
-        ctx.moveTo(x, y);
-        points.push({ x, y });
-      });
-
-      canvas.addEventListener("mousemove", (e) => {
-        if (!drawing) return;
-        const { x, y } = getMousePos(e);
-        ctx.lineTo(x, y);
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        points.push({ x, y });
-      });
-
-      canvas.addEventListener("mouseup", (e) => {
-        drawing = false;
-        ctx.closePath();
-        if (points.length > 2) {
-          const { xmin, xmax, ymin, ymax } = getBoundingBox(points);
-          console.log("Bounding Box:", { xmin, xmax, ymin, ymax });
-
-          fetch(`/API/ai?xmin=${xmin}&xmax=${xmax}&ymin=${ymin}&ymax=${ymax}&resource_id=${file_id}`)
-            .then((res) => res.blob())
-            .then((blob) => {
-              const imgUrl = URL.createObjectURL(blob);
-              const img = document.createElement("img");
-              img.src = imgUrl;
-              img.style.maxWidth = "100%";
-              img.style.marginTop = "10px";
-
-              document.getElementById("results-container").appendChild(img);
-            });
-        }
-      });
-
-      function getMousePos(evt) {
-        const rect = canvas.getBoundingClientRect();
-        return {
-          x: evt.clientX - rect.left,
-          y: evt.clientY - rect.top,
-        };
-      }
-
-      function getBoundingBox(pts) {
-        const xs = pts.map((p) => p.x);
-        const ys = pts.map((p) => p.y);
-        return {
-          xmin: Math.round(Math.min(...xs)),
-          xmax: Math.round(Math.max(...xs)),
-          ymin: Math.round(Math.min(...ys)),
-          ymax: Math.round(Math.max(...ys)),
-        };
-      }
-    });
-  </script>
-  {% endblock %}
 </div>
+{% endblock %}
