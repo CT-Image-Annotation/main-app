@@ -67,16 +67,23 @@ def profile():
     # Fetch the current user
     user = UserService.read(session.get('user_id'))
 
-    # Counts for images and annotations (dynamic or list relationships)
+    # Total images owned by this user
     try:
         imageCount = user.resources.count()
     except Exception:
         imageCount = len(user.resources)
-    try:
-        annotationCount = user.annotations.count()
-    except Exception:
-        annotationCount = len(user.annotations)
-    pendingCount = imageCount - annotationCount
+
+    # Count all images inside datasets tagged "Done"
+    done_count = 0
+    # user.datasets is a dynamic relationship; filter_by works here
+    for ds in user.datasets.filter_by(tags="Done"):
+        try:
+            done_count += ds.files.count()
+        except Exception:
+            done_count += len(ds.files)
+
+    annotationCount = done_count
+    pendingCount    = imageCount - done_count
 
     # Current date & time formatted
     now = datetime.now()

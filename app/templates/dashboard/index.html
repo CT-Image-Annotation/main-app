@@ -1,6 +1,95 @@
-{% extends 'base.html' %} {% block content %}
-<span class="title"><h1>{% block title %} Dashboard{% endblock %}</h1></span>
-<div class="content">
-  <h2>Hi</h2>
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px; margin:60px auto; padding:20px;">
+  <h1 style="text-align:center;">Your Annotations</h1>
+
+  <!-- To Do Section -->
+  <section style="margin-top:40px;">
+    <h2>
+      <button id="toggle-todo" class="button" style="display:inline-flex; align-items:center;">
+        ▼ To Do
+      </button>
+    </h2>
+    <div id="todo-list" style="margin-top:20px; display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:20px;">
+      {% if todo_datasets %}
+        {% for ds in todo_datasets %}
+          <div class="card" style="padding:15px; text-align:center;">
+            {% if ds.files|length > 0 %}
+              {% set f = ds.files[0] %}
+              <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">
+                <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
+                     alt="{{ ds.name }}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;">
+              </a>
+            {% else %}
+              <div style="width:100%; height:120px; background:#eee; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#999;">
+                No Image
+              </div>
+            {% endif %}
+            <h3 style="margin-top:10px;"><a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">{{ ds.name }}</a></h3>
+            {% if ds.description %}
+              <p style="font-size:0.9rem; color:#555; margin-top:5px;">{{ ds.description }}</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No "To Do" datasets yet.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Done Section -->
+  <section style="margin-top:60px;">
+    <h2>
+      <button id="toggle-done" class="button" style="display:inline-flex; align-items:center;">
+        ▶ Done
+      </button>
+    </h2>
+    <div id="done-list" style="display:none; margin-top:20px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:20px;">
+      {% if done_datasets %}
+        {% for ds in done_datasets %}
+          <div class="card" style="padding:15px; text-align:center;">
+            {% if ds.files|length > 0 %}
+              {% set f = ds.files[0] %}
+              <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">
+                <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
+                     alt="{{ ds.name }}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;">
+              </a>
+            {% else %}
+              <div style="width:100%; height:120px; background:#eee; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#999;">
+                No Image
+              </div>
+            {% endif %}
+            <h3 style="margin-top:10px;"><a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">{{ ds.name }}</a></h3>
+            {% if ds.description %}
+              <p style="font-size:0.9rem; color:#555; margin-top:5px;">{{ ds.description }}</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No "Done" datasets yet.</p>
+      {% endif %}
+    </div>
+  </section>
 </div>
+
+<script>
+  // Toggle To Do section
+  document.getElementById('toggle-todo').addEventListener('click', function() {
+    const list = document.getElementById('todo-list');
+    const isHidden = list.style.display === 'none';
+    list.style.display = isHidden ? 'grid' : 'none';
+    this.textContent = (isHidden ? '▼' : '▶') + ' To Do';
+  });
+
+  // Toggle Done section
+  document.getElementById('toggle-done').addEventListener('click', function() {
+    const list = document.getElementById('done-list');
+    const isHidden = list.style.display === 'none';
+    list.style.display = isHidden ? 'grid' : 'none';
+    this.textContent = (isHidden ? '▼' : '▶') + ' Done';
+  });
+</script>
 {% endblock %}

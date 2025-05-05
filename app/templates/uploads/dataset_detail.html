@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Dataset – {{ dataset.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:800px; margin:60px auto; text-align:center;">
+
+  <h1>{{ dataset.name }}</h1>
+  {% if dataset.description %}
+    <p>{{ dataset.description }}</p>
+  {% endif %}
+  <p>Status: <strong>{{ dataset.tags }}</strong></p>
+
+  <!-- Slider -->
+  <div id="slider" style="position:relative; margin:20px auto; max-width:100%; height:auto;">
+    <button id="prev" class="button"
+            style="position:absolute; left:0; top:50%; transform:translateY(-50%);">◀</button>
+
+    <img id="slide-img"
+         src="{{ url_for('processing.image', file_id=files[0].id) }}"
+         alt="Slide 1"
+         style="max-width:100%; height:auto; border:1px solid #ccc; padding:10px;">
+
+    <button id="next" class="button"
+            style="position:absolute; right:0; top:50%; transform:translateY(-50%);">▶</button>
+  </div>
+
+  <p>Image <span id="current-index">1</span> of {{ files|length }}</p>
+
+  <!-- Edit Controls (always visible) -->
+  <div id="edit-controls" style="margin-top:30px;">
+    <form id="batch-filter-form"
+          method="POST"
+          action="{{ url_for('processing.batch_apply', ds_id=dataset.id) }}"
+          style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
+      {% for name in filter_names %}
+        <button type="submit" name="filter_name" value="{{ name }}" class="button" style="margin:5px;">
+          {{ name }}
+        </button>
+      {% endfor %}
+    </form>
+
+    <div style="margin-top:20px; display:flex; gap:10px; justify-content:center; align-items:center;">
+      <a href="{{ url_for('processing.batch_undo',   ds_id=dataset.id) }}" class="button">Undo All</a>
+      <a href="{{ url_for('processing.batch_reset',  ds_id=dataset.id) }}" class="button">Reset All</a>
+      <a href="{{ url_for('processing.batch_download', ds_id=dataset.id) }}" class="button">Download All</a>
+    </div>
+
+    {% if processes %}
+      <p style="margin-top:15px;"><strong>Applied Filters:</strong> {{ processes | join(' → ') }}</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  // Slider navigation using file IDs and raw-image endpoint
+  const fileIds = {{ files|map(attribute='id')|list|tojson }};
+  let idx = 0;
+  const imgEl = document.getElementById('slide-img');
+  const currentIndexEl = document.getElementById('current-index');
+  const total = fileIds.length;
+
+  document.getElementById('prev').addEventListener('click', () => {
+    idx = (idx - 1 + total) % total;
+    imgEl.src = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
+    currentIndexEl.textContent = idx + 1;
+  });
+
+  document.getElementById('next').addEventListener('click', () => {
+    idx = (idx + 1) % total;
+    imgEl.src = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
+    currentIndexEl.textContent = idx + 1;
+  });
+</script>
+{% endblock %}
