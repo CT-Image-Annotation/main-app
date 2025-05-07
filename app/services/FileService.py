@@ -11,10 +11,22 @@ from app.services.UserService import UserService
 
 class FileService:
     @staticmethod
+    def allowed_file(filename):
+        """Check if the file extension is allowed."""
+        return '.' in filename and \
+            filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+
+    @staticmethod
     def upload(file, type, dataset_id=None):
         """
         Save an uploaded file; optionally associate it with a dataset.
         """
+        if not file or not file.filename:
+            raise ValueError("No file provided")
+
+        if not FileService.allowed_file(file.filename):
+            raise ValueError(f"File type not allowed. Allowed types: {', '.join(current_app.config['ALLOWED_EXTENSIONS'])}")
+
         # Secure original filename and extract extension
         original_name = secure_filename(file.filename)
         _, ext = os.path.splitext(original_name)
@@ -40,10 +52,11 @@ class FileService:
         os.makedirs(base_folder, exist_ok=True)
 
         # Save file to disk under the generated name
-        file.save(os.path.join(base_folder, unique_name))
+        file_path = os.path.join(base_folder, unique_name)
+        file.save(file_path)
 
         # DICOM processing
-        if resource.mime == "application/dicom":
+        if ext.lower() in ['.dcm', '.dicom'] or file.mimetype == "application/dicom":
             DicomService.save(resource)
         return resource
 
@@ -64,7 +77,7 @@ class FileService:
     @staticmethod
     def read(resource_id):
         resource = Resource.query.get(resource_id)
-        if resource and resource.mime == "application/dicom":
+        if resource and (resource.mime == "application/dicom" or resource.path.lower().endswith(('.dcm', '.dicom'))):
             return DicomService.read(resource_id)
         return resource
 
@@ -79,9 +92,10 @@ class FileService:
         if not resource:
             return False
         # Delete DICOM if applicable
-        if resource.mime == "application/dicom":
+        if resource.mime == "application/dicom" or resource.path.lower().endswith(('.dcm', '.dicom')):
             dicom_res = DicomService.read(resource_id)
-            db.session.delete(dicom_res)
+            if dicom_res:
+                db.session.delete(dicom_res)
 
         # Remove DB record
         db.session.delete(resource)

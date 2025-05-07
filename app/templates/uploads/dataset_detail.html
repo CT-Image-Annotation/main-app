@@ -10,20 +10,62 @@
     <p>{{ dataset.description }}</p>
   {% endif %}
   <p>Status: <strong>{{ dataset.tags }}</strong></p>
+
+  <!-- File Upload Form -->
+  <div style="margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 5px;">
+    <h3>Upload Files</h3>
+    
+    <!-- Single File Upload -->
+    <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+      <h4>Upload Single File</h4>
+      <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
+        <div style="margin: 10px 0;">
+          <label for="file-upload" style="display: block; margin-bottom: 10px;">Select a file to upload:</label>
+          <input type="file" 
+                 id="file-upload" 
+                 name="files" 
+                 accept=".jpg,.jpeg,.png,.gif,.dcm,.dicom"
+                 style="display: block; margin: 0 auto;">
+          <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
+            Supported formats: JPG, PNG, GIF, DICOM
+          </p>
+        </div>
+        <button type="submit" class="button" style="margin-top: 10px;">Upload File</button>
+      </form>
+    </div>
+
+    <!-- Folder Upload -->
+    <div>
+      <h4>Upload Folder</h4>
+      <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
+        <div style="margin: 10px 0;">
+          <label for="folder-upload" style="display: block; margin-bottom: 10px;">Select a folder to upload:</label>
+          <input type="file" 
+                 id="folder-upload" 
+                 name="files" 
+                 webkitdirectory 
+                 directory
+                 style="display: block; margin: 0 auto;">
+          <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
+            Select a folder containing your files
+          </p>
+        </div>
+        <button type="submit" class="button" style="margin-top: 10px;">Upload Folder</button>
+      </form>
+    </div>
+  </div>
+
   <script type="module" src="{{ url_for('static', filename='js/editor/editor.js') }}"></script>
-  <!-- Slider -->
-  <div id="slider" style="position:relative; margin:20px auto; max-width:100%; height:auto;">
+  
+  <!-- Editor with Navigation -->
+  <div style="position:relative; margin:20px auto; max-width:100%;">
     <button id="prev" class="button"
-            style="position:absolute; left:0; top:50%; transform:translateY(-50%);">◀</button>
-
-    <img id="slide-img"
-         src="{{ url_for('processing.image', file_id=files[0].id) }}"
-         alt="Slide 1"
-         style="max-width:100%; height:auto; border:1px solid #ccc; padding:10px; display:none" />
-    <div class="editor"> </div> <!-- After slide-img is loaded, this is generated with getElement methods -->
-
+            style="position:absolute; left:0; top:50%; transform:translateY(-50%); z-index:1000;">◀</button>
+    
+    <div class="editor" id="editor-container"></div>
+    
     <button id="next" class="button"
-            style="position:absolute; right:0; top:50%; transform:translateY(-50%);">▶</button>
+            style="position:absolute; right:0; top:50%; transform:translateY(-50%); z-index:1000;">▶</button>
   </div>
 
   <p>Image <span id="current-index">1</span> of {{ files|length }}</p>
@@ -55,23 +97,37 @@
 </div>
 
 <script>
-  // Slider navigation using file IDs and raw-image endpoint
+document.addEventListener('DOMContentLoaded', function() {
   const fileIds = {{ files|map(attribute='id')|list|tojson }};
   let idx = 0;
-  const imgEl = document.getElementById('slide-img');
   const currentIndexEl = document.getElementById('current-index');
   const total = fileIds.length;
+  const editorContainer = document.getElementById('editor-container');
 
-  document.getElementById('prev').addEventListener('click', () => {
-    idx = (idx - 1 + total) % total;
-    imgEl.src = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
-    currentIndexEl.textContent = idx + 1;
-  });
+  if (total > 0) {
+    function updateImage() {
+      const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
+      // Update the editor with the new image
+      const editor = document.querySelector('.editor');
+      if (editor) {
+        editor.innerHTML = `<img src="${imageUrl}" style="max-width:100%; height:auto;">`;
+      }
+      currentIndexEl.textContent = idx + 1;
+    }
 
-  document.getElementById('next').addEventListener('click', () => {
-    idx = (idx + 1) % total;
-    imgEl.src = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
-    currentIndexEl.textContent = idx + 1;
-  });
+    document.getElementById('prev').addEventListener('click', function() {
+      idx = (idx - 1 + total) % total;
+      updateImage();
+    });
+
+    document.getElementById('next').addEventListener('click', function() {
+      idx = (idx + 1) % total;
+      updateImage();
+    });
+
+    // Initialize the first image
+    updateImage();
+  }
+});
 </script>
 {% endblock %}

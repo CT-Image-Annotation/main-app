@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Test MedSAM Segmentation{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px; margin:40px auto;">
+    <h1>Test MedSAM Segmentation</h1>
+    
+    <div class="upload-section" style="margin:20px 0;">
+        <input type="file" id="imageInput" accept="image/*" style="margin-bottom:10px;">
+        <button id="uploadBtn" class="button">Upload Image</button>
+    </div>
+
+    <div class="viewer" style="margin-top:20px; text-align:center; position:relative;">
+        <canvas id="imageCanvas" style="max-width:100%; height:auto; border:1px solid #ccc; display:none;"></canvas>
+        <div style="margin-top:10px;">
+            <button id="drawRectBtn" class="button" disabled>Draw Rectangle</button>
+            <button id="segmentBtn" class="button" disabled>Segment</button>
+            <button id="clearBtn" class="button" disabled>Clear</button>
+        </div>
+    </div>
+
+    <div id="result" style="margin-top:20px; text-align:center;">
+        <!-- Segmentation result will be displayed here -->
+    </div>
+</div>
+
+<script>
+let canvas = document.getElementById('imageCanvas');
+let ctx = canvas.getContext('2d');
+let isDrawing = false;
+let startX, startY;
+let rect = null;
+let image = new Image();
+
+// File upload handling
+document.getElementById('uploadBtn').addEventListener('click', function() {
+    const fileInput = document.getElementById('imageInput');
+    if (fileInput.files.length === 0) {
+        alert('Please select an image first');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        image.onload = function() {
+            canvas.width = image.width;
+            canvas.height = image.height;
+            canvas.style.display = 'inline-block';
+            ctx.drawImage(image, 0, 0);
+            document.getElementById('drawRectBtn').disabled = false;
+            document.getElementById('clearBtn').disabled = false;
+        };
+        image.src = e.target.result;
+    };
+
+    reader.readAsDataURL(file);
+});
+
+// Drawing rectangle
+document.getElementById('drawRectBtn').addEventListener('click', function() {
+    canvas.style.cursor = 'crosshair';
+    isDrawing = true;
+});
+
+document.getElementById('clearBtn').addEventListener('click', function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0);
+    rect = null;
+    document.getElementById('segmentBtn').disabled = true;
+});
+
+canvas.addEventListener('mousedown', function(e) {
+    if (!isDrawing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    startX = e.clientX - rect.left;
+    startY = e.clientY - rect.top;
+});
+
+canvas.addEventListener('mousemove', function(e) {
+    if (!isDrawing || !startX || !startY) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top;
+    
+    // Clear canvas and redraw image
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0);
+    
+    // Draw rectangle
+    ctx.strokeStyle = '#00ff00';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+        startX,
+        startY,
+        currentX - startX,
+        currentY - startY
+    );
+});
+
+canvas.addEventListener('mouseup', function(e) {
+    if (!isDrawing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const endX = e.clientX - rect.left;
+    const endY = e.clientY - rect.top;
+    
+    // Store rectangle coordinates
+    rect = {
+        x1: Math.min(startX, endX),
+        y1: Math.min(startY, endY),
+        x2: Math.max(startX, endX),
+        y2: Math.max(startY, endY)
+    };
+    
+    isDrawing = false;
+    canvas.style.cursor = 'default';
+    document.getElementById('segmentBtn').disabled = false;
+});
+
+// Segmentation
+document.getElementById('segmentBtn').addEventListener('click', function() {
+    if (!rect) return;
+    
+    // Create form data
+    const formData = new FormData();
+    
+    // Get the image file
+    const fileInput = document.getElementById('imageInput');
+    formData.append('image', fileInput.files[0]);
+    
+    // Add box coordinates
+    formData.append('box[]', rect.x1);
+    formData.append('box[]', rect.y1);
+    formData.append('box[]', rect.x2);
+    formData.append('box[]', rect.y2);
+    
+    // Send request
+    fetch('/process/test-medsam/segment', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Display the result
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h3>Segmentation Result:</h3>
+                <img src="data:image/png;base64,${data.image}" 
+                     style="max-width:100%; height:auto; border:1px solid #ccc;">
+            `;
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during segmentation');
+    });
+});
+</script>
+{% endblock %} 

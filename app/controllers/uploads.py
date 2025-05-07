@@ -35,12 +35,35 @@ def upload_to_dataset(ds_id):
     ds = DatasetService.read_for_user(ds_id, user_id)
     if not ds:
         abort(403)
+    
+    if 'files' not in request.files:
+        flash('No files selected', 'error')
+        return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
+    
     files = request.files.getlist('files')
+    if not files or all(file.filename == '' for file in files):
+        flash('No files selected', 'error')
+        return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
+    
+    success_count = 0
+    error_messages = []
+    
     for f in files:
         if f and f.filename:
-            FileService.upload(f, type='AImage', dataset_id=ds_id)
-    flash(f"Uploaded {len(files)} files.", 'success')
-    return redirect(url_for('uploads.datasets_index'))
+            try:
+                FileService.upload(f, type='AImage', dataset_id=ds_id)
+                success_count += 1
+            except ValueError as e:
+                error_messages.append(f"{f.filename}: {str(e)}")
+            except Exception as e:
+                error_messages.append(f"{f.filename}: An error occurred during upload")
+    
+    if success_count > 0:
+        flash(f"Successfully uploaded {success_count} files.", 'success')
+    if error_messages:
+        flash('\n'.join(error_messages), 'error')
+    
+    return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
 
 @bp.route('/datasets/<int:ds_id>/delete', methods=['POST'])
 def delete_dataset(ds_id):
