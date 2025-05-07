@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     addRegion: () => {},
                 };
                 const cursorManager = CursorManager(imageManager);
+                toolbarEl.innerHTML = ""; // Clear previous buttons
                 toolbarEl.appendChild(cursorManager.getElement());
                 cursorManager.bindCanvas(annotationCanvas);
             });
@@ -215,6 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             addRegion: () => {},
                         };
                         const cursorManager = CursorManager(imageManager);
+                        toolbarEl.innerHTML = ""; // Clear previous buttons
                         toolbarEl.appendChild(cursorManager.getElement());
                         cursorManager.bindCanvas(annotationCanvas);
                     });

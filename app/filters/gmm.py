@@ -7,7 +7,11 @@ from PIL import Image, ImageDraw, ImageFont
 from sklearn.mixture import GaussianMixture
 class GMM:
     def __init__(self, image):
-        self.image = image
+        # Always convert to grayscale if not already
+        if len(image.shape) == 3 and image.shape[2] == 3:
+            self.image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            self.image = image
         self.gmm = None
 
     def fit_gmm(self, n_components=2):
