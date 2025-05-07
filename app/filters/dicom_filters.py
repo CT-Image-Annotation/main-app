@@ -8,7 +8,10 @@ class DicomFilters:
     @staticmethod
     def apply_filters(img):
         base_img = ((img - np.min(img)) / (np.max(img) - np.min(img)) * 255).astype(np.uint8)
-        gray = cv2.cvtColor(base_img, cv2.COLOR_BGR2GRAY)
+        if len(base_img.shape) == 3 and base_img.shape[2] == 3:
+            gray = cv2.cvtColor(base_img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = base_img
 
         return {
             "Original": base_img,

@@ -177,12 +177,29 @@ def download_processed(file_id):
 def batch_apply(ds_id):
     """Add a filter to the per-dataset session list."""
     name = request.form['filter_name']
+    if name not in FILTER_NAMES:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': False,
+                'message': f'Invalid filter name: {name}'
+            })
+        flash(f'Invalid filter name: {name}', 'error')
+        return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
+
     key = f'batch_{ds_id}_processes'
     procs = session.get(key, [])
     procs.append(name)
     session[key] = procs
-    flash(f'Applied "{name}" to all images.', 'success')
-    return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'success': True,
+            'message': f'Applied "{name}" to all images.',
+            'processes': procs
+        })
+    else:
+        flash(f'Applied "{name}" to all images.', 'success')
+        return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
 
 
 @bp.route('/batch/<int:ds_id>/undo')
@@ -264,21 +281,31 @@ def image(file_id):
         abort(404, "File not found")
 
     # replay batch filters
-    key   = f'batch_{file.dataset_id}_processes'
+    key = f'batch_{file.dataset_id}_processes'
     procs = session.get(key, [])
-    img   = raw.copy()
+    img = raw.copy()
+    
     for name in procs:
         if name == 'Original':
             img = raw.copy()
+        elif name == 'GMM':
+            # Special handling for GMM
+            gmm = GMM(img)
+            gmm.fit_gmm(n_components=2)
+            img = gmm.apply_gmm_threshold()
+            # Convert binary image to 3-channel if needed
+            if len(img.shape) == 2:
+                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         else:
             fmap = DicomFilters.apply_filters(img)
-            thr  = Thresholding(img)
-            fmap['Threshold (Otsu)']   = thr.apply_otsu_threshold()
+            thr = Thresholding(img)
+            fmap['Threshold (Otsu)'] = thr.apply_otsu_threshold()
             fmap['Threshold (Binary)'] = thr.apply_binary_threshold(127)
-            gmm  = GMM(img); gmm.fit_gmm(n_components=2)
-            fmap['GMM']     = gmm.apply_gmm_threshold()
             fmap['Segment'] = apply_segmentation(img)
-            img = fmap.get(name, img)
+            if name in fmap:
+                img = fmap[name]
+            else:
+                print(f"Warning: Unknown filter name: {name}")
 
     # send out as PNG
     _, buf = cv2.imencode('.png', img)

@@ -123,17 +123,30 @@ function loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, callback) {
         annotationCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
         if (callback) callback();
     };
+    img.onerror = function() {
+        console.error('Failed to load image:', imageUrl);
+        // Show error message on canvas
+        const ctx = imageCanvas.getContext('2d');
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
+        ctx.fillStyle = '#dc3545';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Failed to load image', imageCanvas.width/2, imageCanvas.height/2);
+    };
     img.src = imageUrl;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const fileIds = {{ files|map(attribute='id')|list|tojson }};
+    // Always output a valid JS array
+    const fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
     let idx = 0;
     const currentIndexEl = document.getElementById('current-index');
     const total = fileIds.length;
     const toolbarEl = document.querySelector('.editor-toolbar');
     const imageCanvas = document.getElementById('image-canvas');
     const annotationCanvas = document.getElementById('annotation-canvas');
+    const filterForm = document.getElementById('batch-filter-form');
 
     if (total > 0) {
         function updateImage() {
@@ -163,6 +176,55 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('next').addEventListener('click', function() {
             idx = (idx + 1) % total;
             updateImage();
+        });
+
+        // Handle filter form submission
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            const filterName = e.submitter.value; // Get the value from the clicked button
+            formData.append('filter_name', filterName);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the processes list if it exists
+                    const processesEl = document.querySelector('#edit-controls p');
+                    if (processesEl) {
+                        processesEl.innerHTML = `<strong>Applied Filters:</strong> ${data.processes.join(' → ')}`;
+                    }
+                    
+                    // Add a timestamp to force image reload
+                    const timestamp = new Date().getTime();
+                    const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]) + `?t=${timestamp}`;
+                    
+                    // Reload the current image to show the applied filter
+                    loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, function() {
+                        // Set up drawing tools on annotationCanvas only
+                        const imageManager = {
+                            getContext: () => annotationCanvas.getContext('2d'),
+                            getCanvas: () => annotationCanvas,
+                            getRegions: () => [], // You can implement region tracking if needed
+                            addRegion: () => {},
+                        };
+                        const cursorManager = CursorManager(imageManager);
+                        toolbarEl.appendChild(cursorManager.getElement());
+                        cursorManager.bindCanvas(annotationCanvas);
+                    });
+                } else {
+                    console.error('Failed to apply filter:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error applying filter:', error);
+            });
         });
 
         // Initialize the first image
