@@ -19,19 +19,25 @@
             <div class="card bg-dark text-light h-100 shadow-sm">
               {% if ds.files|length > 0 %}
                 {% set f = ds.files[0] %}
-                <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">
+                <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}" style="display:block; position:relative;">
                   <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
-                       alt="{{ ds.name }}" class="card-img-top" style="height:120px; object-fit:cover; border-radius:8px 8px 0 0;">
+                       alt="{{ ds.name }}" title="{{ ds.name }}"
+                       class="card-img-top"
+                       style="height:120px; object-fit:cover; border-radius:8px 8px 0 0; display:block; width:100%;"
+                       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                  <span class="d-none align-items-center justify-content-center bg-secondary text-muted"
+                        style="height:120px; border-radius:8px 8px 0 0; font-size:2.5rem; width:100%; position:absolute; top:0; left:0; display:none;">🖼️</span>
                 </a>
+                <div class="card-body text-center p-2">
+                  <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}"
+                     class="fw-bold fs-3"
+                     style="color:#00cfff; text-decoration:none;">
+                    {{ ds.name }}
+                  </a>
+                </div>
               {% else %}
                 <div class="d-flex align-items-center justify-content-center bg-secondary text-muted" style="height:120px; border-radius:8px 8px 0 0;">No Image</div>
               {% endif %}
-              <div class="card-body">
-                <h3 class="card-title"><a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}" class="text-info">{{ ds.name }}</a></h3>
-                {% if ds.description %}
-                  <p class="card-text text-secondary small mt-2">{{ ds.description }}</p>
-                {% endif %}
-              </div>
             </div>
           </div>
         {% endfor %}
@@ -55,19 +61,25 @@
             <div class="card bg-dark text-light h-100 shadow-sm">
               {% if ds.files|length > 0 %}
                 {% set f = ds.files[0] %}
-                <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">
+                <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}" style="display:block; position:relative;">
                   <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
-                       alt="{{ ds.name }}" class="card-img-top" style="height:120px; object-fit:cover; border-radius:8px 8px 0 0;">
+                       alt="{{ ds.name }}" title="{{ ds.name }}"
+                       class="card-img-top"
+                       style="height:120px; object-fit:cover; border-radius:8px 8px 0 0; display:block; width:100%;"
+                       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                  <span class="d-none align-items-center justify-content-center bg-secondary text-muted"
+                        style="height:120px; border-radius:8px 8px 0 0; font-size:2.5rem; width:100%; position:absolute; top:0; left:0; display:none;">🖼️</span>
                 </a>
+                <div class="card-body text-center p-2">
+                  <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}"
+                     class="fw-bold fs-3"
+                     style="color:#00cfff; text-decoration:none;">
+                    {{ ds.name }}
+                  </a>
+                </div>
               {% else %}
                 <div class="d-flex align-items-center justify-content-center bg-secondary text-muted" style="height:120px; border-radius:8px 8px 0 0;">No Image</div>
               {% endif %}
-              <div class="card-body">
-                <h3 class="card-title"><a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}" class="text-info">{{ ds.name }}</a></h3>
-                {% if ds.description %}
-                  <p class="card-text text-secondary small mt-2">{{ ds.description }}</p>
-                {% endif %}
-              </div>
             </div>
           </div>
         {% endfor %}
