@@ -26,7 +26,7 @@ def create_app(config_class=Config):
     from app.models.Annotation import Annotation
 
     # Register blueprints/controllers after db initialization
-    from app.controllers import register_controllers
+    from app.controllers import register_controllers, landing
     register_controllers(app)
 
     @app.cli.command("download-medsam")

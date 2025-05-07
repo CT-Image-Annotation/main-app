@@ -3,7 +3,7 @@ from app.services.DatasetService import DatasetService
 
 bp = Blueprint("dashboard", __name__)
 
-@bp.route('/')
+@bp.route('/dashboard')
 def index():
     if not session.get('user_id'):
         return redirect(url_for("auth.login"))

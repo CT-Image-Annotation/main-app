@@ -9,7 +9,7 @@ def index():
     if not session.get('user_id'):
         return redirect(url_for("auth.login"))
     user_id = session.get('user_id')
-    datasets = DatasetService.read_all(user_id, "user")
+    datasets = DatasetService.list_for_user(user_id)
     print(datasets)
     return render_template('datasets/index.html', datasets=datasets)
 
