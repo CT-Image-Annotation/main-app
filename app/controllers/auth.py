@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash, current_app, send_from_directory
 from app.services.UserService import UserService
+from app.models.User import User
 import random
 from werkzeug.utils import secure_filename
 import os
@@ -45,9 +46,25 @@ def login():
 @bp.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        
+        # Validate required fields
+        if not username or not password:
+            flash("Username and password are required", "error")
+            return render_template("auth/register.html")
+            
+        # Check if username is already taken
+        if User.query.filter_by(username=username).first():
+            flash("Username is already taken. Please choose a different username.", "error")
+            return render_template("auth/register.html")
+            
+        # Attempt registration
         if UserService.register(request.form):
-            return redirect(url_for("dashboard.index"))
-        flash("No register", "error")
+            flash("Registration successful! Please log in.", "success")
+            return redirect(url_for("auth.login"))
+        else:
+            flash("Registration failed. Please try again.", "error")
     return render_template("auth/register.html")
 
 @bp.route("/logout")
