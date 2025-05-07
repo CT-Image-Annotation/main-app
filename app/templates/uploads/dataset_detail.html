@@ -10,7 +10,7 @@
     <p>{{ dataset.description }}</p>
   {% endif %}
   <p>Status: <strong>{{ dataset.tags }}</strong></p>
-
+  <script type="module" src="{{ url_for('static', filename='js/editor/editor.js') }}"></script>
   <!-- Slider -->
   <div id="slider" style="position:relative; margin:20px auto; max-width:100%; height:auto;">
     <button id="prev" class="button"
@@ -19,7 +19,8 @@
     <img id="slide-img"
          src="{{ url_for('processing.image', file_id=files[0].id) }}"
          alt="Slide 1"
-         style="max-width:100%; height:auto; border:1px solid #ccc; padding:10px;">
+         style="max-width:100%; height:auto; border:1px solid #ccc; padding:10px; display:none" />
+    <div class="editor"> </div> <!-- After slide-img is loaded, this is generated with getElement methods -->
 
     <button id="next" class="button"
             style="position:absolute; right:0; top:50%; transform:translateY(-50%);">▶</button>
