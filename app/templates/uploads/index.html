@@ -3,126 +3,89 @@
 {% block title %}My Datasets{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:800px; margin:60px auto; padding:20px;">
-
   <!-- Create Dataset -->
-  <div class="card" style="padding:20px; margin-bottom:30px;">
-    <h2>Create New Dataset</h2>
-    <form action="{{ url_for('uploads.datasets_index') }}" method="POST"
-          style="display:flex; flex-direction:column; gap:10px;">
+  <div class="card bg-dark text-light shadow p-4 mb-4">
+    <h2 class="mb-3">Create New Dataset</h2>
+    <form action="{{ url_for('uploads.datasets_index') }}" method="POST" class="d-flex flex-column gap-3">
       <div>
-        <label for="name">Name</label><br>
-        <input id="name" name="name" type="text" required
-               style="width:100%; padding:8px;">
+        <label for="name" class="form-label">Name</label>
+        <input id="name" name="name" type="text" required class="form-control bg-secondary text-light" />
       </div>
       <div>
-        <label for="description">Description (optional)</label><br>
-        <textarea id="description" name="description"
-                  style="width:100%; padding:8px;"></textarea>
+        <label for="description" class="form-label">Description (optional)</label>
+        <textarea id="description" name="description" class="form-control bg-secondary text-light"></textarea>
       </div>
       <div>
-        <label for="tags">Status</label><br>
-        <select id="tags" name="tags" style="width:100%; padding:8px;">
+        <label for="tags" class="form-label">Status</label>
+        <select id="tags" name="tags" class="form-select bg-secondary text-light">
           <option value="To Do">To Do</option>
           <option value="Done">Done</option>
         </select>
       </div>
-      <button type="submit" class="button"
-              style="width:150px; align-self:flex-end; margin-top:10px;">
-        Create Dataset
-      </button>
+      <button type="submit" class="btn btn-primary align-self-end mt-2">Create Dataset</button>
     </form>
   </div>
 
   <!-- Datasets List -->
   {% for ds in datasets %}
-    <div class="card dataset-card" style="padding:20px; margin-bottom:40px; position:relative;">
-
+    <div class="card bg-dark text-light shadow p-4 mb-4 dataset-card">
       <!-- VIEW MODE -->
-      <div class="dataset-info" style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:20px;">
+      <div class="dataset-info d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
           {% if ds.files|length > 0 %}
             {% set f = ds.files[0] %}
             <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">
               <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
                    alt="{{ f.name }}"
-                   style="width:100px; height:100px; object-fit:cover; border-radius:8px;">
+                   class="rounded" style="width:100px; height:100px; object-fit:cover;">
             </a>
           {% else %}
-            <div style="width:100px; height:100px; background:#eee; border-radius:8px;
-                        display:flex; align-items:center; justify-content:center; color:#999;">
-              No Image
-            </div>
+            <div class="d-flex align-items-center justify-content-center bg-secondary text-muted rounded" style="width:100px; height:100px;">No Image</div>
           {% endif %}
           <div>
-            <h3><a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">{{ ds.name }}</a></h3>
-            {% if ds.description %}<p>{{ ds.description }}</p>{% endif %}
-            <p>Status: <strong>{{ ds.tags }}</strong></p>
+            <h3><a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}" class="text-info">{{ ds.name }}</a></h3>
+            {% if ds.description %}<p class="text-secondary small">{{ ds.description }}</p>{% endif %}
+            <p>Status: <span class="fw-bold text-info">{{ ds.tags }}</span></p>
           </div>
         </div>
-
-        <div style="display:flex; gap:10px;">
-          <button type="button" class="button edit-btn">Edit</button>
-          <form action="{{ url_for('uploads.delete_dataset', ds_id=ds.id) }}"
-                method="POST"
-                onsubmit="return confirm('Delete this dataset?');">
-            <button type="submit" class="button">Delete</button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-info edit-btn">Edit</button>
+          <form action="{{ url_for('uploads.delete_dataset', ds_id=ds.id) }}" method="POST" onsubmit="return confirm('Delete this dataset?');">
+            <button type="submit" class="btn btn-outline-danger">Delete</button>
           </form>
         </div>
       </div>
-
       <!-- EDIT MODE (hidden by default) -->
-      <form class="edit-form"
-            action="{{ url_for('uploads.edit_dataset', ds_id=ds.id) }}"
-            method="POST"
-            style="display:none; flex-direction:column; gap:10px; margin-top:20px;">
-
+      <form class="edit-form d-none flex-column gap-3 mt-3" action="{{ url_for('uploads.edit_dataset', ds_id=ds.id) }}" method="POST">
         <div>
-          <label for="name-{{ ds.id }}">Name</label><br>
-          <input id="name-{{ ds.id }}"
-                 name="name"
-                 type="text"
-                 value="{{ ds.name }}"
-                 required
-                 style="width:100%; padding:8px;">
+          <label for="name-{{ ds.id }}" class="form-label">Name</label>
+          <input id="name-{{ ds.id }}" name="name" type="text" value="{{ ds.name }}" required class="form-control bg-secondary text-light" />
         </div>
-
         <div>
-          <label for="desc-{{ ds.id }}">Description</label><br>
-          <textarea id="desc-{{ ds.id }}"
-                    name="description"
-                    style="width:100%; padding:8px;">{{ ds.description or '' }}</textarea>
+          <label for="desc-{{ ds.id }}" class="form-label">Description</label>
+          <textarea id="desc-{{ ds.id }}" name="description" class="form-control bg-secondary text-light">{{ ds.description or '' }}</textarea>
         </div>
-
         <div>
-          <label for="tags-{{ ds.id }}">Status</label><br>
-          <select id="tags-{{ ds.id }}"
-                  name="tags"
-                  style="width:100%; padding:8px;">
+          <label for="tags-{{ ds.id }}" class="form-label">Status</label>
+          <select id="tags-{{ ds.id }}" name="tags" class="form-select bg-secondary text-light">
             <option value="To Do"  {% if ds.tags=='To Do'  %}selected{% endif %}>To Do</option>
             <option value="Done"   {% if ds.tags=='Done'   %}selected{% endif %}>Done</option>
           </select>
         </div>
-
-        <div style="display:flex; gap:10px; margin-top:10px;">
-          <button type="submit" class="button">Save</button>
-          <button type="button" class="button cancel-btn">Cancel</button>
+        <div class="d-flex gap-2 mt-2">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-outline-light cancel-btn">Cancel</button>
         </div>
       </form>
-
       <!-- Upload to Dataset -->
-      <form action="{{ url_for('uploads.upload_to_dataset', ds_id=ds.id) }}"
-            method="POST" enctype="multipart/form-data"
-            style="margin-top:20px; display:flex; gap:10px; align-items:center;">
-        <input type="file" name="files" multiple webkitdirectory style="flex:1;">
-        <button type="submit" class="button">Upload Folder</button>
+      <form action="{{ url_for('uploads.upload_to_dataset', ds_id=ds.id) }}" method="POST" enctype="multipart/form-data" class="d-flex gap-2 align-items-center mt-3">
+        <input type="file" name="files" multiple webkitdirectory class="form-control bg-secondary text-light" style="flex:1;">
+        <button type="submit" class="btn btn-outline-info">Upload Folder</button>
       </form>
     </div>
   {% else %}
-    <p>No datasets yet.</p>
+    <p class="text-secondary">No datasets yet.</p>
   {% endfor %}
-
-</div>
 
 <script>
 // For each card, toggle between view‐mode and inline edit‐mode

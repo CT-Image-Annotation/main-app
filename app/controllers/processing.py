@@ -293,6 +293,7 @@ def image(file_id):
             gmm = GMM(img)
             gmm.fit_gmm(n_components=2)
             img = gmm.apply_gmm_threshold()
+            print("GMM output shape:", img.shape, "dtype:", img.dtype, "min:", img.min(), "max:", img.max())
             # Convert binary image to 3-channel if needed
             if len(img.shape) == 2:
                 img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)

@@ -3,99 +3,75 @@
 {% block title %}Dataset – {{ dataset.name }}{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:800px; margin:60px auto; text-align:center;">
-
-  <h1>{{ dataset.name }}</h1>
+<div class="card bg-dark text-light shadow p-4 mb-4">
+  <h1 class="mb-2">{{ dataset.name }}</h1>
   {% if dataset.description %}
-    <p>{{ dataset.description }}</p>
+    <p class="text-secondary">{{ dataset.description }}</p>
   {% endif %}
-  <p>Status: <strong>{{ dataset.tags }}</strong></p>
+  <p>Status: <span class="fw-bold text-info">{{ dataset.tags }}</span></p>
 
   <!-- File Upload Form -->
-  <div style="margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 5px;">
-    <h3>Upload Files</h3>
-    
-    <!-- Single File Upload -->
-    <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-      <h4>Upload Single File</h4>
-      <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
-        <div style="margin: 10px 0;">
-          <label for="file-upload" style="display: block; margin-bottom: 10px;">Select a file to upload:</label>
-          <input type="file" 
-                 id="file-upload" 
-                 name="files" 
-                 accept=".jpg,.jpeg,.png,.gif,.dcm,.dicom"
-                 style="display: block; margin: 0 auto;">
-          <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
-            Supported formats: JPG, PNG, GIF, DICOM
-          </p>
+  <div class="card bg-secondary bg-gradient text-light mb-4 p-3">
+    <h3 class="mb-3">Upload Files</h3>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <h5>Upload Single File</h5>
+          <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
+            <label for="file-upload" class="form-label">Select a file to upload:</label>
+            <input type="file" id="file-upload" name="files" accept=".jpg,.jpeg,.png,.gif,.dcm,.dicom" class="form-control mb-2">
+            <div class="form-text text-light">Supported formats: JPG, PNG, GIF, DICOM</div>
+            <button type="submit" class="btn btn-primary mt-2 w-100">Upload File</button>
+          </form>
         </div>
-        <button type="submit" class="button" style="margin-top: 10px;">Upload File</button>
-      </form>
-    </div>
-
-    <!-- Folder Upload -->
-    <div>
-      <h4>Upload Folder</h4>
-      <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
-        <div style="margin: 10px 0;">
-          <label for="folder-upload" style="display: block; margin-bottom: 10px;">Select a folder to upload:</label>
-          <input type="file" 
-                 id="folder-upload" 
-                 name="files" 
-                 webkitdirectory 
-                 directory
-                 style="display: block; margin: 0 auto;">
-          <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
-            Select a folder containing your files
-          </p>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <h5>Upload Folder</h5>
+          <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
+            <label for="folder-upload" class="form-label">Select a folder to upload:</label>
+            <input type="file" id="folder-upload" name="files" webkitdirectory directory class="form-control mb-2">
+            <div class="form-text text-light">Select a folder containing your files</div>
+            <button type="submit" class="btn btn-primary mt-2 w-100">Upload Folder</button>
+          </form>
         </div>
-        <button type="submit" class="button" style="margin-top: 10px;">Upload Folder</button>
-      </form>
+      </div>
     </div>
   </div>
 
   <!-- Editor Section -->
-  <div class="editor-container" style="display: flex; flex-direction: column; align-items: center; margin: 40px 0;">
-    <div class="editor-toolbar" style="margin-bottom: 8px;"></div>
-    <div class="editor-wrapper" style="position:relative; background:#222; border-radius:8px; box-shadow:0 2px 8px #0002;">
+  <div class="editor-container d-flex flex-column align-items-center my-4">
+    <div class="editor-toolbar mb-2"></div>
+    <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
       <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
       <canvas id="annotation-canvas" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
     </div>
   </div>
 
-  <p style="text-align:center;">Image <span id="current-index">1</span> of {{ files|length }}</p>
+  <p class="text-center text-light">Image <span id="current-index">1</span> of {{ files|length }}</p>
 
   <!-- Navigation Buttons -->
-  <div style="margin:10px 0; text-align:center;">
-    <button id="prev" class="button">◀</button>
-    <button id="next" class="button">▶</button>
+  <div class="d-flex justify-content-center gap-2 my-3">
+    <button id="prev" class="btn btn-outline-light">◀</button>
+    <button id="next" class="btn btn-outline-light">▶</button>
   </div>
 
   <!-- Edit Controls -->
-  <div id="edit-controls" style="margin-top:30px;">
-    <form id="batch-filter-form"
-          method="POST"
-          action="{{ url_for('processing.batch_apply', ds_id=dataset.id) }}"
-          style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
+  <div id="edit-controls" class="mt-4">
+    <form id="batch-filter-form" method="POST" action="{{ url_for('processing.batch_apply', ds_id=dataset.id) }}" class="d-flex flex-wrap gap-2 justify-content-center mb-3">
       {% for name in filter_names %}
-        <button type="submit" name="filter_name" value="{{ name }}" class="button" style="margin:5px;">
-          {{ name }}
-        </button>
+        <button type="submit" name="filter_name" value="{{ name }}" class="btn btn-outline-info">{{ name }}</button>
       {% endfor %}
     </form>
-
-    <div style="margin-top:20px; display:flex; gap:10px; justify-content:center; align-items:center;">
-      <a href="{{ url_for('processing.batch_undo',   ds_id=dataset.id) }}" class="button">Undo All</a>
-      <a href="{{ url_for('processing.batch_reset',  ds_id=dataset.id) }}" class="button">Reset All</a>
-      <a href="{{ url_for('processing.batch_download', ds_id=dataset.id) }}" class="button">Download All</a>
+    <div class="d-flex gap-2 justify-content-center align-items-center mb-2">
+      <a href="{{ url_for('processing.batch_undo', ds_id=dataset.id) }}" class="btn btn-outline-warning">Undo All</a>
+      <a href="{{ url_for('processing.batch_reset', ds_id=dataset.id) }}" class="btn btn-outline-danger">Reset All</a>
+      <a href="{{ url_for('processing.batch_download', ds_id=dataset.id) }}" class="btn btn-outline-success">Download All</a>
     </div>
-
     {% if processes %}
-      <p style="margin-top:15px;"><strong>Applied Filters:</strong> {{ processes | join(' → ') }}</p>
+      <p class="mt-3"><strong>Applied Filters:</strong> <span class="text-info">{{ processes | join(' → ') }}</span></p>
     {% endif %}
   </div>
-
 </div>
 
 <script type="module">
