@@ -3,21 +3,27 @@ import os
 import io
 import zipfile
 from io import BytesIO
+import json
 
 import cv2
 import numpy as np
 import pydicom
 from flask import (
     Blueprint, current_app, render_template, request,
-    redirect, session, url_for, send_file, abort, flash
+    redirect, session, url_for, send_file, abort, flash, jsonify
 )
+from PIL import Image
 
 from app.models.Resource import Resource
 from app.services.FileService import FileService
+from app.services.medsam_service import MedSAMService
 from app.filters import DicomFilters, Thresholding, GMM, apply_segmentation
 
 # Blueprint for image processing routes
-processing_bp = Blueprint('processing', __name__, url_prefix='/process')
+bp = Blueprint('processing', __name__, url_prefix='/process')
+
+# Initialize MedSAM service (will be initialized lazily when needed)
+medsam_service = MedSAMService()
 
 # Filter names available in workspace
 FILTER_NAMES = [
@@ -60,7 +66,7 @@ def read_and_process(path, mime_type, dataset_id=None):
     return base64.b64encode(buf).decode('utf-8')
 
 
-@processing_bp.route('/<int:file_id>')
+@bp.route('/<int:file_id>')
 def process(file_id):
     """Workspace – show the last-processed image plus history & controls."""
     global global_original_image, global_current_image, global_history, global_processes
@@ -99,7 +105,7 @@ def process(file_id):
     )
 
 
-@processing_bp.route('/<int:file_id>/apply', methods=['POST'])
+@bp.route('/<int:file_id>/apply', methods=['POST'])
 def apply_filter(file_id):
     """Apply one filter to the current image in the workspace."""
     global global_current_image, global_history, global_processes
@@ -125,7 +131,7 @@ def apply_filter(file_id):
     return redirect(url_for('processing.process', file_id=file_id))
 
 
-@processing_bp.route('/<int:file_id>/undo')
+@bp.route('/<int:file_id>/undo')
 def undo(file_id):
     """Undo the last single-image operation."""
     global global_current_image, global_history, global_processes
@@ -135,7 +141,7 @@ def undo(file_id):
     return redirect(url_for('processing.process', file_id=file_id))
 
 
-@processing_bp.route('/<int:file_id>/reset')
+@bp.route('/<int:file_id>/reset')
 def reset(file_id):
     """Reset the single-image workspace to original."""
     global global_original_image, global_current_image, global_history, global_processes
@@ -146,7 +152,7 @@ def reset(file_id):
     return redirect(url_for('processing.process', file_id=file_id))
 
 
-@processing_bp.route('/<int:file_id>/download')
+@bp.route('/<int:file_id>/download')
 def download_processed(file_id):
     """Download the currently processed single image."""
     global global_current_image
@@ -167,19 +173,36 @@ def download_processed(file_id):
 
 # ── Batch processing across entire dataset ─────────────────────────────────
 
-@processing_bp.route('/batch/<int:ds_id>/apply', methods=['POST'])
+@bp.route('/batch/<int:ds_id>/apply', methods=['POST'])
 def batch_apply(ds_id):
     """Add a filter to the per-dataset session list."""
     name = request.form['filter_name']
+    if name not in FILTER_NAMES:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': False,
+                'message': f'Invalid filter name: {name}'
+            })
+        flash(f'Invalid filter name: {name}', 'error')
+        return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
+
     key = f'batch_{ds_id}_processes'
     procs = session.get(key, [])
     procs.append(name)
     session[key] = procs
-    flash(f'Applied "{name}" to all images.', 'success')
-    return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'success': True,
+            'message': f'Applied "{name}" to all images.',
+            'processes': procs
+        })
+    else:
+        flash(f'Applied "{name}" to all images.', 'success')
+        return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
 
 
-@processing_bp.route('/batch/<int:ds_id>/undo')
+@bp.route('/batch/<int:ds_id>/undo')
 def batch_undo(ds_id):
     """Undo the last batch filter across the dataset."""
     key = f'batch_{ds_id}_processes'
@@ -193,7 +216,7 @@ def batch_undo(ds_id):
     return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
 
 
-@processing_bp.route('/batch/<int:ds_id>/reset')
+@bp.route('/batch/<int:ds_id>/reset')
 def batch_reset(ds_id):
     """Reset the entire dataset back to original images."""
     key = f'batch_{ds_id}_processes'
@@ -202,7 +225,7 @@ def batch_reset(ds_id):
     return redirect(url_for('uploads.dataset_detail', ds_id=ds_id))
 
 
-@processing_bp.route('/batch/<int:ds_id>/download')
+@bp.route('/batch/<int:ds_id>/download')
 def batch_download(ds_id):
     """Download a ZIP of all (possibly processed) images in the dataset."""
     if not session.get('user_id'):
@@ -233,7 +256,7 @@ def batch_download(ds_id):
 
 # ── Raw image bytes endpoint for slideshow ────────────────────────────────
 
-@processing_bp.route('/image/<int:file_id>')
+@bp.route('/image/<int:file_id>')
 def image(file_id):
     """
     Returns the slide image with all batch filters applied in order
@@ -258,24 +281,121 @@ def image(file_id):
         abort(404, "File not found")
 
     # replay batch filters
-    key   = f'batch_{file.dataset_id}_processes'
+    key = f'batch_{file.dataset_id}_processes'
     procs = session.get(key, [])
-    img   = raw.copy()
+    img = raw.copy()
+    
     for name in procs:
         if name == 'Original':
             img = raw.copy()
+        elif name == 'GMM':
+            # Special handling for GMM
+            gmm = GMM(img)
+            gmm.fit_gmm(n_components=2)
+            img = gmm.apply_gmm_threshold()
+            print("GMM output shape:", img.shape, "dtype:", img.dtype, "min:", img.min(), "max:", img.max())
+            # Convert binary image to 3-channel if needed
+            if len(img.shape) == 2:
+                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         else:
             fmap = DicomFilters.apply_filters(img)
-            thr  = Thresholding(img)
-            fmap['Threshold (Otsu)']   = thr.apply_otsu_threshold()
+            thr = Thresholding(img)
+            fmap['Threshold (Otsu)'] = thr.apply_otsu_threshold()
             fmap['Threshold (Binary)'] = thr.apply_binary_threshold(127)
-            gmm  = GMM(img); gmm.fit_gmm(n_components=2)
-            fmap['GMM']     = gmm.apply_gmm_threshold()
             fmap['Segment'] = apply_segmentation(img)
-            img = fmap.get(name, img)
+            if name in fmap:
+                img = fmap[name]
+            else:
+                print(f"Warning: Unknown filter name: {name}")
 
     # send out as PNG
     _, buf = cv2.imencode('.png', img)
     bio = BytesIO(buf.tobytes())
     bio.seek(0)
     return send_file(bio, mimetype='image/png')
+
+
+@bp.route('/<int:file_id>/segment', methods=['POST'])
+def segment_with_medsam(file_id):
+    """Apply MedSAM segmentation using the provided rectangle coordinates."""
+    global global_current_image
+    
+    try:
+        # Get rectangle coordinates from request
+        data = request.get_json()
+        box = data.get('box')  # [x1, y1, x2, y2]
+        
+        if not box or len(box) != 4:
+            return jsonify({'error': 'Invalid box coordinates'}), 400
+            
+        # Get the current image
+        if global_current_image is None:
+            return jsonify({'error': 'No image loaded'}), 400
+            
+        # Apply MedSAM segmentation
+        mask = medsam_service.segment_image(global_current_image, box)
+        
+        # Overlay the mask on the image
+        result = medsam_service.overlay_mask(global_current_image, mask)
+        
+        # Update the current image
+        global_current_image = result
+        
+        # Encode the result for display
+        _, buf = cv2.imencode('.png', result)
+        img_b64 = base64.b64encode(buf).decode('utf-8')
+        
+        return jsonify({
+            'success': True,
+            'image': img_b64
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/test-medsam')
+def test_medsam():
+    """Test page for MedSAM segmentation."""
+    return render_template(
+        'test_medsam.html'
+    )
+
+@bp.route('/test-medsam/segment', methods=['POST'])
+def test_medsam_segment():
+    """Test endpoint for MedSAM segmentation."""
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'}), 400
+    
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    try:
+        # Get box coordinates from request
+        box = request.form.get('box')
+        if not box:
+            return jsonify({'error': 'No box coordinates provided'}), 400
+        
+        # Parse box coordinates
+        box = json.loads(box)
+        if not isinstance(box, list) or len(box) != 4:
+            return jsonify({'error': 'Invalid box coordinates'}), 400
+        
+        # Read image
+        img = Image.open(file.stream)
+        
+        # Apply segmentation
+        result = medsam_service.segment_image(img, box)
+        
+        # Convert result to base64 for display
+        buffered = BytesIO()
+        result.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        
+        return jsonify({
+            'success': True,
+            'image': f'data:image/png;base64,{img_str}'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

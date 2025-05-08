@@ -1,4 +1,3 @@
-
 from app.models.User import User
 from app.services.BaseService import Base
 from flask import session
@@ -24,11 +23,11 @@ class UserService(Base):
         if username_taken:
             return False
         else:
-            user = User(username=username,password=password)
+            user = User(username=username, password=password)
             db.session.add(user)
             db.session.commit()
             session['user_id'] = user.id
-        return {user}
+            return user
     
     @staticmethod
     def read(user_id):
@@ -36,7 +35,7 @@ class UserService(Base):
     
     @staticmethod
     def update(user):
-        # user is an instance of models.User that’s already been modified
+        # user is an instance of models.User that's already been modified
         db.session.add(user)
         db.session.commit()
         return user

@@ -3,60 +3,54 @@
 {% block title %} Profile {% endblock %}
 
 {% block content %}
-<div class="profile-container" style="max-width:800px; margin:60px auto; display:flex; gap:20px; align-items:flex-start;">
-  <aside class="profile-sidebar" style="flex:1; text-align:center;">
-    {# Serve uploaded profile photos via the auth.uploaded_file route #}
-    {% if user.profile_photo %}
-      <img src="{{ url_for('auth.uploaded_file', filename=user.profile_photo) }}"
-           alt="{{ user.username }}'s Photo"
-           class="profile-photo"
-           style="width:150px; height:150px; border-radius:50%; object-fit:cover;">
-    {% elif user.profile_photo_url %}
-      <img src="{{ user.profile_photo_url }}"
-           alt="{{ user.username }}'s Photo"
-           class="profile-photo"
-           style="width:150px; height:150px; border-radius:50%; object-fit:cover;">
-    {% else %}
-      <div class="profile-photo-placeholder"
-           style="width:150px; height:150px; border-radius:50%; background:#ddd;
-                  display:flex; align-items:center; justify-content:center;">
-        No Photo
+<div class="card bg-dark text-light shadow p-4 mb-4">
+  <div class="row g-4 align-items-start">
+    <aside class="col-md-4 text-center">
+      {# Serve uploaded profile photos via the auth.uploaded_file route #}
+      {% if user.profile_photo %}
+        <img src="{{ url_for('auth.uploaded_file', filename=user.profile_photo) }}"
+             alt="{{ user.username }}'s Photo"
+             class="rounded-circle shadow mb-3" style="width:150px; height:150px; object-fit:cover;">
+      {% elif user.profile_photo_url %}
+        <img src="{{ user.profile_photo_url }}"
+             alt="{{ user.username }}'s Photo"
+             class="rounded-circle shadow mb-3" style="width:150px; height:150px; object-fit:cover;">
+      {% else %}
+        <div class="d-flex align-items-center justify-content-center bg-secondary text-muted rounded-circle shadow mb-3" style="width:150px; height:150px; font-size:1.2rem;">No Photo</div>
+      {% endif %}
+
+      <h3 class="mt-2">Dr. {{ user.full_name or user.username }}</h3>
+      {# Display specialty or prompt to add one #}
+      {% if user.specialty %}
+        <p class="text-info"><em>{{ user.specialty }}</em></p>
+      {% else %}
+        <p><a href="{{ url_for('auth.edit_profile') }}" class="text-info">Add your specialty</a></p>
+      {% endif %}
+      <p class="text-secondary small">{{ user.email }}</p>
+
+      {# Edit Profile link #}
+      <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-outline-info mt-3">Edit Profile</a>
+    </aside>
+
+    <section class="col-md-8">
+      <div>
+        <h1 class="mb-2">Welcome back, Dr. {{ user.full_name or user.username }}!</h1>
+        <p><strong>Date &amp; Time:</strong> {{ currentTime }}</p>
+
+        <div class="d-flex gap-4 mt-3 flex-wrap">
+          <div class="stat"><strong>Total Images:</strong> {{ imageCount }}</div>
+          <div class="stat"><strong>Annotations Done:</strong> {{ annotationCount }}</div>
+          <div class="stat"><strong>Annotations Remaining:</strong> {{ pendingCount }}</div>
+        </div>
+
+        <blockquote class="blockquote mt-4 text-secondary border-start border-4 ps-3" style="font-style:italic;">
+          {{ quote
+            | replace("\n", "<br/><br/>")
+            | safe
+          }}
+        </blockquote>
       </div>
-    {% endif %}
-
-    <h3 style="margin-top:10px;">Dr. {{ user.full_name or user.username }}</h3>
-    {# Display specialty or prompt to add one #}
-    {% if user.specialty %}
-      <p><em>{{ user.specialty }}</em></p>
-    {% else %}
-      <p><a href="{{ url_for('auth.edit_profile') }}">Add your specialty</a></p>
-    {% endif %}
-    <p>{{ user.email }}</p>
-
-    {# Edit Profile link #}
-    <a href="{{ url_for('auth.edit_profile') }}"
-       class="button"
-       style="margin-top:15px; display:inline-block;">
-      Edit Profile
-    </a>
-  </aside>
-
-  <section class="profile-main" style="flex:2;">
-    <h1>Welcome back, Dr. {{ user.full_name or user.username }}!</h1>
-    <p><strong>Date &amp; Time:</strong> {{ currentTime }}</p>
-
-    <div class="stats" style="display:flex; gap:20px; margin-top:20px;">
-      <div class="stat"><strong>Total Images:</strong> {{ imageCount }}</div>
-      <div class="stat"><strong>Annotations Done:</strong> {{ annotationCount }}</div>
-      <div class="stat"><strong>Annotations Remaining:</strong> {{ pendingCount }}</div>
-    </div>
-
-    <blockquote style="margin-top:30px; font-style:italic; color:#555; border-left:4px solid #ccc; padding-left:10px;">
-      {{ quote
-        | replace("\n", "<br/><br/>")
-        | safe
-      }}
-    </blockquote>
-  </section>
+    </section>
+  </div>
 </div>
 {% endblock %}

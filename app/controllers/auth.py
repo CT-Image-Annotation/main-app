@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash, current_app, send_from_directory
 from app.services.UserService import UserService
+from app.models.User import User
 import random
 from werkzeug.utils import secure_filename
 import os
@@ -12,16 +13,16 @@ QUOTES = [
     "...let me congratulate you on the choice of calling which offers a combination of intellectual and moral interests found in no other profession.\n- Sir William Olser",
     "Wherever the art of Medicine is loved, there is also a love of Humanity.\n- Hippocrates",
     "I remind my fellows, residents and medical students that what we do is a privilege. People let us into the most intimate aspects of their lives, and they look to us to help guide them through very complex and delicate situations.\n- Shikha Jain, MD",
-    "In our job, you will never go home at the end of the day thinking that you haven’t done something valuable and important.\n- Suneel Dhand",
+    "In our job, you will never go home at the end of the day thinking that you haven't done something valuable and important.\n- Suneel Dhand",
     "As a caregiver, you see selfless acts everyday.\n- Dr. Raj Panjabi",
     "[Being a doctor] offers the most complete and constant union of those three qualities which have the greatest charm for pure and active minds – novelty, utility, and charity.\n- Sir James Paget",
-    "[As a doctor] people will trust you, confide in you, and appreciate your efforts. You can do amazing things for people if you don’t let the system get you down.\n- Wes Fischer, MD",
+    "[As a doctor] people will trust you, confide in you, and appreciate your efforts. You can do amazing things for people if you don't let the system get you down.\n- Wes Fischer, MD",
     "In nothing do men more nearly approach the gods than in giving health to men.\n- Cicero",
     "While the journey seems long and hard at the beginning with perseverance and dedication the rewards at the end last a lifetime.\n- William R. Francis",
     "To solve a difficult problem in medicine, don't study it directly, but rather pursue a curiosity about nature and the rest will follow. Do basic research.\n- Roger Kornberg, PhD",
     "The awe of discovering the human body. The honor of being trusted to give advice. The gratitude for helping someone through a difficult illness. These things never grow old.\n- Danielle Ofri, MD",
     "I always tell my residents to never forget that we have the opportunity to do more good in one day than most people have in a month.\n- Suneel Dhand",
-    "I would still ‘do it again’ despite all the difficulty of training and roadblocks to just practice medicine. Truly is worth it!\n- James A. Bowden, MD",
+    "I would still 'do it again' despite all the difficulty of training and roadblocks to just practice medicine. Truly is worth it!\n- James A. Bowden, MD",
     "Observation, Reason, Human Understanding, Courage; these make the physician.\n- Martin H. Fischer",
     "Wear the white coat with dignity and pride—it is an honor and privilege to get to serve the public as a physician.\n- Bill H. Warren, MD",
     "Always remember the privilege it is to be a physician.\n- Daniel P. Logan, MD",
@@ -45,9 +46,25 @@ def login():
 @bp.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        
+        # Validate required fields
+        if not username or not password:
+            flash("Username and password are required", "error")
+            return render_template("auth/register.html")
+            
+        # Check if username is already taken
+        if User.query.filter_by(username=username).first():
+            flash("Username is already taken. Please choose a different username.", "error")
+            return render_template("auth/register.html")
+            
+        # Attempt registration
         if UserService.register(request.form):
-            return redirect(url_for("dashboard.index"))
-        flash("No register", "error")
+            flash("Registration successful! Please log in.", "success")
+            return redirect(url_for("auth.login"))
+        else:
+            flash("Registration failed. Please try again.", "error")
     return render_template("auth/register.html")
 
 @bp.route("/logout")
@@ -66,6 +83,10 @@ def profile():
 
     # Fetch the current user
     user = UserService.read(session.get('user_id'))
+    if not user:
+        session.clear()  # Clear invalid session
+        flash("Your session has expired. Please log in again.", "error")
+        return redirect(url_for("auth.login"))
 
     # Total images owned by this user
     try:
@@ -121,7 +142,7 @@ def edit_profile():
             photo.save(save_path)
             user.profile_photo = fname
 
-        UserService.update(user)   # you’ll need an update() method in UserService
+        UserService.update(user)   # you'll need an update() method in UserService
         flash('Profile updated!', 'success')
         return redirect(url_for('auth.profile'))
 

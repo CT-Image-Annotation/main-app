@@ -3,72 +3,24 @@
 {% block title %}My Datasets{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
-        <!-- Left side: List of datasets -->
-        <div class="col-md-4">
-            <ul class="list-group" id="dataset-list">
-                {% for dataset in datasets %}
-                    <li class="list-group-item" data-id="{{ dataset.id }}" onclick="selectDataset({{ dataset.id }})">
-                        {{ dataset.name }}
-                        <a href="{{ url_for('uploads.upload', dataset_id=dataset.id) }}">
-                            <button>Upload</button>
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <!-- Right side: Resources of selected dataset -->
-        <div class="col-md-8" id="resource-list">
-            {% if resources %}
-                <ul>
-                    {% for resource in resources %}
-                        <li>{{ resource.name }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>No resources available.</p>
-            {% endif %}
-        </div>
-    </div>
+<div class="landing-page">
+    <h1>Welcome to Our Awesome Project!</h1>
+    <p>This is a cool landing page for first-time loggers. Explore our project and discover its features.</p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">Go to Dashboard</a>
 </div>
-
-<!-- JavaScript for handling dataset selection -->
-<script>
-    function selectDataset(datasetId) {
-        fetch(`/datasets/${datasetId}/resources`)
-            .then(response => response.json())
-            .then(data => {
-                const resourceList = document.getElementById('resource-list');
-                resourceList.innerHTML = ''; // Clear current resources
-
-                if (data.resources.length > 0) {
-                    const ul = document.createElement('ul');
-                    data.resources.forEach(resource => {
-                        const li = document.createElement('li');
-                        li.textContent = resource.name;
-                        console.log(resource.path);
-                        li.onclick = function () {
-                            const downloadLink = document.createElement('a');
-                            downloadLink.href = resource.path;
-                            downloadLink.download = resource.name;
-                            document.body.appendChild(downloadLink);
-                            downloadLink.click();
-                            document.body.removeChild(downloadLink);                        };
-                        ul.appendChild(li);
-                    });
-                    resourceList.appendChild(ul);
-                } else {
-                    resourceList.innerHTML = '<p>No resources available.</p>';
-                }
-            });
+<style>
+    body {
+        background-color: #343a40;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
     }
-
-    // Initial load: Select the first dataset
-    document.addEventListener('DOMContentLoaded', function() {
-        const firstDatasetId = document.querySelector('#dataset-list li').dataset.id;
-        selectDataset(firstDatasetId);
-    });
-</script>
+    .landing-page {
+        color: #ffffff;
+        padding: 3rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+</style>
 {% endblock %}

@@ -113,6 +113,35 @@ export function CursorManager(imageManager) {
           });
         },
       },
+      {
+        name: "Eraser",
+        getOptionsElement,
+        size: 20,
+        erasing: false,
+        onMouseDown(e) {
+          this.erasing = true;
+          const ctx = imageManager.getContext();
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.beginPath();
+          ctx.arc(e.offsetX, e.offsetY, this.size, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.restore();
+        },
+        onMouseMove(e) {
+          if (!this.erasing) return;
+          const ctx = imageManager.getContext();
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.beginPath();
+          ctx.arc(e.offsetX, e.offsetY, this.size, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.restore();
+        },
+        onMouseUp(e) {
+          this.erasing = false;
+        },
+      },
     ];
   
     function setActiveTool(name) {

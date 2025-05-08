@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Radiolyze{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 80vh;">
+  <div class="card bg-dark text-light shadow-lg p-5" style="max-width: 600px;">
+    <h1 class="display-3 text-center mb-3" style="color:#00cfff;">Radiolyze</h1>
+    <h2 class="text-center mb-4" style="font-weight:400;">Medical Imaging Platform</h2>
+    <p class="lead text-center mb-4">
+      <strong>Radiolyze</strong> is a modern platform for medical image annotation, sharing, and collaboration.<br>
+      <span class="text-info">Our aim:</span> To empower radiologists and researchers with intuitive tools for managing and analyzing medical datasets.
+    </p>
+    <ul class="mb-4">
+      <li>Upload and organize DICOM, PNG, and JPG images</li>
+      <li>Apply advanced filters and segmentations</li>
+      <li>Collaborate with your team</li>
+      <li>Secure, user-friendly, and beautiful</li>
+    </ul>
+    <div class="text-center">
+      <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-2">Log In</a>
+      <a href="{{ url_for('auth.register') }}" class="btn btn-outline-info btn-lg">Sign Up</a>
+    </div>
+  </div>
+</div>
+{% endblock %} 

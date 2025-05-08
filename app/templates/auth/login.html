@@ -27,43 +27,41 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 400px; margin: 60px auto;">
-  <div class="header">
-    <h1>Medical Imaging Access</h1>
-    <p>Securely log in to view patient MRI and CT scan records.</p>
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+  <div class="card bg-dark text-light shadow p-4 w-100" style="max-width: 400px;">
+    <div class="text-center mb-3">
+      <h1 class="mb-1">Medical Imaging Access</h1>
+      <p class="text-secondary">Securely log in to view patient MRI and CT scan records.</p>
+    </div>
+    <form id="loginForm" action="{{ url_for('auth.login') }}" method="POST">
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" id="username" name="username" class="form-control bg-secondary text-light" placeholder="e.g. dr.jones" required />
+      </div>
+      <div class="mb-3 password-group">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" name="password" class="form-control bg-secondary text-light" placeholder="Your password" required />
+        <span class="toggle-password" data-target="password" title="Show/Hide Password">👁️</span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <button type="submit" class="btn btn-primary w-50 me-2">Log In</button>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-info w-50 ms-2">Sign Up</a>
+      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="list-unstyled mt-3">
+            {% for category, message in messages %}
+              {% if category == 'error' %}
+                <li class="text-danger">Incorrect username or password. Please try again.</li>
+              {% else %}
+                <li class="text-info">{{ message }}</li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+    </form>
   </div>
-
-  <form id="loginForm" action="{{ url_for('auth.login') }}" method="POST" style="text-align: center;">
-    <div class="form-group">
-      <label for="username" style="display: block; margin-bottom: 8px;">Username</label>
-      <input type="text" id="username" name="username" placeholder="e.g. dr.jones" required />
-    </div>
-
-    <div class="form-group password-group">
-      <label for="password" style="display: block; margin-bottom: 8px;">Password</label>
-      <input type="password" id="password" name="password" placeholder="Your password" required />
-      <span class="toggle-password" data-target="password" title="Show/Hide Password">👁️</span>
-    </div>
-
-    <div class="form-actions" style="margin-top: 20px;">
-      <button type="submit" class="button">Log In</button>
-      <a href="{{ url_for('auth.register') }}" class="button">Sign Up</a>
-    </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class="flash-messages" style="text-align: center; margin-top: 20px;">
-          {% for category, message in messages %}
-            {% if category == 'error' %}
-              <li class="flash error">Incorrect username or password. Please try again.</li>
-            {% else %}
-              <li class="flash {{ category }}">{{ message }}</li>
-            {% endif %}
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-  </form>
 </div>
 
 <script>
