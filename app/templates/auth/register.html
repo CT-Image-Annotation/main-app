@@ -57,7 +57,11 @@
         {% if messages %}
           <ul class="list-unstyled mt-3">
             {% for category, message in messages %}
-              <li class="text-info">{{ message }}</li>
+              {% if category == 'error' %}
+                <li class="text-danger">Incorrect username or password. Please try again.</li>
+              {% else %}
+                <li class="text-info">{{ message }}</li>
+              {% endif %}
             {% endfor %}
           </ul>
         {% endif %}

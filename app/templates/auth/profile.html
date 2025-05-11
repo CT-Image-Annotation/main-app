@@ -7,19 +7,15 @@
   <div class="row g-4 align-items-start">
     <aside class="col-md-4 text-center">
       {# Serve uploaded profile photos via the auth.uploaded_file route #}
-      {% if user.profile_photo %}
-        <img src="{{ url_for('auth.uploaded_file', filename=user.profile_photo) }}"
-             alt="{{ user.username }}'s Photo"
-             class="rounded-circle shadow mb-3" style="width:150px; height:150px; object-fit:cover;">
-      {% elif user.profile_photo_url %}
-        <img src="{{ user.profile_photo_url }}"
+      {% if profile_photo %}
+        <img src="{{ url_for('api.download', path=profile_photo.path) }}"
              alt="{{ user.username }}'s Photo"
              class="rounded-circle shadow mb-3" style="width:150px; height:150px; object-fit:cover;">
       {% else %}
         <div class="d-flex align-items-center justify-content-center bg-secondary text-muted rounded-circle shadow mb-3" style="width:150px; height:150px; font-size:1.2rem;">No Photo</div>
       {% endif %}
 
-      <h3 class="mt-2">Dr. {{ user.full_name or user.username }}</h3>
+      <h3 class="mt-2">Dr. {{ user.username }}</h3>
       {# Display specialty or prompt to add one #}
       {% if user.specialty %}
         <p class="text-info"><em>{{ user.specialty }}</em></p>
@@ -34,7 +30,7 @@
 
     <section class="col-md-8">
       <div>
-        <h1 class="mb-2">Welcome back, Dr. {{ user.full_name or user.username }}!</h1>
+        <h1 class="mb-2">Welcome back, Dr. {{ user.username }}!</h1>
         <p><strong>Date &amp; Time:</strong> {{ currentTime }}</p>
 
         <div class="d-flex gap-4 mt-3 flex-wrap">

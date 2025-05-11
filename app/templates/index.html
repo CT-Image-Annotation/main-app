@@ -1,26 +1,321 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Radiolyze{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:800px; margin:60px auto; padding:40px; text-align:center;">
-  <h1 class="title" style="margin-bottom:20px;">Web-based CT Image Annotation Tool</h1>
-  <p style="font-size:1.1rem; line-height:1.6; margin:0 auto; max-width:700px;">
-    Simplify CT scan annotation for medical professionals. Draw freehand on 2D slices, leverage algorithmic
-    tools for 3D boundary extrapolation, and manage annotated images—all through an intuitive web interface
-    without specialized hardware or software setup.
-  </p>
-
-  <h2 style="margin-top:30px;">Key Use Cases</h2>
-  <ul style="list-style-position: inside; margin:10px auto; padding:0; max-width:600px; text-align:left;">
-    <li>Freehand and region-based tracing on CT slices with undo/redo support.</li>
-    <li>Automatic 3D boundary interpolation from 2D sketches.</li>
-    <li>Version-controlled annotations with export to JSON, XML, or DICOM.</li>
-    <li>Collaborative review environment for multiple physicians.</li>
-  </ul>
-
-  <div class="actions" style="margin-top:40px;">
-    <a href="{{ url_for('auth.login') }}" class="button">Log In</a>
-  </div>
+<div class="hero-section">
+    <div class="marquee-container">
+        <div class="marquee-track">
+            <img src="/static/images/ct13.png" alt="CT Image 13">
+            <img src="/static/images/ct2.jpg" alt="CT Image 2">
+            <img src="/static/images/ct10.png" alt="CT Image 10">
+            <img src="/static/images/ct7.png" alt="CT Image 7">
+            <img src="/static/images/ct1.jpg" alt="CT Image 1">
+            <img src="/static/images/ct15.png" alt="CT Image 15">
+            <img src="/static/images/ct3.jpg" alt="CT Image 3">
+            <img src="/static/images/ct12.png" alt="CT Image 12">
+            <img src="/static/images/ct5.jpg" alt="CT Image 5">
+            <img src="/static/images/ct8.png" alt="CT Image 8">
+            <img src="/static/images/ct14.png" alt="CT Image 14">
+            <img src="/static/images/ct9.png" alt="CT Image 9">
+            <img src="/static/images/ct11.png" alt="CT Image 11">
+            <img src="/static/images/ct6.jpg" alt="CT Image 6">
+            <img src="/static/images/ct16.png" alt="CT Image 16">
+            <img src="/static/images/ct4.jpg" alt="CT Image 4">
+            <img src="/static/images/000127.png" alt="CT Image 17">
+            <img src="/static/images/ct13.png" alt="CT Image 13">
+            <img src="/static/images/ct2.jpg" alt="CT Image 2">
+            <img src="/static/images/ct10.png" alt="CT Image 10">
+            <img src="/static/images/ct7.png" alt="CT Image 7">
+            <img src="/static/images/ct1.jpg" alt="CT Image 1">
+            <img src="/static/images/ct15.png" alt="CT Image 15">
+            <img src="/static/images/ct3.jpg" alt="CT Image 3">
+            <img src="/static/images/ct12.png" alt="CT Image 12">
+            <img src="/static/images/ct5.jpg" alt="CT Image 5">
+            <img src="/static/images/ct8.png" alt="CT Image 8">
+            <img src="/static/images/ct14.png" alt="CT Image 14">
+            <img src="/static/images/ct9.png" alt="CT Image 9">
+            <img src="/static/images/ct11.png" alt="CT Image 11">
+            <img src="/static/images/ct6.jpg" alt="CT Image 6">
+            <img src="/static/images/ct16.png" alt="CT Image 16">
+            <img src="/static/images/ct4.jpg" alt="CT Image 4">
+            <img src="/static/images/000127.png" alt="CT Image 17">
+        </div>
+    </div>
+    <h1 class="animated-headline">Accelerate Medical Imaging Insights with AI-Powered CT Annotation</h1>
+    <p class="animated-subheadline">Annotate. Visualize. Collaborate. All in one browser-based platform tailored for medical professionals.</p>
+    <div class="cta-buttons">
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Get Started Free</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">Already Have an Account?</a>
+        <a href="#" class="btn btn-secondary">Watch Demo</a>
+    </div>
 </div>
+
+<div class="features-section">
+    <h2>Features</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <span class="feature-icon">🤖</span>
+            <h3>Smart AI Tools</h3>
+            <p>Use models like MedSAM for automatic, accurate segmentation.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">✍️</span>
+            <h3>Freehand & Manual Modes</h3>
+            <p>Draw, edit, and annotate precisely with intuitive tools.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🆚</span>
+            <h3>Side-by-Side Comparisons</h3>
+            <p>Easily compare ground truth with predictions.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">📁</span>
+            <h3>DICOM Support</h3>
+            <p>Upload, preview, and annotate .dcm files directly in the browser.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">☁️</span>
+            <h3>Cloud-Based</h3>
+            <p>No installation required — access your projects from anywhere.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🤝</span>
+            <h3>Collaborative Workspace</h3>
+            <p>Comment, assign, and review annotations with your team.</p>
+        </div>
+    </div>
+</div>
+
+<div class="how-it-works-section">
+    <h2>How It Works</h2>
+    <div class="how-steps">
+        <div class="how-step">
+            <div class="how-icon">1</div>
+            <p>Upload your CT scans</p>
+        </div>
+        <div class="how-step">
+            <div class="how-icon">2</div>
+            <p>Annotate with AI or manual tools</p>
+        </div>
+        <div class="how-step">
+            <div class="how-icon">3</div>
+            <p>Export or integrate with your workflow</p>
+        </div>
+    </div>
+</div>
+
+<div class="use-cases-section">
+    <h2>Use Cases</h2>
+    <div class="use-cases-grid">
+        <div class="use-case-card">
+            <span class="use-case-icon">🩺</span>
+            <h3>Radiologists</h3>
+            <p>"Makes annotation fast and reliable!"</p>
+        </div>
+        <div class="use-case-card">
+            <span class="use-case-icon">🔬</span>
+            <h3>Medical Researchers</h3>
+            <p>"Perfect for large-scale studies."</p>
+        </div>
+        <div class="use-case-card">
+            <span class="use-case-icon">💻</span>
+            <h3>AI/ML Engineers</h3>
+            <p>"Easy integration with ML pipelines."</p>
+        </div>
+        <div class="use-case-card">
+            <span class="use-case-icon">🏥</span>
+            <h3>Clinical Trials Teams</h3>
+            <p>"Streamlines multi-user collaboration."</p>
+        </div>
+    </div>
+</div>
+
+<div class="trusted-by-section">
+    <h2>Trusted By</h2>
+    <div class="trusted-logos">
+        <img src="/static/images/logo1.png" alt="Hospital 1">
+        <img src="/static/images/logo2.png" alt="University 2">
+        <img src="/static/images/logo3.png" alt="Research Group 3">
+        <img src="/static/images/logo4.png" alt="Clinic 4">
+    </div>
+</div>
+
+<footer>
+    <div class="footer-links">
+        <a href="#">About Us</a>
+        <a href="#">Privacy & Compliance (HIPAA/GDPR)</a>
+        <a href="#">Contact</a>
+        <a href="#">GitHub / Docs / API Access</a>
+    </div>
+    <div class="social-media">
+        <a href="#">Social Media</a>
+        <a href="#">Newsletter Signup</a>
+    </div>
+</footer>
+
+<style>
+    body {
+        background-color: #343a40;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+    }
+    .hero-section {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    .features-section, .how-it-works-section, .use-cases-section, .trusted-by-section {
+        padding: 2rem;
+        text-align: center;
+    }
+    .cta-buttons {
+        margin-top: 2rem;
+    }
+    .cta-buttons .btn {
+        margin: 0.5rem;
+    }
+    footer {
+        text-align: center;
+        padding: 2rem;
+        background-color: #212529;
+    }
+    .footer-links, .social-media {
+        margin-top: 1rem;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .animated-headline {
+        animation: fadeIn 2s ease-in;
+    }
+    .animated-subheadline {
+        animation: fadeIn 2s ease-in 0.5s;
+    }
+    .marquee-container {
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+        width: 100vw;
+        max-width: 100vw;
+        overflow: hidden;
+        background: #000;
+        padding: 0;
+        height: 180px;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        border-radius: 0;
+        margin-top: 0;
+        margin-bottom: 2rem;
+    }
+    .marquee-container::before,
+    .marquee-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        width: 30px;
+        height: 100%;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .marquee-container::before {
+        left: 0;
+        background: linear-gradient(to right, #000 90%, transparent 100%);
+    }
+    .marquee-container::after {
+        right: 0;
+        background: linear-gradient(to left, #000 90%, transparent 100%);
+    }
+    .marquee-track {
+        display: flex;
+        width: max-content;
+        min-width: 200vw;
+        animation: marquee 30s linear infinite;
+    }
+    .marquee-track img {
+        height: 160px;
+        width: 160px;
+        margin: 0 10px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #222;
+        display: block;
+    }
+    @keyframes marquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    .features-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .feature-card,
+    .how-step,
+    .use-case-card {
+        background: #23272b;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12);
+    }
+    .feature-card { width: 260px; }
+    .how-step { width: 200px; }
+    .use-case-card { width: 220px; }
+    .feature-icon {
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .how-steps {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .how-icon {
+        background: #00bfff;
+        color: #fff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.3rem;
+        margin: 0 auto 1rem auto;
+    }
+    .use-cases-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .use-case-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .trusted-logos {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        margin-top: 2rem;
+        filter: grayscale(1) brightness(0.9);
+    }
+    .trusted-logos img {
+        height: 48px;
+        opacity: 0.8;
+    }
+</style>
 {% endblock %}

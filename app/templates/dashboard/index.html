@@ -17,10 +17,10 @@
         {% for ds in todo_datasets %}
           <div class="col-md-4">
             <div class="card bg-dark text-light h-100 shadow-sm">
-              {% if ds.files|length > 0 %}
-                {% set f = ds.files[0] %}
-                <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}" style="display:block; position:relative;">
-                  <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
+              {% if ds.resources|length > 0 %}
+                {% set f = ds.resources[0] %}
+                <a href="{{ url_for('editor.index', dataset_id=ds.id) }}" style="display:block; position:relative;">
+                  <img src="{{ url_for('api.download', path=f.path) }}"
                        alt="{{ ds.name }}" title="{{ ds.name }}"
                        class="card-img-top"
                        style="height:120px; object-fit:cover; border-radius:8px 8px 0 0; display:block; width:100%;"
@@ -29,7 +29,7 @@
                         style="height:120px; border-radius:8px 8px 0 0; font-size:2.5rem; width:100%; position:absolute; top:0; left:0; display:none;">🖼️</span>
                 </a>
                 <div class="card-body text-center p-2">
-                  <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}"
+                  <a href="{{ url_for('editor.index', dataset_id=ds.id) }}"
                      class="fw-bold fs-3"
                      style="color:#00cfff; text-decoration:none;">
                     {{ ds.name }}
@@ -59,10 +59,10 @@
         {% for ds in done_datasets %}
           <div class="col-md-4">
             <div class="card bg-dark text-light h-100 shadow-sm">
-              {% if ds.files|length > 0 %}
-                {% set f = ds.files[0] %}
-                <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}" style="display:block; position:relative;">
-                  <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
+              {% if ds.resources|length > 0 %}
+                {% set f = ds.resources[0] %}
+                <a href="{{ url_for('editor.index', dataset_id=ds.id) }}" style="display:block; position:relative;">
+                  <img src="{{ url_for('api.download', path=f.path)  }}"
                        alt="{{ ds.name }}" title="{{ ds.name }}"
                        class="card-img-top"
                        style="height:120px; object-fit:cover; border-radius:8px 8px 0 0; display:block; width:100%;"
@@ -71,7 +71,7 @@
                         style="height:120px; border-radius:8px 8px 0 0; font-size:2.5rem; width:100%; position:absolute; top:0; left:0; display:none;">🖼️</span>
                 </a>
                 <div class="card-body text-center p-2">
-                  <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}"
+                  <a href="{{ url_for('editor.index', dataset_id=ds.id) }}"
                      class="fw-bold fs-3"
                      style="color:#00cfff; text-decoration:none;">
                     {{ ds.name }}

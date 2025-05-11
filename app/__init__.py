@@ -1,4 +1,6 @@
 from dotenv import load_dotenv
+
+from app.services.UserService import UserService
 load_dotenv()   # <-- this reads .env into os.environ
 
 from flask import Flask
@@ -29,11 +31,10 @@ def create_app(config_class=Config):
     from app.controllers import register_controllers, landing
     register_controllers(app)
 
-    @app.cli.command("download-medsam")
-    def download_medsam():
-        """Download the MedSAM model."""
-        with app.app_context():
-            from app.services.download_medsam import download_medsam_model
-            download_medsam_model()
+    @app.context_processor
+    def inject_user():
+        if user := UserService.currentUser():
+            return {'user': user.serialize()}
+        return {'user': ''}
 
     return app

@@ -28,14 +28,19 @@ function setupEditor(editorEl) {
 // });
 
 window.addEventListener("load", () => {
-    const img = document.querySelector("#slide-img");
-  
-    if (!img.complete) {
+  const img = document.querySelector("#slide-img");
+
+  function tryInitEditor() {
+    if (img.complete && img.naturalWidth > 0) {
+      // Image is fully loaded and valid
+      document.querySelectorAll(".editor").forEach(setupEditor);
+    } else {
+      // Wait for it to actually load
       img.addEventListener("load", () => {
         document.querySelectorAll(".editor").forEach(setupEditor);
       });
-    } else {
-      // Image already loaded
-      document.querySelectorAll(".editor").forEach(setupEditor);
     }
-  });
+  }
+
+  tryInitEditor();
+});
