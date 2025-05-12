@@ -13,6 +13,8 @@ from flask import (
     redirect, session, url_for, send_file, abort, flash, jsonify
 )
 from PIL import Image
+from skimage import measure
+from skimage.transform import resize
 
 from app.models.Resource import Resource
 from app.services.FileService import FileService
@@ -603,3 +605,49 @@ def get_contours(file_id):
     path = os.path.join(base, file.path)
     contours = extract_contours_from_dicom(path, method=method, user_threshold=user_threshold)
     return jsonify({'contours': contours})
+
+def extract_mask_from_dicom(dicom_path, method='adaptive', user_threshold=50):
+    dcm = pydicom.dcmread(dicom_path, force=True)
+    if not hasattr(dcm, 'pixel_array'):
+        return None
+    img = dcm.pixel_array
+    img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    if method == 'adaptive':
+        mask = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 51, 2)
+    elif method == 'canny':
+        mask = cv2.Canny(img, 50, 150)
+    elif method == 'manual':
+        _, mask = cv2.threshold(img, user_threshold, 255, cv2.THRESH_BINARY)
+    else:
+        _, mask = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return (mask > 0).astype(np.uint8)
+
+@bp.route('/mesh/<int:ds_id>')
+def get_mesh(ds_id):
+    method = request.args.get('method', 'adaptive')
+    try:
+        user_threshold = int(request.args.get('threshold', 50))
+    except Exception:
+        user_threshold = 50
+
+    files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
+    masks = []
+    for f in files:
+        base = current_app.config['UPLOAD_FOLDER']
+        if f.dataset_id:
+            base = os.path.join(base, str(f.dataset_id))
+        path = os.path.join(base, f.path)
+        mask = extract_mask_from_dicom(path, method, user_threshold)
+        if mask is not None:
+            masks.append(mask)
+    if not masks:
+        return jsonify({'error': 'No valid masks found'}), 400
+
+    volume = np.stack(masks, axis=0)
+    # Downsample to 64x64 for speed
+    volume_small = resize(volume, (volume.shape[0], 64, 64), order=0, preserve_range=True, anti_aliasing=False).astype(volume.dtype)
+    verts, faces, normals, values = measure.marching_cubes(volume_small, level=0.5)
+    return jsonify({
+        'vertices': verts.tolist(),
+        'faces': faces.tolist()
+    })
