@@ -543,6 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const y = e.clientY - rect.top;
         const ctx = annotationCanvas.getContext('2d');
         if (currentTool === 'pen') {
+            ctx.globalCompositeOperation = 'source-over';
             ctx.strokeStyle = brushColor;
             ctx.lineWidth = brushSize;
             ctx.lineCap = 'round';
@@ -551,7 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.beginPath();
             ctx.moveTo(x, y);
         } else if (currentTool === 'eraser') {
-            ctx.strokeStyle = '#000';
+            ctx.globalCompositeOperation = 'destination-out';
             ctx.lineWidth = brushSize * 2;
             ctx.lineCap = 'round';
             ctx.lineTo(x, y);
@@ -571,10 +572,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const y = e.clientY - rect.top;
         const ctx = annotationCanvas.getContext('2d');
         if (currentTool === 'rect') {
+            ctx.globalCompositeOperation = 'source-over';
             ctx.strokeStyle = brushColor;
             ctx.lineWidth = brushSize;
             ctx.strokeRect(startX, startY, x - startX, y - startY);
         } else if (currentTool === 'circle') {
+            ctx.globalCompositeOperation = 'source-over';
             ctx.strokeStyle = brushColor;
             ctx.lineWidth = brushSize;
             const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
@@ -582,6 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
             ctx.stroke();
         }
+        ctx.globalCompositeOperation = 'source-over';
         ctx.beginPath();
     });
 
