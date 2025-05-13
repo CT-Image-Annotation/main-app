@@ -71,7 +71,13 @@
     <input type="range" id="contour-threshold" min="0" max="255" value="50" class="form-range w-auto" style="width:120px;">
     <span id="contour-threshold-value" class="text-light ms-1" style="font-size: 0.95em;">50</span>
   </div>
+  <div class="d-flex align-items-center gap-2">
+    <label class="text-light mb-0" for="interpolation-slices" style="font-size: 0.95em;">Interp. Slices:</label>
+    <input type="number" id="interpolation-slices" min="0" max="10" value="0" class="form-control form-control-sm" style="width:60px;">
+  </div>
   <button id="toggle-contours" class="btn btn-outline-info btn-sm ms-2">Hide Contours</button>
+  <button id="toggle-interpolation" class="btn btn-outline-warning btn-sm ms-2">Enable Interpolation</button>
+  <button id="reconstruct-volume" class="btn btn-outline-success btn-sm ms-2">Reconstruct Volume</button>
 </div>
 
 <!-- Edit Controls -->
@@ -99,14 +105,64 @@
   </div>
 </div>
 
-<div id="mesh-viewer" style="width: 600px; height: 400px; margin: 0 auto; background: #111; border-radius: 0.5rem;"></div>
-<button id="show-mesh" class="btn btn-outline-info btn-sm mt-2">Show 3D Mesh</button>
+<!-- 3D Viewer Section -->
+<div class="mt-4">
+    <div id="mesh-viewer" style="width: 100%; height: 500px; background: #111; border-radius: 0.5rem;"></div>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-2">
+        <div class="d-flex align-items-center gap-2">
+            <button id="show-mesh" class="btn btn-outline-info btn-sm">Show Mesh</button>
+            <button id="reset-camera" class="btn btn-outline-light btn-sm">Reset View</button>
+            <button id="export-stl" class="btn btn-outline-success btn-sm">Export STL</button>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0" for="mesh-opacity" style="font-size: 0.95em;">Opacity:</label>
+            <input type="range" id="mesh-opacity" min="0" max="100" value="100" class="form-range" style="width:100px;">
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0" for="mesh-color" style="font-size: 0.95em;">Color:</label>
+            <select id="mesh-color" class="form-select form-select-sm" style="width:120px;">
+                <option value="blue">Blue</option>
+                <option value="red">Red</option>
+                <option value="green">Green</option>
+                <option value="yellow">Yellow</option>
+                <option value="purple">Purple</option>
+            </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0" for="render-mode" style="font-size: 0.95em;">Mode:</label>
+            <select id="render-mode" class="form-select form-select-sm" style="width:120px;">
+                <option value="solid">Solid</option>
+                <option value="wireframe">Wireframe</option>
+                <option value="points">Points</option>
+            </select>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-2">
+        <div class="d-flex align-items-center gap-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="smooth-volume">
+                <label class="form-check-label text-light" for="smooth-volume">Smooth Volume</label>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0" for="smooth-factor" style="font-size: 0.95em;">Smooth Factor:</label>
+            <input type="range" id="smooth-factor" min="0" max="200" value="100" class="form-range" style="width:100px;">
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="fill-holes">
+                <label class="form-check-label text-light" for="fill-holes">Fill Holes</label>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script type="module">
 import { CursorManager } from "{{ url_for('static', filename='js/editor/CursorManager.js') }}";
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Always output a valid JS array
+    // Assign Jinja2 variables to JS constants at the top
+    const dsId = {{ dataset.id|tojson }};
     const fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
     let idx = 0;
     const currentIndexEl = document.getElementById('current-index');
@@ -124,6 +180,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let drawing = false;
     let startX = 0, startY = 0;
     let lastX = 0, lastY = 0;
+    let interpolationEnabled = false;
+    let interpolationSlices = 0;
+    let annotationHistory = [];
+    let redoStack = [];
 
     function loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, callback) {
         console.log('Loading image from URL:', imageUrl);  // Debug log
@@ -222,17 +282,25 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
             const method = document.getElementById('contour-method')?.value || 'adaptive';
             const threshold = document.getElementById('contour-threshold')?.value || 50;
-            // Helper to fetch and draw contours
-            async function fetchAndDrawContours(sliceIdx, color, width, alpha=1.0) {
-                if (sliceIdx < 0 || sliceIdx >= fileIds.length) return;
+
+            // Helper to fetch contours
+            async function fetchContours(sliceIdx) {
+                if (sliceIdx < 0 || sliceIdx >= fileIds.length) return null;
                 let url = `/process/contours/${fileIds[sliceIdx]}?method=${method}`;
                 if (method === 'manual') url += `&threshold=${threshold}`;
-                const data = await (await fetch(url)).json();
+                const response = await fetch(url);
+                const data = await response.json();
+                return data.contours;
+            }
+
+            // Helper to draw contours
+            function drawContours(contours, color, width, alpha=1.0) {
+                if (!contours) return;
                 ctx.save();
                 ctx.strokeStyle = color;
                 ctx.globalAlpha = alpha;
                 ctx.lineWidth = width;
-                data.contours.forEach(contour => {
+                contours.forEach(contour => {
                     if (contour.length < 2) return;
                     ctx.beginPath();
                     ctx.moveTo(contour[0][0], contour[0][1]);
@@ -245,12 +313,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 ctx.globalAlpha = 1.0;
                 ctx.restore();
             }
-            // Draw previous slice contours (faded blue)
-            await fetchAndDrawContours(idx - 1, 'rgba(0,0,255,0.5)', 1, 0.5);
-            // Draw next slice contours (faded red)
-            await fetchAndDrawContours(idx + 1, 'rgba(255,0,0,0.5)', 1, 0.5);
-            // Draw current slice contours (lime, normal)
-            await fetchAndDrawContours(idx, 'lime', 2, 1.0);
+
+            // Fetch contours for current and adjacent slices
+            const prevContours = await fetchContours(idx - 1);
+            const currentContours = await fetchContours(idx);
+            const nextContours = await fetchContours(idx + 1);
+
+            // Draw interpolated contours if enabled
+            if (interpolationEnabled && interpolationSlices > 0) {
+                if (prevContours && currentContours) {
+                    // Interpolate between previous and current slice
+                    const response = await fetch('/process/interpolate-contours', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contour1: prevContours[0],
+                            contour2: currentContours[0],
+                            num_slices: interpolationSlices
+                        })
+                    });
+                    const data = await response.json();
+                    data.interpolated.forEach((contour, i) => {
+                        const alpha = 0.3 * (1 - (i + 1) / (interpolationSlices + 1));
+                        drawContours([contour], 'rgba(0,0,255,0.5)', 1, alpha);
+                    });
+                }
+                if (currentContours && nextContours) {
+                    // Interpolate between current and next slice
+                    const response = await fetch('/process/interpolate-contours', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contour1: currentContours[0],
+                            contour2: nextContours[0],
+                            num_slices: interpolationSlices
+                        })
+                    });
+                    const data = await response.json();
+                    data.interpolated.forEach((contour, i) => {
+                        const alpha = 0.3 * ((i + 1) / (interpolationSlices + 1));
+                        drawContours([contour], 'rgba(255,0,0,0.5)', 1, alpha);
+                    });
+                }
+            }
+
+            // Draw the main contours
+            drawContours(prevContours, 'rgba(0,0,255,0.5)', 1, 0.5);
+            drawContours(nextContours, 'rgba(255,0,0,0.5)', 1, 0.5);
+            drawContours(currentContours, 'lime', 2, 1.0);
         }
 
         // Handle slice navigation
@@ -435,15 +545,41 @@ document.addEventListener('DOMContentLoaded', function() {
             updateCanvasFilter();
         });
 
+        // Add event listeners for interpolation controls
+        document.getElementById('interpolation-slices').addEventListener('change', function() {
+            interpolationSlices = parseInt(this.value) || 0;
+            if (contoursVisible) {
+                updateImage();
+            }
+        });
+
+        document.getElementById('toggle-interpolation').addEventListener('click', function() {
+            interpolationEnabled = !interpolationEnabled;
+            this.textContent = interpolationEnabled ? 'Disable Interpolation' : 'Enable Interpolation';
+            if (contoursVisible) {
+                updateImage();
+            }
+        });
+
         // Initialize the first image
         updateImage();
     }
 
+    // Helper to collect mesh/volume parameters
+    function getMeshVolumeParams() {
+        return {
+            method: document.getElementById('contour-method').value,
+            threshold: document.getElementById('contour-threshold').value,
+            numInterp: document.getElementById('interpolation-slices').value,
+            smooth: document.getElementById('smooth-volume').checked,
+            smoothFactor: document.getElementById('smooth-factor').value / 100,
+            fillHoles: document.getElementById('fill-holes').checked
+        };
+    }
+
     document.getElementById('show-mesh').addEventListener('click', async function() {
-        const dsId = {{ dataset.id }};
-        const method = document.getElementById('contour-method').value;
-        const threshold = document.getElementById('contour-threshold').value;
-        const url = `/process/mesh/${dsId}?method=${method}&threshold=${threshold}`;
+        const params = getMeshVolumeParams();
+        const url = `/process/mesh/${dsId}?method=${params.method}&threshold=${params.threshold}`;
         const response = await fetch(url);
         const data = await response.json();
         if (data.error) {
@@ -452,6 +588,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         renderMesh(data.vertices, data.faces);
     });
+
+    // Add color mapping
+    const colorMap = {
+        blue: new THREE.Color(0.2, 0.6, 1.0),
+        red: new THREE.Color(1.0, 0.2, 0.2),
+        green: new THREE.Color(0.2, 1.0, 0.2),
+        yellow: new THREE.Color(1.0, 1.0, 0.2),
+        purple: new THREE.Color(0.8, 0.2, 1.0)
+    };
 
     function renderMesh(vertices, faces) {
         const container = document.getElementById('mesh-viewer');
@@ -524,7 +669,51 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     document.getElementById('brush-color').oninput = function() { brushColor = this.value; };
 
+    // Helper to save the current annotation state
+    function saveAnnotationState() {
+        const ctx = annotationCanvas.getContext('2d');
+        annotationHistory.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+        // Clear redo stack on new action
+        redoStack = [];
+    }
+
+    // Undo function
+    function undoAnnotation() {
+        if (annotationHistory.length > 0) {
+            const ctx = annotationCanvas.getContext('2d');
+            redoStack.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+            const prev = annotationHistory.pop();
+            ctx.putImageData(prev, 0, 0);
+        }
+    }
+
+    // Redo function
+    function redoAnnotation() {
+        if (redoStack.length > 0) {
+            const ctx = annotationCanvas.getContext('2d');
+            annotationHistory.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+            const next = redoStack.pop();
+            ctx.putImageData(next, 0, 0);
+        }
+    }
+
+    // Clear function
+    function clearAnnotation() {
+        const ctx = annotationCanvas.getContext('2d');
+        saveAnnotationState();
+        ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+    }
+
+    // Wire up the buttons
+    document.getElementById('tool-undo').addEventListener('click', undoAnnotation);
+    document.getElementById('tool-redo').addEventListener('click', redoAnnotation);
+    document.getElementById('tool-clear').addEventListener('click', clearAnnotation);
+
+    // Save state on drawing start
     annotationCanvas.addEventListener('mousedown', function(e) {
+        if (currentTool === 'pen' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'eraser') {
+            saveAnnotationState();
+        }
         drawing = true;
         const rect = annotationCanvas.getBoundingClientRect();
         startX = lastX = e.clientX - rect.left;
@@ -592,6 +781,42 @@ document.addEventListener('DOMContentLoaded', function() {
     annotationCanvas.addEventListener('mouseleave', function() {
         drawing = false;
         annotationCanvas.getContext('2d').beginPath();
+    });
+
+    document.getElementById('export-stl').addEventListener('click', function() {
+        const params = getMeshVolumeParams();
+        const url = `/process/export-volume/${dsId}?` + new URLSearchParams({
+            method: params.method,
+            threshold: params.threshold,
+            num_interp: params.numInterp,
+            smooth: params.smooth,
+            smooth_factor: params.smoothFactor,
+            fill_holes: params.fillHoles
+        });
+        window.location.href = url;
+    });
+
+    document.getElementById('reconstruct-volume').addEventListener('click', async function() {
+        const params = getMeshVolumeParams();
+        try {
+            const response = await fetch(`/process/volume/${dsId}?` + new URLSearchParams({
+                method: params.method,
+                threshold: params.threshold,
+                num_interp: params.numInterp,
+                smooth: params.smooth,
+                smooth_factor: params.smoothFactor,
+                fill_holes: params.fillHoles
+            }));
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            renderMesh(data.vertices, data.faces, data.volume_shape);
+        } catch (error) {
+            console.error('Error reconstructing volume:', error);
+            alert('Failed to reconstruct volume');
+        }
     });
 });
 </script>
