@@ -3,211 +3,220 @@
 {% block title %}Dataset – {{ dataset.name }}{% endblock %}
 
 {% block content %}
-<div class="card bg-dark text-light shadow p-4 mb-4">
-  <h1 class="mb-2">{{ dataset.name }}</h1>
-  {% if dataset.description %}
-    <p class="text-secondary">{{ dataset.description }}</p>
-  {% endif %}
-  <p>Status: <span class="fw-bold text-info">{{ dataset.tags }}</span></p>
+  <!-- Annotorious CSS & JS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/annotorious.css') }}" />
+  <script src="{{ url_for('static', filename='js/editor/annotorious.js') }}"></script>
 
-  <!-- File Upload Form -->
-  <div class="card bg-secondary bg-gradient text-light mb-4 p-3">
-    <h3 class="mb-3">Upload Files</h3>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <div class="mb-3">
-          <h5>Upload Single File</h5>
-          <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
-            <label for="file-upload" class="form-label">Select a file to upload:</label>
-            <input type="file" id="file-upload" name="files" accept=".jpg,.jpeg,.png,.gif,.dcm,.dicom" class="form-control mb-2">
-            <div class="form-text text-light">Supported formats: JPG, PNG, GIF, DICOM</div>
-            <button type="submit" class="btn btn-primary mt-2 w-100">Upload File</button>
-          </form>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="mb-3">
-          <h5>Upload Folder</h5>
-          <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
-            <label for="folder-upload" class="form-label">Select a folder to upload:</label>
-            <input type="file" id="folder-upload" name="files" webkitdirectory directory class="form-control mb-2">
-            <div class="form-text text-light">Select a folder containing your files</div>
-            <button type="submit" class="btn btn-primary mt-2 w-100">Upload Folder</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Editor Section -->
-  <div class="editor-container d-flex flex-column align-items-center my-4">
-    <div class="editor-toolbar mb-2"></div>
-    <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
-      <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
-      <canvas id="annotation-canvas" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
-    </div>
-  </div>
-
-  <p class="text-center text-light">Image <span id="current-index">1</span> of {{ files|length }}</p>
-
-  <!-- Navigation Buttons -->
-  <div class="d-flex justify-content-center gap-2 my-3">
-    <button id="prev" class="btn btn-outline-light">◀</button>
-    <button id="next" class="btn btn-outline-light">▶</button>
-  </div>
-
-  <!-- Edit Controls -->
-  <div id="edit-controls" class="mt-4">
-    <form id="batch-filter-form" method="POST" action="{{ url_for('processing.batch_apply', ds_id=dataset.id) }}" class="d-flex flex-wrap gap-2 justify-content-center mb-3">
-      {% for name in filter_names %}
-        <button type="submit" name="filter_name" value="{{ name }}" class="btn btn-outline-info">{{ name }}</button>
-      {% endfor %}
-    </form>
-    <div class="d-flex gap-2 justify-content-center align-items-center mb-2">
-      <a href="{{ url_for('processing.batch_undo', ds_id=dataset.id) }}" class="btn btn-outline-warning">Undo All</a>
-      <a href="{{ url_for('processing.batch_reset', ds_id=dataset.id) }}" class="btn btn-outline-danger">Reset All</a>
-      <a href="{{ url_for('processing.batch_download', ds_id=dataset.id) }}" class="btn btn-outline-success">Download All</a>
-    </div>
-    {% if processes %}
-      <p class="mt-3"><strong>Applied Filters:</strong> <span class="text-info">{{ processes | join(' → ') }}</span></p>
+  <div class="card bg-dark text-light shadow p-4 mb-4">
+    <h1 class="mb-2">{{ dataset.name }}</h1>
+    {% if dataset.description %}
+      <p class="text-secondary">{{ dataset.description }}</p>
     {% endif %}
-  </div>
-</div>
+    <p>Status: <span class="fw-bold text-info">{{ dataset.tags }}</span></p>
 
-<script type="module">
+    <!-- File Upload Form -->
+    <div class="card bg-secondary bg-gradient text-light mb-4 p-3">
+      <h3 class="mb-3">Upload Files</h3>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <h5>Upload Single File</h5>
+            <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
+              <label for="file-upload" class="form-label">Select a file to upload:</label>
+              <input type="file" id="file-upload" name="files" accept=".jpg,.jpeg,.png,.gif,.dcm,.dicom" class="form-control mb-2">
+              <div class="form-text text-light">Supported formats: JPG, PNG, GIF, DICOM</div>
+              <button type="submit" class="btn btn-primary mt-2 w-100">Upload File</button>
+            </form>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <h5>Upload Folder</h5>
+            <form action="{{ url_for('uploads.upload_to_dataset', ds_id=dataset.id) }}" method="post" enctype="multipart/form-data">
+              <label for="folder-upload" class="form-label">Select a folder to upload:</label>
+              <input type="file" id="folder-upload" name="files" webkitdirectory directory class="form-control mb-2">
+              <div class="form-text text-light">Select a folder containing your files</div>
+              <button type="submit" class="btn btn-primary mt-2 w-100">Upload Folder</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor Section -->
+    <div class="editor-container d-flex flex-column align-items-center my-4">
+      <!-- Toolbar -->
+      <div class="editor-toolbar mb-2">
+        <div class="btn-group" role="group" aria-label="Annotation Tools">
+          <button type="button" id="tool-box" class="btn btn-outline-light tool-btn active">Box</button>
+          <button type="button" id="tool-freehand" class="btn btn-outline-light tool-btn">Freehand</button>
+          <button type="button" id="tool-erase" class="btn btn-outline-light tool-btn d-none">Erase</button>
+        </div>
+        <div id="cursor-options" class="mt-2"></div>
+      </div>
+
+      <!-- Image & Annotation Wrapper -->
+      <div class="editor-wrapper card bg-secondary bg-gradient position-relative mx-auto" style="display:inline-block; padding:0;">
+        <button id="prev" class="btn btn-outline-light nav-arrow nav-left">◀</button>
+
+        <!-- Base image canvas -->
+        <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; pointer-events:none;"></canvas>
+
+        <!-- Annotorious image overlay -->
+        <img id="annotatable-image"
+             draggable="false"
+             style="position:absolute; top:0; left:0; z-index:2; display:none; pointer-events:none; user-drag: none; user-select: none;"
+             alt="Annotatable">
+
+        <!-- Annotation canvas for freehand/erase -->
+        <canvas id="annotation-canvas" style="position:absolute; top:0; left:0; z-index:3; pointer-events:auto; cursor:crosshair;"></canvas>
+
+        <button id="next" class="btn btn-outline-light nav-arrow nav-right">▶</button>
+      </div>
+    </div>
+
+    <p class="text-center text-light">Image <span id="current-index">1</span> of {{ files|length }}</p>
+
+    <!-- Images Slider -->
+    <div class="d-flex justify-content-center my-3">
+      <input type="range" id="image-slider" class="form-range" style="width:80%; max-width:500px;"
+             min="1" max="{{ files|length }}" value="1">
+    </div>
+
+    <!-- Edit Controls -->
+    <div id="edit-controls" class="mt-4">
+      <form id="batch-filter-form" method="POST" action="{{ url_for('processing.batch_apply', ds_id=dataset.id) }}"
+            class="d-flex flex-wrap gap-2 justify-content-center mb-3">
+        {% for name in filter_names %}
+          <button type="submit" name="filter_name" value="{{ name }}" class="btn btn-outline-info">{{ name }}</button>
+        {% endfor %}
+      </form>
+      <div class="d-flex gap-2 justify-content-center align-items-center mb-2">
+        <a href="{{ url_for('processing.batch_undo', ds_id=dataset.id) }}" class="btn btn-outline-warning">Undo All</a>
+        <a href="{{ url_for('processing.batch_reset', ds_id=dataset.id) }}" class="btn btn-outline-danger">Reset All</a>
+        <a href="{{ url_for('processing.batch_download', ds_id=dataset.id) }}" class="btn btn-outline-success">Download All</a>
+      </div>
+      {% if processes %}
+        <p class="mt-3"><strong>Applied Filters:</strong> <span class="text-info">{{ processes | join(' → ') }}</span></p>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <script type="module">
 import { CursorManager } from "{{ url_for('static', filename='js/editor/CursorManager.js') }}";
 
-function loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, callback) {
-    const img = new window.Image();
-    img.onload = function() {
-        // Set wrapper size to match image
-        const wrapper = imageCanvas.parentElement;
-        wrapper.style.width = img.width + 'px';
-        wrapper.style.height = img.height + 'px';
+function loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas) {
+  const img = new Image();
+  const annImg = document.getElementById('annotatable-image');
+  img.onload = () => {
+    const wrapper = imageCanvas.parentElement;
+    wrapper.style.width  = img.width  + 'px';
+    wrapper.style.height = img.height + 'px';
 
-        // Set canvas pixel size to match image
-        imageCanvas.width = img.width;
-        imageCanvas.height = img.height;
-        annotationCanvas.width = img.width;
-        annotationCanvas.height = img.height;
+    // Size canvases
+    imageCanvas.width = annotationCanvas.width = img.width;
+    imageCanvas.height = annotationCanvas.height = img.height;
+    imageCanvas.style.width = annotationCanvas.style.width = img.width + 'px';
+    imageCanvas.style.height = annotationCanvas.style.height = img.height + 'px';
 
-        imageCanvas.style.width = annotationCanvas.style.width = img.width + 'px';
-        imageCanvas.style.height = annotationCanvas.style.height = img.height + 'px';
+    // Size <img> overlay
+    annImg.src = imageUrl;
+    annImg.width = img.width;
+    annImg.height = img.height;
+    annImg.style.display = 'block';
+    annImg.style.pointerEvents = 'none';
 
-        imageCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
-        imageCanvas.getContext('2d').drawImage(img, 0, 0);
-        annotationCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
-        if (callback) callback();
-    };
-    img.onerror = function() {
-        console.error('Failed to load image:', imageUrl);
-        // Show error message on canvas
-        const ctx = imageCanvas.getContext('2d');
-        ctx.fillStyle = '#f8f9fa';
-        ctx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
-        ctx.fillStyle = '#dc3545';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('Failed to load image', imageCanvas.width/2, imageCanvas.height/2);
-    };
-    img.src = imageUrl;
+    // Draw base canvas
+    const ctx = imageCanvas.getContext('2d');
+    ctx.clearRect(0, 0, img.width, img.height);
+    ctx.drawImage(img, 0, 0);
+
+    // Clear annotation canvas
+    annotationCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
+  };
+  img.onerror = () => console.error('Failed to load image:', imageUrl);
+  img.src = imageUrl;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Always output a valid JS array
-    const fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
-    let idx = 0;
-    const currentIndexEl = document.getElementById('current-index');
-    const total = fileIds.length;
-    const toolbarEl = document.querySelector('.editor-toolbar');
-    const imageCanvas = document.getElementById('image-canvas');
-    const annotationCanvas = document.getElementById('annotation-canvas');
-    const filterForm = document.getElementById('batch-filter-form');
+document.addEventListener('DOMContentLoaded', () => {
+  const fileIds = {{ files|map(attribute='id')|list|tojson }};
+  let idx = 0;
+  const total = fileIds.length;
 
-    if (total > 0) {
-        function updateImage() {
-            const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
-            currentIndexEl.textContent = idx + 1;
-            toolbarEl.innerHTML = '';
-            // Load image and reset annotation canvas
-            loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, function() {
-                // Set up drawing tools on annotationCanvas only
-                const imageManager = {
-                    getContext: () => annotationCanvas.getContext('2d'),
-                    getCanvas: () => annotationCanvas,
-                    getRegions: () => [], // You can implement region tracking if needed
-                    addRegion: () => {},
-                };
-                const cursorManager = CursorManager(imageManager);
-                toolbarEl.innerHTML = ""; // Clear previous buttons
-                toolbarEl.appendChild(cursorManager.getElement());
-                cursorManager.bindCanvas(annotationCanvas);
-            });
-        }
+  const imageCanvas = document.getElementById('image-canvas');
+  const annotationCanvas = document.getElementById('annotation-canvas');
+  const annImg = document.getElementById('annotatable-image');
+  const currentIndexEl = document.getElementById('current-index');
+  const slider = document.getElementById('image-slider');
 
-        document.getElementById('prev').addEventListener('click', function() {
-            idx = (idx - 1 + total) % total;
-            updateImage();
-        });
+  const imageManager = {
+    getContext: () => annotationCanvas.getContext('2d'),
+    getCanvas: () => annotationCanvas,
+    getRegions: () => [],
+    addRegion: (r) => console.log('region added:', r)
+  };
+  const cursorManager = CursorManager(imageManager);
+  cursorManager.bindCanvas(annotationCanvas);
 
-        document.getElementById('next').addEventListener('click', function() {
-            idx = (idx + 1) % total;
-            updateImage();
-        });
+  // Tool buttons
+  document.querySelectorAll('.tool-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
 
-        // Handle filter form submission
-        filterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData();
-            const filterName = e.submitter.value; // Get the value from the clicked button
-            formData.append('filter_name', filterName);
-            
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update the processes list if it exists
-                    const processesEl = document.querySelector('#edit-controls p');
-                    if (processesEl) {
-                        processesEl.innerHTML = `<strong>Applied Filters:</strong> ${data.processes.join(' → ')}`;
-                    }
-                    
-                    // Add a timestamp to force image reload
-                    const timestamp = new Date().getTime();
-                    const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]) + `?t=${timestamp}`;
-                    
-                    // Reload the current image to show the applied filter
-                    loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, function() {
-                        // Set up drawing tools on annotationCanvas only
-                        const imageManager = {
-                            getContext: () => annotationCanvas.getContext('2d'),
-                            getCanvas: () => annotationCanvas,
-                            getRegions: () => [], // You can implement region tracking if needed
-                            addRegion: () => {},
-                        };
-                        const cursorManager = CursorManager(imageManager);
-                        toolbarEl.innerHTML = ""; // Clear previous buttons
-                        toolbarEl.appendChild(cursorManager.getElement());
-                        cursorManager.bindCanvas(annotationCanvas);
-                    });
-                } else {
-                    console.error('Failed to apply filter:', data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error applying filter:', error);
-            });
-        });
+      const eraseBtn = document.getElementById('tool-erase');
+      eraseBtn.classList.toggle('d-none', !(btn.id === 'tool-freehand' || btn.id === 'tool-erase'));
 
-        // Initialize the first image
-        updateImage();
+      if (btn.id === 'tool-box') {
+        // Box mode
+        annotationCanvas.style.display = 'none';
+        annotationCanvas.style.pointerEvents = 'none';
+
+        annImg.style.display = 'block';
+        annImg.style.pointerEvents = 'auto';
+
+        cursorManager.disableCanvasTools();
+        cursorManager.initAnnotorious();
+      } else {
+        // Freehand/Eraser mode
+        cursorManager.destroyAnnotorious();
+
+        annImg.style.display = 'none';
+
+        annotationCanvas.style.display = 'block';
+        annotationCanvas.style.pointerEvents = 'auto';
+
+        cursorManager.enableCanvasTools();
+        const toolName = (btn.id === 'tool-freehand' ? 'Freehand' : 'Eraser');
+        cursorManager.setActiveTool(toolName);
+        cursorManager.showOptions(document.getElementById('cursor-options'));
+      }
+    });
+  });
+
+  // Navigation handlers
+  document.getElementById('prev').onclick = () => { idx = (idx - 1 + total) % total; updateImage(); };
+  document.getElementById('next').onclick = () => { idx = (idx + 1) % total; updateImage(); };
+  slider.addEventListener('input', () => { idx = +slider.value - 1; updateImage(); });
+
+  function updateImage() {
+    const url = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]) + `?t=${Date.now()}`;
+    currentIndexEl.textContent = idx + 1;
+    slider.value = idx + 1;
+    loadImageToCanvas(url, imageCanvas, annotationCanvas);
+
+    // Re-init Annotorious if Box mode active
+    if (document.getElementById('tool-box').classList.contains('active')) {
+      cursorManager.destroyAnnotorious();
+      cursorManager.initAnnotorious();
     }
+  }
+
+  // Initial setup
+  document.getElementById('tool-box').click();
+  updateImage();
 });
 </script>
+
 {% endblock %}

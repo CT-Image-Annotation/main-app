@@ -99,3 +99,23 @@ body {
     left: 0;
   }
   
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.nav-left {
+  left: 10px;
+}
+
+.nav-right {
+  right: 10px;
+}
