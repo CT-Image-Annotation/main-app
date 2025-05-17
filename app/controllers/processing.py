@@ -13,6 +13,9 @@ from flask import (
     redirect, session, url_for, send_file, abort, flash, jsonify
 )
 from PIL import Image
+from skimage import measure
+from skimage.transform import resize
+from scipy.interpolate import interp1d
 
 from app.models.Resource import Resource
 from app.services.FileService import FileService
@@ -262,57 +265,111 @@ def image(file_id):
     Returns the slide image with all batch filters applied in order
     before sending it back as a PNG (or original mime-type).
     """
-    file = Resource.query.get_or_404(file_id)
+    try:
+        print(f"Starting image endpoint for file_id: {file_id}")  # Early debug log
+        
+        file = Resource.query.get_or_404(file_id)
+        print(f"Found file: {file.path}, mime: {file.mime}")  # Debug log
 
-    # figure out dataset folder
-    base = current_app.config['UPLOAD_FOLDER']
-    if file.dataset_id:
-        base = os.path.join(base, str(file.dataset_id))
-    path = os.path.join(base, file.path)
+        # figure out dataset folder
+        base = current_app.config['UPLOAD_FOLDER']
+        if file.dataset_id:
+            base = os.path.join(base, str(file.dataset_id))
+        path = os.path.join(base, file.path)
+        print(f"Full file path: {path}")  # Debug log
 
-    # load raw
-    raw = cv2.imread(path) if file.mime != 'application/dicom' else None
-    if file.mime == 'application/dicom':
-        dcm = pydicom.dcmread(path)
-        arr = dcm.pixel_array
-        raw = cv2.normalize(arr, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        # Check if file exists
+        if not os.path.exists(path):
+            print(f"File does not exist: {path}")  # Debug log
+            return jsonify({'error': 'File not found'}), 404
 
-    if raw is None:
-        abort(404, "File not found")
-
-    # replay batch filters
-    key = f'batch_{file.dataset_id}_processes'
-    procs = session.get(key, [])
-    img = raw.copy()
-    
-    for name in procs:
-        if name == 'Original':
-            img = raw.copy()
-        elif name == 'GMM':
-            # Special handling for GMM
-            gmm = GMM(img)
-            gmm.fit_gmm(n_components=2)
-            img = gmm.apply_gmm_threshold()
-            print("GMM output shape:", img.shape, "dtype:", img.dtype, "min:", img.min(), "max:", img.max())
-            # Convert binary image to 3-channel if needed
-            if len(img.shape) == 2:
-                img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        # load raw
+        raw = None
+        if file.mime == 'application/dicom' or file.path.lower().endswith('.dcm'):
+            try:
+                print(f"Reading DICOM file: {path}")  # Debug log
+                dcm = pydicom.dcmread(path, force=True)
+                print(f"Successfully read DICOM file")  # Debug log
+                
+                if not hasattr(dcm, 'pixel_array'):
+                    print("DICOM file has no pixel array")  # Debug log
+                    return jsonify({'error': 'DICOM file has no pixel data'}), 500
+                    
+                arr = dcm.pixel_array
+                print(f"DICOM array shape: {arr.shape}, dtype: {arr.dtype}")  # Debug log
+                
+                # Handle different array shapes
+                if len(arr.shape) == 3:  # Multi-slice DICOM
+                    print("Multi-slice DICOM detected, using first slice")  # Debug log
+                    arr = arr[0]  # Take first slice
+                elif len(arr.shape) != 2:
+                    print(f"Unexpected array shape: {arr.shape}")  # Debug log
+                    return jsonify({'error': 'Unexpected DICOM array shape'}), 500
+                    
+                # Normalize to 8-bit
+                raw = cv2.normalize(arr, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+                print(f"Normalized array shape: {raw.shape}, dtype: {raw.dtype}")  # Debug log
+                
+                # Convert to 3-channel if grayscale
+                if len(raw.shape) == 2:
+                    raw = cv2.cvtColor(raw, cv2.COLOR_GRAY2BGR)
+                    print("Converted grayscale to BGR")  # Debug log
+                    
+            except Exception as e:
+                print(f"Error reading DICOM file {path}: {str(e)}")  # Debug log
+                return jsonify({'error': f'Error reading DICOM file: {str(e)}'}), 500
         else:
-            fmap = DicomFilters.apply_filters(img)
-            thr = Thresholding(img)
-            fmap['Threshold (Otsu)'] = thr.apply_otsu_threshold()
-            fmap['Threshold (Binary)'] = thr.apply_binary_threshold(127)
-            fmap['Segment'] = apply_segmentation(img)
-            if name in fmap:
-                img = fmap[name]
-            else:
-                print(f"Warning: Unknown filter name: {name}")
+            raw = cv2.imread(path)
+            if raw is None:
+                print(f"Failed to load image: {path}")  # Debug log
+                return jsonify({'error': 'File not found'}), 404
 
-    # send out as PNG
-    _, buf = cv2.imencode('.png', img)
-    bio = BytesIO(buf.tobytes())
-    bio.seek(0)
-    return send_file(bio, mimetype='image/png')
+        if raw is None:
+            print(f"Failed to process image: {path}")  # Debug log
+            return jsonify({'error': 'Failed to process image'}), 500
+
+        # replay batch filters
+        key = f'batch_{file.dataset_id}_processes'
+        procs = session.get(key, [])
+        img = raw.copy()
+        
+        for name in procs:
+            if name == 'Original':
+                img = raw.copy()
+            elif name == 'GMM':
+                # Special handling for GMM
+                gmm = GMM(img)
+                gmm.fit_gmm(n_components=2)
+                img = gmm.apply_gmm_threshold()
+                print("GMM output shape:", img.shape, "dtype:", img.dtype, "min:", img.min(), "max:", img.max())
+                # Convert binary image to 3-channel if needed
+                if len(img.shape) == 2:
+                    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+            else:
+                fmap = DicomFilters.apply_filters(img)
+                thr = Thresholding(img)
+                fmap['Threshold (Otsu)'] = thr.apply_otsu_threshold()
+                fmap['Threshold (Binary)'] = thr.apply_binary_threshold(127)
+                fmap['Segment'] = apply_segmentation(img)
+                if name in fmap:
+                    img = fmap[name]
+                else:
+                    print(f"Warning: Unknown filter name: {name}")
+
+        # send out as PNG
+        try:
+            _, buf = cv2.imencode('.png', img)
+            bio = BytesIO(buf.tobytes())
+            bio.seek(0)
+            print(f"Successfully encoded image to PNG, size: {len(buf.tobytes())} bytes")  # Debug log
+            return send_file(bio, mimetype='image/png')
+        except Exception as e:
+            print(f"Error encoding image to PNG: {str(e)}")  # Debug log
+            return jsonify({'error': f'Error encoding image: {str(e)}'}), 500
+            
+    except Exception as e:
+        print(f"Unexpected error in image endpoint: {str(e)}")  # Debug log
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 
 @bp.route('/<int:file_id>/segment', methods=['POST'])
@@ -399,3 +456,432 @@ def test_medsam_segment():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@bp.route('/dicom-info/<int:file_id>')
+def dicom_info(file_id):
+    """Get metadata about a DICOM file, including number of slices."""
+    file = Resource.query.get_or_404(file_id)
+    
+    if file.mime != 'application/dicom' and not file.path.lower().endswith('.dcm'):
+        return jsonify({'error': 'Not a DICOM file'}), 400
+        
+    # figure out dataset folder
+    base = current_app.config['UPLOAD_FOLDER']
+    if file.dataset_id:
+        base = os.path.join(base, str(file.dataset_id))
+    path = os.path.join(base, file.path)
+    
+    try:
+        print(f"Reading DICOM file: {path}")  # Debug log
+        dcm = pydicom.dcmread(path, force=True)
+        print(f"Successfully read DICOM file")  # Debug log
+        
+        if hasattr(dcm, 'pixel_array'):
+            if len(dcm.pixel_array.shape) == 3:  # Multi-slice DICOM
+                num_slices = dcm.pixel_array.shape[0]
+            else:  # Single-slice DICOM
+                num_slices = 1
+        else:
+            num_slices = 1
+            
+        return jsonify({
+            'total_slices': num_slices,  # Changed from num_slices to total_slices to match frontend
+            'rows': dcm.Rows if hasattr(dcm, 'Rows') else None,
+            'columns': dcm.Columns if hasattr(dcm, 'Columns') else None,
+            'modality': dcm.Modality if hasattr(dcm, 'Modality') else None,
+            'study_date': str(dcm.StudyDate) if hasattr(dcm, 'StudyDate') else None,
+            'patient_name': str(dcm.PatientName) if hasattr(dcm, 'PatientName') else None
+        })
+    except Exception as e:
+        print(f"Error reading DICOM file {path}: {str(e)}")  # Debug log
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/dataset-info/<int:ds_id>')
+def dataset_info(ds_id):
+    """Get information about the dataset's DICOM files, including whether they are multi-slice."""
+    if not session.get('user_id'):
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    from app.services.DatasetService import DatasetService
+    ds = DatasetService.read_for_user(ds_id, session['user_id'])
+    if not ds:
+        return jsonify({'error': 'Dataset not found'}), 404
+
+    files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
+    if not files:
+        return jsonify({'error': 'No files found in dataset'}), 400
+
+    # Check for both .dcm files and files with DICOM mime type
+    dicom_files = [f for f in files if f.mime == 'application/dicom' or f.path.lower().endswith('.dcm')]
+    if not dicom_files:
+        return jsonify({'error': 'No DICOM files in dataset'}), 400
+
+    # Check the first DICOM file to determine if it's multi-slice
+    base = current_app.config['UPLOAD_FOLDER']
+    if ds.id:
+        base = os.path.join(base, str(ds.id))
+    
+    try:
+        first_dicom = dicom_files[0]
+        path = os.path.join(base, first_dicom.path)
+        
+        # Log the path and check if file exists
+        print(f"Attempting to read DICOM file at: {path}")
+        if not os.path.exists(path):
+            return jsonify({'error': f'DICOM file not found at path: {path}'}), 404
+            
+        try:
+            # Try reading with force=True to handle missing DICOM header
+            dcm = pydicom.dcmread(path, force=True)
+            print(f"Successfully read DICOM file: {path}")
+        except Exception as e:
+            print(f"Error reading DICOM file {path}: {str(e)}")
+            return jsonify({'error': f'Error reading DICOM file: {str(e)}'}), 500
+        
+        # For CT series, each file is a slice, so the total number of files is the number of slices
+        is_multi_slice = len(dicom_files) > 1
+        print(f"Number of DICOM files: {len(dicom_files)}")
+        
+        # Get additional DICOM metadata
+        metadata = {
+            'is_multi_slice': is_multi_slice,
+            'total_files': len(files),
+            'dicom_files': len(dicom_files),
+            'first_file_slices': 1,  # Each file is one slice
+            'total_slices': len(dicom_files),  # Total number of slices in the series
+            'file_path': first_dicom.path,
+            'modality': str(dcm.get('Modality', 'Unknown')),
+            'rows': dcm.get('Rows', 'Unknown'),
+            'columns': dcm.get('Columns', 'Unknown'),
+            'bits_allocated': dcm.get('BitsAllocated', 'Unknown'),
+            'samples_per_pixel': dcm.get('SamplesPerPixel', 'Unknown'),
+            'warning': 'DICOM header was missing, file was read in forced mode'
+        }
+        
+        print(f"DICOM metadata: {metadata}")
+        return jsonify(metadata)
+        
+    except Exception as e:
+        print(f"Error processing DICOM file: {str(e)}")
+        return jsonify({'error': f'Error processing DICOM file: {str(e)}'}), 500
+
+def extract_contours_from_dicom(dicom_path, method='adaptive', user_threshold=50):
+    try:
+        dcm = pydicom.dcmread(dicom_path, force=True)
+        if not hasattr(dcm, 'pixel_array'):
+            return []
+        img = dcm.pixel_array
+        img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+        if method == 'adaptive':
+            mask = cv2.adaptiveThreshold(
+                img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                cv2.THRESH_BINARY, 51, 2
+            )
+        elif method == 'canny':
+            mask = cv2.Canny(img, 50, 150)
+        elif method == 'manual':
+            _, mask = cv2.threshold(img, user_threshold, 255, cv2.THRESH_BINARY)
+        else:  # fallback to Otsu
+            _, mask = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour_points = [c.squeeze().tolist() for c in contours if c.shape[0] >= 3]
+        return contour_points
+    except Exception as e:
+        print(f"Error extracting contours: {e}")
+        return []
+
+@bp.route('/contours/<int:file_id>')
+def get_contours(file_id):
+    method = request.args.get('method', 'adaptive')
+    try:
+        user_threshold = int(request.args.get('threshold', 50))
+    except Exception:
+        user_threshold = 50
+    file = Resource.query.get_or_404(file_id)
+    base = current_app.config['UPLOAD_FOLDER']
+    if file.dataset_id:
+        base = os.path.join(base, str(file.dataset_id))
+    path = os.path.join(base, file.path)
+    contours = extract_contours_from_dicom(path, method=method, user_threshold=user_threshold)
+    return jsonify({'contours': contours})
+
+def extract_mask_from_dicom(dicom_path, method='adaptive', user_threshold=50):
+    dcm = pydicom.dcmread(dicom_path, force=True)
+    if not hasattr(dcm, 'pixel_array'):
+        return None
+    img = dcm.pixel_array
+    img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    if method == 'adaptive':
+        mask = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 51, 2)
+    elif method == 'canny':
+        mask = cv2.Canny(img, 50, 150)
+    elif method == 'manual':
+        _, mask = cv2.threshold(img, user_threshold, 255, cv2.THRESH_BINARY)
+    else:
+        _, mask = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return (mask > 0).astype(np.uint8)
+
+@bp.route('/mesh/<int:ds_id>')
+def get_mesh(ds_id):
+    method = request.args.get('method', 'adaptive')
+    try:
+        user_threshold = int(request.args.get('threshold', 50))
+    except Exception:
+        user_threshold = 50
+
+    files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
+    masks = []
+    for f in files:
+        base = current_app.config['UPLOAD_FOLDER']
+        if f.dataset_id:
+            base = os.path.join(base, str(f.dataset_id))
+        path = os.path.join(base, f.path)
+        mask = extract_mask_from_dicom(path, method, user_threshold)
+        if mask is not None:
+            masks.append(mask)
+    if not masks:
+        return jsonify({'error': 'No valid masks found'}), 400
+
+    volume = np.stack(masks, axis=0)
+    # Downsample to 64x64 for speed
+    volume_small = resize(volume, (volume.shape[0], 64, 64), order=0, preserve_range=True, anti_aliasing=False).astype(volume.dtype)
+    verts, faces, normals, values = measure.marching_cubes(volume_small, level=0.5)
+    return jsonify({
+        'vertices': verts.tolist(),
+        'faces': faces.tolist()
+    })
+
+def resample_contour(contour, num_points=100):
+    contour = np.array(contour)
+    dists = np.sqrt(np.sum(np.diff(contour, axis=0)**2, axis=1))
+    dists = np.insert(dists, 0, 0)
+    arc_length = np.cumsum(dists)
+    arc_length /= arc_length[-1]
+    fx = interp1d(arc_length, contour[:,0], kind='linear')
+    fy = interp1d(arc_length, contour[:,1], kind='linear')
+    uniform_dist = np.linspace(0, 1, num_points)
+    resampled = np.stack([fx(uniform_dist), fy(uniform_dist)], axis=-1)
+    return resampled
+
+def interpolate_contours(contour1, contour2, num_slices):
+    contour1 = resample_contour(contour1)
+    contour2 = resample_contour(contour2)
+    interpolated = []
+    for i in range(1, num_slices+1):
+        alpha = i / (num_slices + 1)
+        interp = (1 - alpha) * contour1 + alpha * contour2
+        interpolated.append(interp.tolist())
+    return interpolated
+
+@bp.route('/interpolate-contours', methods=['POST'])
+def interpolate_contours_api():
+    data = request.get_json()
+    contour1 = data['contour1']  # list of [x, y]
+    contour2 = data['contour2']  # list of [x, y]
+    num_slices = int(data['num_slices'])
+    result = interpolate_contours(contour1, contour2, num_slices)
+    return jsonify({'interpolated': result})
+
+def create_volume_from_contours(contours_list, num_slices, image_shape):
+    """
+    Create a 3D volume from a list of contours by interpolating between them.
+    
+    Args:
+        contours_list: List of contour points for each slice
+        num_slices: Number of slices in the volume
+        image_shape: Shape of the 2D image (height, width)
+        
+    Returns:
+        3D numpy array representing the volume
+    """
+    volume = np.zeros((num_slices, image_shape[0], image_shape[1]), dtype=np.uint8)
+    
+    # For each pair of consecutive slices
+    for i in range(len(contours_list) - 1):
+        contour1 = contours_list[i]
+        contour2 = contours_list[i + 1]
+        
+        if not contour1 or not contour2:
+            continue
+            
+        # Get the interpolated contours between these two slices
+        interpolated = interpolate_contours(contour1[0], contour2[0], num_slices - 1)
+        
+        # For each interpolated contour, create a binary mask
+        for j, contour in enumerate(interpolated):
+            mask = np.zeros(image_shape, dtype=np.uint8)
+            contour_points = np.array(contour, dtype=np.int32)
+            cv2.fillPoly(mask, [contour_points], 1)
+            volume[i * num_slices + j] = mask
+            
+    return volume
+
+def process_volume(volume, options):
+    """
+    Apply various processing steps to the volume.
+    
+    Args:
+        volume: 3D numpy array
+        options: dict containing processing options:
+            - smooth: bool, whether to apply smoothing
+            - smooth_factor: float, smoothing strength
+            - fill_holes: bool, whether to fill holes
+            - threshold: float, threshold for hole filling
+    """
+    processed = volume.copy()
+    
+    if options.get('smooth', False):
+        from scipy.ndimage import gaussian_filter
+        smooth_factor = float(options.get('smooth_factor', 1.0))
+        processed = gaussian_filter(processed, sigma=smooth_factor)
+    
+    if options.get('fill_holes', False):
+        from scipy.ndimage import binary_fill_holes
+        threshold = float(options.get('threshold', 0.5))
+        processed = (processed > threshold).astype(np.uint8)
+        for i in range(processed.shape[0]):
+            processed[i] = binary_fill_holes(processed[i])
+    
+    return processed
+
+@bp.route('/volume/<int:ds_id>')
+def get_volume(ds_id):
+    """Generate a 3D volume from interpolated contours."""
+    method = request.args.get('method', 'adaptive')
+    try:
+        user_threshold = int(request.args.get('threshold', 50))
+        num_interp = int(request.args.get('num_interp', 5))
+        smooth = request.args.get('smooth', 'false').lower() == 'true'
+        smooth_factor = float(request.args.get('smooth_factor', 1.0))
+        fill_holes = request.args.get('fill_holes', 'false').lower() == 'true'
+    except Exception as e:
+        return jsonify({'error': f'Invalid parameters: {str(e)}'}), 400
+
+    files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
+    if not files:
+        return jsonify({'error': 'No files found in dataset'}), 400
+
+    # Get contours for all slices
+    contours_list = []
+    image_shape = None
+    
+    for f in files:
+        base = current_app.config['UPLOAD_FOLDER']
+        if f.dataset_id:
+            base = os.path.join(base, str(f.dataset_id))
+        path = os.path.join(base, f.path)
+        
+        # Get contours for this slice
+        contours = extract_contours_from_dicom(path, method, user_threshold)
+        if contours:
+            contours_list.append(contours)
+            
+            # Get image shape from first valid contour
+            if image_shape is None:
+                dcm = pydicom.dcmread(path, force=True)
+                if hasattr(dcm, 'pixel_array'):
+                    image_shape = dcm.pixel_array.shape
+
+    if not contours_list or image_shape is None:
+        return jsonify({'error': 'No valid contours found'}), 400
+
+    # Create volume from contours
+    volume = create_volume_from_contours(contours_list, num_interp, image_shape)
+    
+    # Apply processing
+    processed_volume = process_volume(volume, {
+        'smooth': smooth,
+        'smooth_factor': smooth_factor,
+        'fill_holes': fill_holes,
+        'threshold': user_threshold / 255.0
+    })
+    
+    # Downsample volume for performance
+    volume_small = resize(processed_volume, (processed_volume.shape[0], 64, 64), 
+                         order=0, preserve_range=True, anti_aliasing=False).astype(processed_volume.dtype)
+    
+    # Generate mesh using marching cubes
+    verts, faces, normals, values = measure.marching_cubes(volume_small, level=0.5)
+    
+    return jsonify({
+        'vertices': verts.tolist(),
+        'faces': faces.tolist(),
+        'volume_shape': processed_volume.shape
+    })
+
+@bp.route('/export-volume/<int:ds_id>')
+def export_volume(ds_id):
+    """Export the 3D volume as an STL file."""
+    # Get the same parameters as get_volume
+    method = request.args.get('method', 'adaptive')
+    try:
+        user_threshold = int(request.args.get('threshold', 50))
+        num_interp = int(request.args.get('num_interp', 5))
+        smooth = request.args.get('smooth', 'false').lower() == 'true'
+        smooth_factor = float(request.args.get('smooth_factor', 1.0))
+        fill_holes = request.args.get('fill_holes', 'false').lower() == 'true'
+    except Exception as e:
+        return jsonify({'error': f'Invalid parameters: {str(e)}'}), 400
+
+    # Get the dataset name for the filename
+    from app.services.DatasetService import DatasetService
+    ds = DatasetService.read_for_user(ds_id, session.get('user_id'))
+    if not ds:
+        return jsonify({'error': 'Dataset not found'}), 404
+
+    # Generate the volume (reuse the code from get_volume)
+    files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
+    if not files:
+        return jsonify({'error': 'No files found in dataset'}), 400
+
+    contours_list = []
+    image_shape = None
+    
+    for f in files:
+        base = current_app.config['UPLOAD_FOLDER']
+        if f.dataset_id:
+            base = os.path.join(base, str(f.dataset_id))
+        path = os.path.join(base, f.path)
+        contours = extract_contours_from_dicom(path, method, user_threshold)
+        if contours:
+            contours_list.append(contours)
+            if image_shape is None:
+                dcm = pydicom.dcmread(path, force=True)
+                if hasattr(dcm, 'pixel_array'):
+                    image_shape = dcm.pixel_array.shape
+
+    if not contours_list or image_shape is None:
+        return jsonify({'error': 'No valid contours found'}), 400
+
+    volume = create_volume_from_contours(contours_list, num_interp, image_shape)
+    processed_volume = process_volume(volume, {
+        'smooth': smooth,
+        'smooth_factor': smooth_factor,
+        'fill_holes': fill_holes,
+        'threshold': user_threshold / 255.0
+    })
+
+    # Generate the mesh
+    verts, faces, normals, values = measure.marching_cubes(processed_volume, level=0.5)
+    
+    # Create STL file
+    from stl import mesh
+    volume_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+    for i, f in enumerate(faces):
+        for j in range(3):
+            volume_mesh.vectors[i][j] = verts[f[j]]
+    
+    # Save to BytesIO
+    stl_data = BytesIO()
+    volume_mesh.save(stl_data)
+    stl_data.seek(0)
+    
+    # Send the file
+    return send_file(
+        stl_data,
+        mimetype='application/octet-stream',
+        as_attachment=True,
+        download_name=f'{ds.name}_volume.stl'
+    )
