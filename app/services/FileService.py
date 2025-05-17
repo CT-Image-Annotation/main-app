@@ -17,6 +17,28 @@ class FileService:
             filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
     @staticmethod
+    def create(params):
+        file = params.get("file")
+        if not file:
+            return False
+        path = str(uuid4())
+
+        resource = Resource(
+            name=secure_filename(file.filename),
+            type=params.get("type"),
+            mime=file.mimetype,
+            path=path,
+            owner_id=params.get("owner_id"),
+            dataset_id=params.get("dataset_id")
+        )
+        db.session.add(resource)
+        db.session.commit()
+
+        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], path))
+
+        return resource
+
+    @staticmethod
     def upload(file, type, dataset_id=None):
         """
         Save an uploaded file; optionally associate it with a dataset.

@@ -183,6 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let interpolationEnabled = false;
     let interpolationSlices = 0;
     let annotationHistory = [];
+    window.annotationHistory = annotationHistory;
     let redoStack = [];
 
     function loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, callback) {
@@ -207,6 +208,11 @@ document.addEventListener('DOMContentLoaded', function() {
             imageCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
             imageCanvas.getContext('2d').drawImage(img, 0, 0);
             annotationCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
+
+            loadPastAnnotations();
+
+            
+
             if (callback) callback();
         };
         img.onerror = function(error) {
@@ -669,12 +675,65 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     document.getElementById('brush-color').oninput = function() { brushColor = this.value; };
 
+    function loadPastAnnotations() {
+        const ctx = annotationCanvas.getContext('2d');
+        let RELATED_RESOURCE_ID = fileIds[idx]
+        
+        // Construct the URL to load the last annotation
+        const url = `/api/annotation/load-last/${RELATED_RESOURCE_ID}`;
+
+        const img = new Image();
+        img.onload = function() {
+            // Resize canvas if needed
+            annotationCanvas.width = img.width;
+            annotationCanvas.height = img.height;
+
+            // Draw the annotation image on the annotation canvas
+            ctx.clearRect(0, 0, img.width, img.height);
+            ctx.drawImage(img, 0, 0);
+        };
+
+        img.onerror = function(err) {
+            console.error('Failed to load annotation image:', err);
+        };
+
+        img.src = url;
+    }
+    function syncAnnotation() {
+        const ctx = annotationCanvas.getContext('2d');
+
+        let RELATED_RESOURCE_ID = fileIds[idx]
+        
+        // Convert canvas to Blob
+        annotationCanvas.toBlob((blob) => {
+            const formData = new FormData();
+            formData.append("file", blob, "annotation.png");
+            formData.append("resource_id", RELATED_RESOURCE_ID);
+
+            fetch("/api/annotation/create", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to upload annotation");
+                return response.json();
+            })
+            .then(data => {
+                console.log("Annotation saved:", data);
+            })
+            .catch(error => {
+                console.error("Error saving annotation:", error);
+            });
+        }, "image/png");
+    }
+
     // Helper to save the current annotation state
     function saveAnnotationState() {
         const ctx = annotationCanvas.getContext('2d');
         annotationHistory.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
         // Clear redo stack on new action
         redoStack = [];
+
     }
 
     // Undo function
@@ -776,6 +835,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         ctx.globalCompositeOperation = 'source-over';
         ctx.beginPath();
+        syncAnnotation()
+
     });
 
     annotationCanvas.addEventListener('mouseleave', function() {
