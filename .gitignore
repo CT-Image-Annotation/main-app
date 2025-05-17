@@ -2,6 +2,7 @@ __pycache__
 .env
 *.db
 /migrations
+/uploads
 
 # Python
 __pycache__/

@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}Workspace – {{ file.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px; margin:40px auto;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>Workspace – {{ file.name }}</h1>
+    <a href="{{ url_for('uploads.datasets_index') }}" class="button go-back">Back to Uploads</a>
+  </div>
+
+  <div class="viewer" style="margin-top:20px; text-align:center; position:relative;">
+    <canvas id="imageCanvas" style="max-width:100%; height:auto; border:1px solid #ccc;"></canvas>
+    <div style="margin-top:10px;">
+      <button id="drawRectBtn" class="button">Draw Rectangle</button>
+      <button id="segmentBtn" class="button" disabled>Segment</button>
+      <button id="eraserBtn" class="button" disabled>Eraser</button>
+      <button id="clearBtn" class="button">Clear</button>
+    </div>
+  </div>
+
+  <form action="{{ url_for('uploads.apply_filter', file_id=file.id) }}" method="POST" style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+    {% for name in filter_names %}
+      <button
+        type="submit"
+        name="filter_name"
+        value="{{ name }}"
+        {% if name not in allowed_filters %}disabled{% endif %}
+        class="button filter-btn"
+        style="margin:5px;"
+      >
+        {{ name }}
+      </button>
+    {% endfor %}
+  </form>
+
+  <div style="margin-top:20px;">
+    <form action="{{ url_for('uploads.undo', file_id=file.id) }}" method="GET" style="display:inline;">
+      <button type="submit" class="button">Undo</button>
+    </form>
+    <form action="{{ url_for('uploads.reset', file_id=file.id) }}" method="GET" style="display:inline; margin-left:10px;">
+      <button type="submit" class="button">Reset</button>
+    </form>
+    <form action="{{ url_for('uploads.download_processed', file_id=file.id) }}" method="GET" style="display:inline; margin-left:10px;">
+      <button type="submit" class="button">Download</button>
+    </form>
+  </div>
+
+  <div style="margin-top:30px;">
+    <h2>Other Files</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">
+      {% for f in files %}
+      <a href="{{ url_for('uploads.process', file_id=f.id) }}">
+        <img
+          src="{{ url_for('uploads.serve_dataset_file',
+                          ds_id=file.dataset_id,
+                          filename=f.path) }}"
+          alt="{{ f.name }}"
+          style="width:80px; height:80px; object-fit:cover; border:2px solid #ccc;"
+        >
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+let canvas = document.getElementById('imageCanvas');
+let ctx = canvas.getContext('2d');
+let isDrawing = false;
+let isErasing = false;
+let startX, startY;
+let rect = null;
+let image = new Image();
+let mask = null;
+let eraserSize = 20; // Size of the eraser brush
+
+// Load the initial image
+image.onload = function() {
+    canvas.width = image.width;
+    canvas.height = image.height;
+    ctx.drawImage(image, 0, 0);
+};
+image.src = "data:image/png;base64,{{ img }}";
+
+// Drawing rectangle
+document.getElementById('drawRectBtn').addEventListener('click', function() {
+    canvas.style.cursor = 'crosshair';
+    isDrawing = true;
+    isErasing = false;
+    document.getElementById('eraserBtn').disabled = true;
+});
+
+document.getElementById('eraserBtn').addEventListener('click', function() {
+    canvas.style.cursor = 'crosshair';
+    isErasing = true;
+    isDrawing = false;
+    document.getElementById('drawRectBtn').disabled = true;
+});
+
+document.getElementById('clearBtn').addEventListener('click', function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0);
+    rect = null;
+    mask = null;
+    document.getElementById('segmentBtn').disabled = true;
+    document.getElementById('eraserBtn').disabled = true;
+    document.getElementById('drawRectBtn').disabled = false;
+    isDrawing = false;
+    isErasing = false;
+});
+
+canvas.addEventListener('mousedown', function(e) {
+    if (!isDrawing && !isErasing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    startX = e.clientX - rect.left;
+    startY = e.clientY - rect.top;
+    
+    if (isErasing && mask) {
+        // Start erasing
+        eraseMask(startX, startY);
+    }
+});
+
+canvas.addEventListener('mousemove', function(e) {
+    if (!isDrawing && !isErasing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top;
+    
+    if (isDrawing) {
+        // Clear canvas and redraw image
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0);
+        
+        // Draw rectangle
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+            startX,
+            startY,
+            currentX - startX,
+            currentY - startY
+        );
+    } else if (isErasing && mask) {
+        // Continue erasing
+        eraseMask(currentX, currentY);
+    }
+});
+
+canvas.addEventListener('mouseup', function(e) {
+    if (!isDrawing && !isErasing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const endX = e.clientX - rect.left;
+    const endY = e.clientY - rect.top;
+    
+    if (isDrawing) {
+        // Store rectangle coordinates
+        rect = {
+            x1: Math.min(startX, endX),
+            y1: Math.min(startY, endY),
+            x2: Math.max(startX, endX),
+            y2: Math.max(startY, endY)
+        };
+        
+        isDrawing = false;
+        canvas.style.cursor = 'default';
+        document.getElementById('segmentBtn').disabled = false;
+    } else if (isErasing) {
+        isErasing = false;
+        canvas.style.cursor = 'default';
+        document.getElementById('drawRectBtn').disabled = false;
+    }
+});
+
+function eraseMask(x, y) {
+    if (!mask) return;
+    
+    // Create a temporary canvas for the mask
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    // Draw the current mask
+    const maskImageData = new ImageData(
+        new Uint8ClampedArray(mask.buffer),
+        mask.width,
+        mask.height
+    );
+    tempCtx.putImageData(maskImageData, 0, 0);
+    
+    // Erase the area
+    tempCtx.globalCompositeOperation = 'destination-out';
+    tempCtx.beginPath();
+    tempCtx.arc(x, y, eraserSize, 0, Math.PI * 2);
+    tempCtx.fill();
+    
+    // Update the mask
+    mask = tempCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+    
+    // Redraw the image with the updated mask
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0);
+    
+    // Draw the updated mask
+    const coloredMask = new ImageData(
+        new Uint8ClampedArray(canvas.width * canvas.height * 4),
+        canvas.width,
+        canvas.height
+    );
+    for (let i = 0; i < mask.length; i += 4) {
+        if (mask[i] > 0) {
+            coloredMask.data[i] = 0;     // R
+            coloredMask.data[i + 1] = 255; // G
+            coloredMask.data[i + 2] = 0;   // B
+            coloredMask.data[i + 3] = 128; // A (semi-transparent)
+        }
+    }
+    ctx.putImageData(coloredMask, 0, 0);
+}
+
+// Segmentation
+document.getElementById('segmentBtn').addEventListener('click', function() {
+    if (!rect) return;
+    
+    fetch(`/process/{{ file.id }}/segment`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            box: [rect.x1, rect.y1, rect.x2, rect.y2]
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the image with the segmentation result
+            image.src = 'data:image/png;base64,' + data.image;
+            image.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(image, 0, 0);
+                
+                // Enable eraser after segmentation
+                document.getElementById('eraserBtn').disabled = false;
+                
+                // Store the mask for erasing
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                mask = new Uint8ClampedArray(imageData.data);
+            };
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during segmentation');
+    });
+});
+</script>
+{% endblock %}

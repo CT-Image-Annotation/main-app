@@ -1,12 +1,17 @@
+# app/models/Dataset.py
 from app.models.BaseModel import BaseModel
+from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy.orm import relationship
 from app.extensions import db
-from app.models.Ownable import Ownable
 
-class Dataset(BaseModel, Ownable):
-    __tablename__ = "datasets"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(255), nullable=True)
-    status = db.Column(db.String(4), nullable=False, default='todo')
+class Dataset(BaseModel):
+    __tablename__ = 'datasets'
 
-    resources = db.relationship('Resource', back_populates='dataset', lazy=True, cascade='all, delete-orphan')
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    tags = Column(String(50), nullable=False, default='To Do')  # 'To Do' or 'Done'
+    owner_id    = Column(Integer, ForeignKey('users.id'), nullable=False)
+
+    files       = relationship('Resource', back_populates='dataset', cascade='all, delete-orphan')
+    owner       = relationship('User', back_populates='datasets')

@@ -23,7 +23,6 @@ class BoundingBoxSegmenter:
     """
     def __init__(self, medsam_checkpoint_path, device="cuda" if torch.cuda.is_available() else "cpu"):
         if not os.path.exists(medsam_checkpoint_path):
-            os.makedirs(os.path.dirname(medsam_checkpoint_path), exist_ok=True)
             url = "https://drive.google.com/uc?id=1UAmWL88roYR7wKlnApw5Bcuzf2iQgk6_"
             print(f"[MedSAM] Model not found, downloading.")
             gdown.download(url, medsam_checkpoint_path, quiet=False)

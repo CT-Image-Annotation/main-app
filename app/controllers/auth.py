@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash, current_app, send_from_directory
-from app.services.FileService import FileService
 from app.services.UserService import UserService
 from app.models.User import User
 import random
@@ -40,23 +39,42 @@ def login():
     if request.method == "POST":
         if UserService.login(request.form):
             return redirect(url_for("dashboard.index"))
-        flash("", "error")
-        
+        else:
+            flash("No", "error")
     return render_template('auth/login.html')
 
 @bp.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
-        if UserService.register(request.form):
-            return redirect(url_for("dashboard.index"))
-        flash("", "error")
+        username = request.form.get("username")
+        password = request.form.get("password")
         
+        # Validate required fields
+        if not username or not password:
+            flash("Username and password are required", "error")
+            return render_template("auth/register.html")
+            
+        # Check if username is already taken
+        if User.query.filter_by(username=username).first():
+            flash("Username is already taken. Please choose a different username.", "error")
+            return render_template("auth/register.html")
+            
+        # Attempt registration
+        if UserService.register(request.form):
+            flash("Registration successful! Please log in.", "success")
+            return redirect(url_for("auth.login"))
+        else:
+            flash("Registration failed. Please try again.", "error")
     return render_template("auth/register.html")
 
 @bp.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for('landing.index'))
+
+@bp.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 @bp.route("/profile", methods=["GET"])
 def profile():
@@ -72,18 +90,18 @@ def profile():
 
     # Total images owned by this user
     try:
-        imageCount = user.resources.filter_by(type="AImage").count()
+        imageCount = user.resources.count()
     except Exception:
         imageCount = len(user.resources)
 
     # Count all images inside datasets tagged "Done"
     done_count = 0
     # user.datasets is a dynamic relationship; filter_by works here
-    for ds in user.datasets.filter_by(status="done"):
+    for ds in user.datasets.filter_by(tags="Done"):
         try:
-            done_count += ds.resources.count()
+            done_count += ds.files.count()
         except Exception:
-            done_count += len(ds.resources)
+            done_count += len(ds.files)
 
     annotationCount = done_count
     pendingCount    = imageCount - done_count
@@ -95,18 +113,14 @@ def profile():
     # Pick a random quote
     quote = random.choice(QUOTES)
 
-    profile_photo = FileService.getUserFiles(type="PP")
-    if profile_photo:
-        profile_photo = profile_photo[0]
-
     return render_template(
         "auth/profile.html",
+        user=user,
         imageCount=imageCount,
         annotationCount=annotationCount,
         pendingCount=pendingCount,
         currentTime=currentTime,
-        quote=quote,
-        profile_photo = profile_photo,
+        quote=quote
     )
 
 @bp.route('/profile/edit', methods=['GET','POST'])
@@ -118,31 +132,18 @@ def edit_profile():
 
     if request.method == 'POST':
         # 1) Specialty
-        specialty = request.form.get('specialty').strip()
+        user.specialty = request.form.get('specialty', '').strip()
 
         # 2) Photo upload
         photo = request.files.get('photo')
-        if photo:
-            for old in FileService.getUserFiles(type="PP"):
-                FileService.delete(old.id)
+        if photo and photo.filename:
+            fname = secure_filename(photo.filename)
+            save_path = os.path.join(current_app.config['UPLOAD_FOLDER'], fname)
+            photo.save(save_path)
+            user.profile_photo = fname
 
-            params = {
-                "type": "PP",
-                "owner_id": user.id,
-                "owner_type": "user",
-                "file": photo
-            }
-            resource = FileService.create(params)
-
-        params = {
-            "user_id": user.id,
-            "specialty": specialty,
-        }
-        if UserService.update(params):
-            flash('Profile updated!', 'success')
-        else:
-            flash('Failed update!', 'error')
-
+        UserService.update(user)   # you'll need an update() method in UserService
+        flash('Profile updated!', 'success')
         return redirect(url_for('auth.profile'))
 
-    return render_template('auth/edit_profile.html')
+    return render_template('auth/edit_profile.html', user=user)

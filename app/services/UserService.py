@@ -5,18 +5,18 @@ from app.extensions import db
 
 class UserService(Base):
     @staticmethod
-    def login(params):
-        username = params.get("username")
-        password = params.get("password")
+    def login(request):
+        username = request.get("username")
+        password = request.get("password")
         user = User.query.filter_by(username=username, password=password).first()
         if user:
             session['user_id'] = user.id
         return user
     
     @staticmethod
-    def register(params):
-        username = params.get("username")
-        password = params.get("password")
+    def register(request):
+        username = request.get("username")
+        password = request.get("password")
         
         username_taken = User.query.filter_by(username=username).first()
         
@@ -27,27 +27,19 @@ class UserService(Base):
             db.session.add(user)
             db.session.commit()
             session['user_id'] = user.id
-        return user
+            return user
     
     @staticmethod
     def read(user_id):
         return User.query.filter_by(id=user_id).first()
     
     @staticmethod
-    def update(params):
-        if not params.get('user_id'):
-            return False
-        
-        user = UserService.read(params.get('user_id'))
-        if not user:
-            return False
-        
-        if specialty := params.get('specialty'):
-            user.specialty = specialty
-        
+    def update(user):
+        # user is an instance of models.User that's already been modified
+        db.session.add(user)
         db.session.commit()
         return user
-
+    
     @staticmethod
     def delete(user_id):
          db.session.delete(User.query.get(user_id))

@@ -3,50 +3,67 @@ from app.extensions import db
 
 class DatasetService:
     @staticmethod
-    def create(params):
+    def create(params, owner_id):
+        """
+        Create a new dataset owned by the given user.
+        params: dict with keys 'name', 'description', 'tags'
+        owner_id: int user ID
+        """
         ds = Dataset(
             name=params.get('name'),
             description=params.get('description'),
-            status=params.get('status', 'todo'), #todo or done
-            owner_id=params.get('owner_id'),
-            owner_type=params.get('owner_type')
+            tags=params.get('tags', 'To Do'),
+            owner_id=owner_id
         )
         db.session.add(ds)
         db.session.commit()
         return ds
 
     @staticmethod
-    def read(dataset_id):
-        return Dataset.query.get(dataset_id)
-    
-    @staticmethod
-    def read_all(owner_id, owner_type, filters = None):
-        conditions = [Dataset.owner_id == owner_id, Dataset.owner_type == owner_type]
-    
-        if filters:
-            conditions.extend(filters)
-        return Dataset.query.filter(*conditions).order_by(Dataset.updated_at.desc()).all()
+    def list_for_user(owner_id):
+        """
+        Return all datasets belonging to a user, most-recently updated first.
+        """
+        return (
+            Dataset.query
+                   .filter_by(owner_id=owner_id)
+                   .order_by(Dataset.updated_at.desc())
+                   .all()
+        )
 
     @staticmethod
-    def update(params):
-        if not params.get('dataset_id'):
-            return False
-        ds = DatasetService.read(params.get('dataset_id'))
+    def read_for_user(dataset_id, owner_id):
+        """
+        Return a single dataset if it belongs to the user, else None.
+        """
+        return (
+            Dataset.query
+                   .filter_by(id=dataset_id, owner_id=owner_id)
+                   .first()
+        )
 
-        if name := params.get('name'):
-            ds.name = name
-        if description := params.get('description'):
-            ds.description = description
-        if status := params.get('status'):
-            ds.status = status
-        
+    @staticmethod
+    def update_for_user(dataset_id, owner_id, params):
+        """
+        Update name, description, and tags for a dataset if owned by user.
+        """
+        ds = DatasetService.read_for_user(dataset_id, owner_id)
+        if not ds:
+            return None
+        ds.name = params.get('name', ds.name)
+        ds.description = params.get('description', ds.description)
+        ds.tags = params.get('tags', ds.tags)
         db.session.commit()
         return ds
 
     @staticmethod
-    def delete(dataset_id):
-        db.session.delete(Dataset.query.get(dataset_id))
+    def delete_for_user(dataset_id, owner_id):
+        """
+        Delete the dataset if owned by the user. Returns True if deleted, False otherwise.
+        """
+        ds = DatasetService.read_for_user(dataset_id, owner_id)
+        if not ds:
+            return False
+        db.session.delete(ds)
         db.session.commit()
         return True
-
-

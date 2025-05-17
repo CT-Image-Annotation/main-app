@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_file, session, Response
+from flask import Blueprint, jsonify, request, session, Response
 from PIL import Image
 from app.services.AnnotationService import AnnotationService
 from app.services.BoundingBoxSegmentationService import BoundingBoxSegmentationService
@@ -55,9 +55,7 @@ def readUser(user_id):
 
 @bp.route("/user", methods=["POST"])
 def updateUser():
-    params = request.form if request.form else request.get_json()
-    user = UserService.update(params)
-    return jsonify(user.serialize()), 200
+    pass
 
 @bp.route("/user/<int:user_id>", methods=["DELETE"])
 def deleteUser(user_id):
@@ -84,10 +82,7 @@ def readDataset(dataset_id):
 
 @bp.route("/dataset", methods=["POST"])
 def updateDataset():
-    params = request.form if request.form else request.get_json()
-    ds = DatasetService.update(params)
-
-    return jsonify(ds.serialize()), 200
+    pass
 
 @bp.route("/dataset/<int:dataset_id>", methods=["DELETE"])
 def deleteDataset(dataset_id):
@@ -141,9 +136,3 @@ def updateAnnotation():
 def deleteAnnotation(annotation_id):
     FileService.delete(annotation_id)
     return {}, 204
-
-# DOWNLOAD
-@bp.route("/download/<path:path>")
-def download(path):
-    data = FileService.load(path)
-    return Response(data, mimetype="application/octet-stream")
