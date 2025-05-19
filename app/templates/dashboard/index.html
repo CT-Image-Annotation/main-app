@@ -28,16 +28,45 @@
                   <span class="d-none align-items-center justify-content-center bg-secondary text-muted"
                         style="height:120px; border-radius:8px 8px 0 0; font-size:2.5rem; width:100%; position:absolute; top:0; left:0; display:none;">🖼️</span>
                 </a>
-                <div class="card-body text-center p-2">
-                  <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}"
-                     class="fw-bold fs-3"
-                     style="color:#00cfff; text-decoration:none;">
-                    {{ ds.name }}
-                  </a>
-                </div>
               {% else %}
                 <div class="d-flex align-items-center justify-content-center bg-secondary text-muted" style="height:120px; border-radius:8px 8px 0 0;">No Image</div>
               {% endif %}
+              <div class="card-body">
+                <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}"
+                   class="fw-bold fs-4 d-block mb-2"
+                   style="color:#00cfff; text-decoration:none;">
+                  {{ ds.name }}
+                </a>
+                {% if ds.patient_name or ds.patient_id %}
+                  <div class="patient-info mb-2">
+                    <small class="text-secondary d-block">
+                      <i class="fas fa-user me-1"></i>
+                      {% if ds.patient_name %}{{ ds.patient_name }}{% endif %}
+                      {% if ds.patient_id %}(ID: {{ ds.patient_id }}){% endif %}
+                    </small>
+                    {% if ds.patient_dob or ds.patient_gender %}
+                      <small class="text-secondary d-block">
+                        {% if ds.patient_dob %}{{ ds.patient_dob.strftime('%Y-%m-%d') }}{% endif %}
+                        {% if ds.patient_gender %}| {{ ds.patient_gender }}{% endif %}
+                      </small>
+                    {% endif %}
+                  </div>
+                {% endif %}
+                {% if ds.scan_type or ds.scan_date %}
+                  <div class="scan-info">
+                    <small class="text-secondary d-block">
+                      <i class="fas fa-microscope me-1"></i>
+                      {% if ds.scan_type %}{{ ds.scan_type }}{% endif %}
+                      {% if ds.scan_date %}| {{ ds.scan_date.strftime('%Y-%m-%d') }}{% endif %}
+                    </small>
+                  </div>
+                {% endif %}
+                <!-- File Upload Form -->
+                <form action="{{ url_for('dashboard.upload_to_dataset', ds_id=ds.id) }}" method="POST" enctype="multipart/form-data" class="mb-2 mt-3">
+                  <input type="file" name="files" multiple webkitdirectory class="form-control mb-2">
+                  <button type="submit" class="btn btn-primary btn-sm">Upload Files</button>
+                </form>
+              </div>
             </div>
           </div>
         {% endfor %}
@@ -70,16 +99,45 @@
                   <span class="d-none align-items-center justify-content-center bg-secondary text-muted"
                         style="height:120px; border-radius:8px 8px 0 0; font-size:2.5rem; width:100%; position:absolute; top:0; left:0; display:none;">🖼️</span>
                 </a>
-                <div class="card-body text-center p-2">
-                  <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}"
-                     class="fw-bold fs-3"
-                     style="color:#00cfff; text-decoration:none;">
-                    {{ ds.name }}
-                  </a>
-                </div>
               {% else %}
                 <div class="d-flex align-items-center justify-content-center bg-secondary text-muted" style="height:120px; border-radius:8px 8px 0 0;">No Image</div>
               {% endif %}
+              <div class="card-body">
+                <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}"
+                   class="fw-bold fs-4 d-block mb-2"
+                   style="color:#00cfff; text-decoration:none;">
+                  {{ ds.name }}
+                </a>
+                {% if ds.patient_name or ds.patient_id %}
+                  <div class="patient-info mb-2">
+                    <small class="text-secondary d-block">
+                      <i class="fas fa-user me-1"></i>
+                      {% if ds.patient_name %}{{ ds.patient_name }}{% endif %}
+                      {% if ds.patient_id %}(ID: {{ ds.patient_id }}){% endif %}
+                    </small>
+                    {% if ds.patient_dob or ds.patient_gender %}
+                      <small class="text-secondary d-block">
+                        {% if ds.patient_dob %}{{ ds.patient_dob.strftime('%Y-%m-%d') }}{% endif %}
+                        {% if ds.patient_gender %}| {{ ds.patient_gender }}{% endif %}
+                      </small>
+                    {% endif %}
+                  </div>
+                {% endif %}
+                {% if ds.scan_type or ds.scan_date %}
+                  <div class="scan-info">
+                    <small class="text-secondary d-block">
+                      <i class="fas fa-microscope me-1"></i>
+                      {% if ds.scan_type %}{{ ds.scan_type }}{% endif %}
+                      {% if ds.scan_date %}| {{ ds.scan_date.strftime('%Y-%m-%d') }}{% endif %}
+                    </small>
+                  </div>
+                {% endif %}
+                <!-- File Upload Form -->
+                <form action="{{ url_for('dashboard.upload_to_dataset', ds_id=ds.id) }}" method="POST" enctype="multipart/form-data" class="mb-2 mt-3">
+                  <input type="file" name="files" multiple webkitdirectory class="form-control mb-2">
+                  <button type="submit" class="btn btn-primary btn-sm">Upload Files</button>
+                </form>
+              </div>
             </div>
           </div>
         {% endfor %}
