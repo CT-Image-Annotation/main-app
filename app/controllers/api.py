@@ -1,4 +1,5 @@
-from flask import Blueprint, jsonify, request, session, Response
+import os
+from flask import Blueprint, current_app, jsonify, request, send_file, send_from_directory, session, Response
 from PIL import Image
 from app.services.AnnotationService import AnnotationService
 from app.services.BoundingBoxSegmentationService import BoundingBoxSegmentationService
@@ -136,3 +137,11 @@ def updateAnnotation():
 def deleteAnnotation(annotation_id):
     FileService.delete(annotation_id)
     return {}, 204
+
+@bp.route("/annotation/load-last/<int:resource_id>")
+def downloadLastAnnotation(resource_id):
+    annotation_resource = AnnotationService.read_last(resource_id)
+    if not annotation_resource:
+        return {},404
+
+    return send_file(os.path.join(current_app.config['UPLOAD_FOLDER'],annotation_resource.file.path))

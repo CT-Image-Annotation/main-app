@@ -143,10 +143,12 @@
   {% endif %}
 </div>
 
+
 <script>
   // Pass data to JavaScript
   window.datasetId = {{ dataset.id|tojson }};
   window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
+
 </script>
 <script src="{{ url_for('static', filename='js/dataset_detail.js') }}"></script>
 {% endblock %}

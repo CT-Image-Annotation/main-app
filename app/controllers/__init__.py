@@ -11,7 +11,7 @@ def register_controllers(app: Flask):
     app.register_blueprint(auth_bp)
     app.register_blueprint(uploads_bp)
     app.register_blueprint(processing_bp)
-    app.register_blueprint(api_bp)
+    app.register_blueprint(api_bp, url_prefix = "/api")
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(datasets_bp)
     app.register_blueprint(landing_bp)
