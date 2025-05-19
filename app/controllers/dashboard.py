@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, session, redirect, url_for
 from app.services.DatasetService import DatasetService
 
-bp = Blueprint("dashboard", __name__)
+bp = Blueprint("dashboard", __name__, url_prefix='/dashboard')
 
-@bp.route('/dashboard')
+@bp.route('/')
 def index():
     if not session.get('user_id'):
         return redirect(url_for("auth.login"))

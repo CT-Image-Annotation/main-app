@@ -3,105 +3,304 @@
 {% block title %}My Datasets{% endblock %}
 
 {% block content %}
-  <!-- Create Dataset -->
-  <div class="card bg-dark text-light shadow p-4 mb-4">
-    <h2 class="mb-3">Create New Dataset</h2>
+  <!-- Main Action Buttons -->
+  <div class="d-flex justify-content-center gap-4 mb-5">
+    <button id="new-data-btn" class="btn btn-primary btn-lg px-5">
+      <i class="fas fa-plus-circle me-2"></i>Enter New Data
+    </button>
+    <button id="existing-scans-btn" class="btn btn-outline-primary btn-lg px-5">
+      <i class="fas fa-folder-open me-2"></i>View Existing Scans
+    </button>
+  </div>
+
+  <!-- New Dataset Section -->
+  <div id="new-dataset-section" class="card bg-dark text-light shadow p-4 mb-4" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="mb-0">Create New Dataset</h2>
+      <button class="btn btn-outline-light btn-sm" onclick="hideSection('new-dataset-section')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
     <form action="{{ url_for('uploads.datasets_index') }}" method="POST" class="d-flex flex-column gap-3">
-      <div>
-        <label for="name" class="form-label">Name</label>
-        <input id="name" name="name" type="text" required class="form-control bg-secondary text-light" />
+      <!-- Step 1: Basic Dataset Information -->
+      <div class="step-section">
+        <h4 class="mb-3">Step 1: Dataset Information</h4>
+        <div>
+          <label for="name" class="form-label">Dataset Name</label>
+          <input id="name" name="name" type="text" required class="form-control bg-secondary text-light" />
+        </div>
+        <div>
+          <label for="description" class="form-label">Description (optional)</label>
+          <textarea id="description" name="description" class="form-control bg-secondary text-light"></textarea>
+        </div>
       </div>
-      <div>
-        <label for="description" class="form-label">Description (optional)</label>
-        <textarea id="description" name="description" class="form-control bg-secondary text-light"></textarea>
+
+      <!-- Step 2: Patient Information -->
+      <div class="step-section">
+        <h4 class="mb-3">Step 2: Patient Information</h4>
+        <div class="row">
+          <div class="col-md-6">
+            <label for="patient_id" class="form-label">Patient ID</label>
+            <input id="patient_id" name="patient_id" type="text" class="form-control bg-secondary text-light" />
+          </div>
+          <div class="col-md-6">
+            <label for="patient_name" class="form-label">Patient Name</label>
+            <input id="patient_name" name="patient_name" type="text" class="form-control bg-secondary text-light" />
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <label for="patient_dob" class="form-label">Date of Birth</label>
+            <input id="patient_dob" name="patient_dob" type="date" class="form-control bg-secondary text-light" />
+          </div>
+          <div class="col-md-6">
+            <label for="patient_gender" class="form-label">Gender</label>
+            <select id="patient_gender" name="patient_gender" class="form-select bg-secondary text-light">
+              <option value="">Select gender</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+              <option value="O">Other</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div>
-        <label for="tags" class="form-label">Status</label>
-        <select id="tags" name="tags" class="form-select bg-secondary text-light">
-          <option value="To Do">To Do</option>
-          <option value="Done">Done</option>
-        </select>
+
+      <!-- Step 3: Scan Information -->
+      <div class="step-section">
+        <h4 class="mb-3">Step 3: Scan Information</h4>
+        <div class="row">
+          <div class="col-md-6">
+            <label for="scan_date" class="form-label">Scan Date</label>
+            <input id="scan_date" name="scan_date" type="date" class="form-control bg-secondary text-light" />
+          </div>
+          <div class="col-md-6">
+            <label for="scan_type" class="form-label">Scan Type</label>
+            <select id="scan_type" name="scan_type" class="form-select bg-secondary text-light">
+              <option value="">Select scan type</option>
+              <option value="CT">CT</option>
+              <option value="MRI">MRI</option>
+              <option value="X-Ray">X-Ray</option>
+              <option value="Ultrasound">Ultrasound</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-3">
+          <label for="scan_description" class="form-label">Scan Description</label>
+          <textarea id="scan_description" name="scan_description" class="form-control bg-secondary text-light"></textarea>
+        </div>
+        <div class="mt-3">
+          <label for="scan_series_number" class="form-label">Series Number</label>
+          <input id="scan_series_number" name="scan_series_number" type="text" class="form-control bg-secondary text-light" />
+        </div>
       </div>
+
+      <!-- Step 4: Status -->
+      <div class="step-section">
+        <h4 class="mb-3">Step 4: Status</h4>
+        <div>
+          <label for="tags" class="form-label">Status</label>
+          <select id="tags" name="tags" class="form-select bg-secondary text-light">
+            <option value="To Do">To Do</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+      </div>
+
       <button type="submit" class="btn btn-primary align-self-end mt-2">Create Dataset</button>
     </form>
   </div>
 
-  <!-- Datasets List -->
-  {% for ds in datasets %}
-    <div class="card bg-dark text-light shadow p-4 mb-4 dataset-card">
-      <!-- VIEW MODE -->
-      <div class="dataset-info d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div class="d-flex align-items-center gap-3">
-          {% if ds.files|length > 0 %}
-            {% set f = ds.files[0] %}
-            <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">
-              <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
-                   alt="{{ f.name }}"
-                   class="rounded" style="width:100px; height:100px; object-fit:cover;">
-            </a>
-          {% else %}
-            <div class="d-flex align-items-center justify-content-center bg-secondary text-muted rounded" style="width:100px; height:100px;">No Image</div>
-          {% endif %}
-          <div>
-            <h3><a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}" class="text-info">{{ ds.name }}</a></h3>
-            {% if ds.description %}<p class="text-secondary small">{{ ds.description }}</p>{% endif %}
-            <p>Status: <span class="fw-bold text-info">{{ ds.tags }}</span></p>
-          </div>
-        </div>
-        <div class="d-flex gap-2">
-          <button type="button" class="btn btn-outline-info edit-btn">Edit</button>
-          <form action="{{ url_for('uploads.delete_dataset', ds_id=ds.id) }}" method="POST" onsubmit="return confirm('Delete this dataset?');">
-            <button type="submit" class="btn btn-outline-danger">Delete</button>
-          </form>
+  <!-- Existing Datasets Section -->
+  <div id="existing-datasets-section" class="mb-4" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0">Existing Datasets</h2>
+      <button class="btn btn-outline-light btn-sm" onclick="hideSection('existing-datasets-section')">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    {% for patient in grouped_datasets %}
+      <div class="mb-4 patient-group">
+        <button class="btn btn-info w-100 text-start patient-toggle mb-2" type="button" data-patient="{{ loop.index0 }}">
+          <span class="fw-bold">Patient: {{ patient.patient_name or 'Unknown' }}</span>{% if patient.patient_id %} <span class="text-secondary">(ID: {{ patient.patient_id }})</span>{% endif %}
+        </button>
+        <div class="patient-datasets" id="patient-datasets-{{ loop.index0 }}" style="display:none;">
+          {% for ds in patient.datasets %}
+            <div class="card bg-dark text-light shadow p-4 mb-4 dataset-card">
+              <!-- VIEW MODE -->
+              <div class="dataset-info d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                  {% if ds.files|length > 0 %}
+                    {% set f = ds.files[0] %}
+                    <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">
+                      <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
+                           alt="{{ f.name }}"
+                           class="rounded" style="width:100px; height:100px; object-fit:cover;">
+                    </a>
+                  {% else %}
+                    <div class="d-flex align-items-center justify-content-center bg-secondary text-muted rounded" style="width:100px; height:100px;">No Image</div>
+                  {% endif %}
+                  <div>
+                    <h3><a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}" class="text-info">{{ ds.name }}</a></h3>
+                    {% if ds.description %}<p class="text-secondary small">{{ ds.description }}</p>{% endif %}
+                    {% if ds.patient_name %}
+                      <p class="text-secondary small mb-1">Patient: {{ ds.patient_name }} (ID: {{ ds.patient_id }})</p>
+                    {% endif %}
+                    {% if ds.scan_type %}
+                      <p class="text-secondary small mb-1">Scan: {{ ds.scan_type }} - {{ ds.scan_date.strftime('%Y-%m-%d') if ds.scan_date }}</p>
+                    {% endif %}
+                    <p>Status: <span class="fw-bold text-info">{{ ds.tags }}</span></p>
+                  </div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-outline-info edit-btn">Edit</button>
+                  <form action="{{ url_for('uploads.delete_dataset', ds_id=ds.id) }}" method="POST" onsubmit="return confirm('Delete this dataset?');">
+                    <button type="submit" class="btn btn-outline-danger">Delete</button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- EDIT MODE (hidden by default) -->
+              <form class="edit-form d-none flex-column gap-3 mt-3" action="{{ url_for('uploads.edit_dataset', ds_id=ds.id) }}" method="POST">
+                <!-- Basic Information -->
+                <div>
+                  <label for="name-{{ ds.id }}" class="form-label">Name</label>
+                  <input id="name-{{ ds.id }}" name="name" type="text" value="{{ ds.name }}" required class="form-control bg-secondary text-light" />
+                </div>
+                <div>
+                  <label for="desc-{{ ds.id }}" class="form-label">Description</label>
+                  <textarea id="desc-{{ ds.id }}" name="description" class="form-control bg-secondary text-light">{{ ds.description or '' }}</textarea>
+                </div>
+
+                <!-- Patient Information -->
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="patient_id-{{ ds.id }}" class="form-label">Patient ID</label>
+                    <input id="patient_id-{{ ds.id }}" name="patient_id" type="text" value="{{ ds.patient_id or '' }}" class="form-control bg-secondary text-light" />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="patient_name-{{ ds.id }}" class="form-label">Patient Name</label>
+                    <input id="patient_name-{{ ds.id }}" name="patient_name" type="text" value="{{ ds.patient_name or '' }}" class="form-control bg-secondary text-light" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="patient_dob-{{ ds.id }}" class="form-label">Date of Birth</label>
+                    <input id="patient_dob-{{ ds.id }}" name="patient_dob" type="date" value="{{ ds.patient_dob.strftime('%Y-%m-%d') if ds.patient_dob else '' }}" class="form-control bg-secondary text-light" />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="patient_gender-{{ ds.id }}" class="form-label">Gender</label>
+                    <select id="patient_gender-{{ ds.id }}" name="patient_gender" class="form-select bg-secondary text-light">
+                      <option value="">Select gender</option>
+                      <option value="M" {% if ds.patient_gender == 'M' %}selected{% endif %}>Male</option>
+                      <option value="F" {% if ds.patient_gender == 'F' %}selected{% endif %}>Female</option>
+                      <option value="O" {% if ds.patient_gender == 'O' %}selected{% endif %}>Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Scan Information -->
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="scan_date-{{ ds.id }}" class="form-label">Scan Date</label>
+                    <input id="scan_date-{{ ds.id }}" name="scan_date" type="date" value="{{ ds.scan_date.strftime('%Y-%m-%d') if ds.scan_date else '' }}" class="form-control bg-secondary text-light" />
+                  </div>
+                  <div class="col-md-6">
+                    <label for="scan_type-{{ ds.id }}" class="form-label">Scan Type</label>
+                    <select id="scan_type-{{ ds.id }}" name="scan_type" class="form-select bg-secondary text-light">
+                      <option value="">Select scan type</option>
+                      <option value="CT" {% if ds.scan_type == 'CT' %}selected{% endif %}>CT</option>
+                      <option value="MRI" {% if ds.scan_type == 'MRI' %}selected{% endif %}>MRI</option>
+                      <option value="X-Ray" {% if ds.scan_type == 'X-Ray' %}selected{% endif %}>X-Ray</option>
+                      <option value="Ultrasound" {% if ds.scan_type == 'Ultrasound' %}selected{% endif %}>Ultrasound</option>
+                      <option value="Other" {% if ds.scan_type == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <label for="scan_description-{{ ds.id }}" class="form-label">Scan Description</label>
+                  <textarea id="scan_description-{{ ds.id }}" name="scan_description" class="form-control bg-secondary text-light">{{ ds.scan_description or '' }}</textarea>
+                </div>
+                <div class="mt-3">
+                  <label for="scan_series_number-{{ ds.id }}" class="form-label">Series Number</label>
+                  <input id="scan_series_number-{{ ds.id }}" name="scan_series_number" type="text" value="{{ ds.scan_series_number or '' }}" class="form-control bg-secondary text-light" />
+                </div>
+
+                <!-- Status -->
+                <div class="mt-3">
+                  <label for="tags-{{ ds.id }}" class="form-label">Status</label>
+                  <select id="tags-{{ ds.id }}" name="tags" class="form-select bg-secondary text-light">
+                    <option value="To Do" {% if ds.tags == 'To Do' %}selected{% endif %}>To Do</option>
+                    <option value="Done" {% if ds.tags == 'Done' %}selected{% endif %}>Done</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-success align-self-end mt-2">Save Changes</button>
+                <button type="button" class="btn btn-outline-secondary align-self-end mt-2 cancel-edit-btn">Cancel</button>
+              </form>
+            </div>
+          {% endfor %}
         </div>
       </div>
-      <!-- EDIT MODE (hidden by default) -->
-      <form class="edit-form d-none flex-column gap-3 mt-3" action="{{ url_for('uploads.edit_dataset', ds_id=ds.id) }}" method="POST">
-        <div>
-          <label for="name-{{ ds.id }}" class="form-label">Name</label>
-          <input id="name-{{ ds.id }}" name="name" type="text" value="{{ ds.name }}" required class="form-control bg-secondary text-light" />
-        </div>
-        <div>
-          <label for="desc-{{ ds.id }}" class="form-label">Description</label>
-          <textarea id="desc-{{ ds.id }}" name="description" class="form-control bg-secondary text-light">{{ ds.description or '' }}</textarea>
-        </div>
-        <div>
-          <label for="tags-{{ ds.id }}" class="form-label">Status</label>
-          <select id="tags-{{ ds.id }}" name="tags" class="form-select bg-secondary text-light">
-            <option value="To Do"  {% if ds.tags=='To Do'  %}selected{% endif %}>To Do</option>
-            <option value="Done"   {% if ds.tags=='Done'   %}selected{% endif %}>Done</option>
-          </select>
-        </div>
-        <div class="d-flex gap-2 mt-2">
-          <button type="submit" class="btn btn-primary">Save</button>
-          <button type="button" class="btn btn-outline-light cancel-btn">Cancel</button>
-        </div>
-      </form>
-      <!-- Upload to Dataset -->
-      <form action="{{ url_for('uploads.upload_to_dataset', ds_id=ds.id) }}" method="POST" enctype="multipart/form-data" class="d-flex gap-2 align-items-center mt-3">
-        <input type="file" name="files" multiple webkitdirectory class="form-control bg-secondary text-light" style="flex:1;">
-        <button type="submit" class="btn btn-outline-info">Upload Folder</button>
-      </form>
-    </div>
-  {% else %}
-    <p class="text-secondary">No datasets yet.</p>
-  {% endfor %}
+    {% endfor %}
+  </div>
 
 <script>
+// Function to hide a section
+function hideSection(sectionId) {
+  document.getElementById(sectionId).style.display = 'none';
+}
+
+// Function to show a section and hide others
+function showSection(sectionId) {
+  // Hide all sections first
+  document.getElementById('new-dataset-section').style.display = 'none';
+  document.getElementById('existing-datasets-section').style.display = 'none';
+  
+  // Show the selected section
+  document.getElementById(sectionId).style.display = 'block';
+  
+  // Scroll to the section
+  document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+}
+
+// Add click handlers to the main buttons
+document.getElementById('new-data-btn').addEventListener('click', () => {
+  showSection('new-dataset-section');
+});
+
+document.getElementById('existing-scans-btn').addEventListener('click', () => {
+  showSection('existing-datasets-section');
+});
+
 // For each card, toggle between view‐mode and inline edit‐mode
 document.querySelectorAll('.dataset-card').forEach(card => {
-  const info    = card.querySelector('.dataset-info');
+  const info = card.querySelector('.dataset-info');
   const editFrm = card.querySelector('.edit-form');
   const editBtn = card.querySelector('.edit-btn');
-  const cancel  = card.querySelector('.cancel-btn');
+  const cancel = card.querySelector('.cancel-btn');
 
   editBtn.addEventListener('click', () => {
-    info.style.display    = 'none';
+    info.style.display = 'none';
     editFrm.style.display = 'flex';
   });
   cancel.addEventListener('click', () => {
     editFrm.style.display = 'none';
-    info.style.display    = 'flex';
+    info.style.display = 'flex';
+  });
+});
+
+// Collapsible patient groups
+document.querySelectorAll('.patient-toggle').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const idx = this.getAttribute('data-patient');
+    const section = document.getElementById('patient-datasets-' + idx);
+    if (section.style.display === 'none') {
+      section.style.display = 'block';
+      this.classList.add('active');
+    } else {
+      section.style.display = 'none';
+      this.classList.remove('active');
+    }
   });
 });
 </script>

@@ -25,7 +25,16 @@ def datasets_index():
         flash('Dataset created!', 'success')
         return redirect(url_for('uploads.datasets_index'))
     datasets = DatasetService.list_for_user(user_id)
-    return render_template('uploads/index.html', datasets=datasets)
+    from collections import defaultdict
+    grouped = defaultdict(list)
+    for ds in datasets:
+        key = (ds.patient_id, ds.patient_name)
+        grouped[key].append(ds)
+    grouped_datasets = [
+        {'patient_id': pid, 'patient_name': pname, 'datasets': dsets}
+        for (pid, pname), dsets in grouped.items()
+    ]
+    return render_template('uploads/index.html', grouped_datasets=grouped_datasets)
 
 @bp.route('/datasets/<int:ds_id>/upload', methods=['POST'])
 def upload_to_dataset(ds_id):
