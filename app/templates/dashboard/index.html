@@ -61,6 +61,11 @@
                     </small>
                   </div>
                 {% endif %}
+                <!-- File Upload Form -->
+                <form action="{{ url_for('dashboard.upload_to_dataset', ds_id=ds.id) }}" method="POST" enctype="multipart/form-data" class="mb-2 mt-3">
+                  <input type="file" name="files" multiple webkitdirectory class="form-control mb-2">
+                  <button type="submit" class="btn btn-primary btn-sm">Upload Files</button>
+                </form>
               </div>
             </div>
           </div>
@@ -127,6 +132,11 @@
                     </small>
                   </div>
                 {% endif %}
+                <!-- File Upload Form -->
+                <form action="{{ url_for('dashboard.upload_to_dataset', ds_id=ds.id) }}" method="POST" enctype="multipart/form-data" class="mb-2 mt-3">
+                  <input type="file" name="files" multiple webkitdirectory class="form-control mb-2">
+                  <button type="submit" class="btn btn-primary btn-sm">Upload Files</button>
+                </form>
               </div>
             </div>
           </div>
