@@ -128,7 +128,7 @@
     {% for patient in grouped_datasets %}
       <div class="mb-4 patient-group">
         <button class="btn btn-info w-100 text-start patient-toggle mb-2" type="button" data-patient="{{ loop.index0 }}">
-          <span class="fw-bold">Patient: {{ patient.patient_name or 'Unknown' }}</span>{% if patient.patient_id %} <span class="text-secondary">(ID: {{ patient.patient_id }})</span>{% endif %}
+          <span class="fw-bold">Patient: {{ patient.patient_name or 'Unknown' }}</span>{% if patient.patient_id %} <span class="text-secondary" style="color: #000 !important;">(ID: {{ patient.patient_id }})</span>{% endif %}
         </button>
         <div class="patient-datasets" id="patient-datasets-{{ loop.index0 }}" style="display:none;">
           {% for ds in patient.datasets %}
