@@ -62,7 +62,7 @@ def register():
         # Attempt registration
         if UserService.register(request.form):
             flash("Registration successful! Please log in.", "success")
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.profile"))
         else:
             flash("Registration failed. Please try again.", "error")
     return render_template("auth/register.html")
