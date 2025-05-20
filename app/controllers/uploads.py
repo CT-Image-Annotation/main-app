@@ -21,13 +21,40 @@ def datasets_index():
         return redirect(url_for('auth.login'))
     user_id = session['user_id']
     if request.method == 'POST':
-        DatasetService.create(request.form, user_id)
+        # Create the dataset first
+        ds = DatasetService.create(request.form, user_id)
         flash('Dataset created!', 'success')
+        
+        # Handle file uploads if any
+        if 'files' in request.files:
+            files = request.files.getlist('files')
+            if files and not all(file.filename == '' for file in files):
+                success_count = 0
+                error_messages = []
+                
+                for f in files:
+                    if f and f.filename:
+                        try:
+                            FileService.upload(f, type='AImage', dataset_id=ds.id)
+                            success_count += 1
+                        except ValueError as e:
+                            error_messages.append(f"{f.filename}: {str(e)}")
+                        except Exception as e:
+                            error_messages.append(f"{f.filename}: An error occurred during upload")
+                
+                if success_count > 0:
+                    flash(f"Successfully uploaded {success_count} files.", 'success')
+                if error_messages:
+                    flash('\n'.join(error_messages), 'error')
+        
         return redirect(url_for('uploads.datasets_index'))
+    
     datasets = DatasetService.list_for_user(user_id)
     from collections import defaultdict
     grouped = defaultdict(list)
     for ds in datasets:
+        # Load files for each dataset
+        ds.files = FileService.getUserFiles(type='AImage', dataset_id=ds.id)
         key = (ds.patient_id, ds.patient_name)
         grouped[key].append(ds)
     grouped_datasets = [
@@ -137,10 +164,35 @@ def edit_dataset(ds_id):
         abort(403)
 
     if request.method == 'POST':
+        # Update dataset information
         updated = DatasetService.update_for_user(ds_id, user_id, request.form)
         if updated:
+            # Handle file uploads if any
+            if 'files' in request.files:
+                files = request.files.getlist('files')
+                if files and not all(file.filename == '' for file in files):
+                    success_count = 0
+                    error_messages = []
+                    
+                    for f in files:
+                        if f and f.filename:
+                            try:
+                                FileService.upload(f, type='AImage', dataset_id=ds_id)
+                                success_count += 1
+                            except ValueError as e:
+                                error_messages.append(f"{f.filename}: {str(e)}")
+                            except Exception as e:
+                                error_messages.append(f"{f.filename}: An error occurred during upload")
+                    
+                    if success_count > 0:
+                        flash(f"Successfully uploaded {success_count} files.", 'success')
+                    if error_messages:
+                        flash('\n'.join(error_messages), 'error')
+            
             flash('Dataset updated!', 'success')
             return redirect(url_for('uploads.datasets_index'))
         flash('Could not update dataset.', 'error')
 
+    # Load files for the dataset
+    ds.files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
     return render_template('uploads/edit_dataset.html', dataset=ds)

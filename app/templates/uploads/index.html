@@ -21,7 +21,7 @@
         <i class="fas fa-times"></i>
       </button>
     </div>
-    <form action="{{ url_for('uploads.datasets_index') }}" method="POST" class="d-flex flex-column gap-3">
+    <form id="new-dataset-form" action="{{ url_for('uploads.datasets_index') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column gap-3">
       <!-- Step 1: Basic Dataset Information -->
       <div class="step-section">
         <h4 class="mb-3">Step 1: Dataset Information</h4>
@@ -33,6 +33,12 @@
           <label for="description" class="form-label">Description (optional)</label>
           <textarea id="description" name="description" class="form-control bg-secondary text-light"></textarea>
         </div>
+        <div class="mt-3">
+          <label for="files" class="form-label">Upload Files <span class="text-danger">*</span></label>
+          <input type="file" id="files" name="files" multiple webkitdirectory class="form-control bg-secondary text-light" required />
+          <small class="text-muted">You can select multiple files or a directory</small>
+          <div id="file-error" class="text-danger mt-1" style="display:none;">You must upload at least one file.</div>
+        </div>
       </div>
 
       <!-- Step 2: Patient Information -->
@@ -40,8 +46,8 @@
         <h4 class="mb-3">Step 2: Patient Information</h4>
         <div class="row">
           <div class="col-md-6">
-            <label for="patient_id" class="form-label">Patient ID</label>
-            <input id="patient_id" name="patient_id" type="text" class="form-control bg-secondary text-light" />
+            <label for="patient_id" class="form-label">Patient ID <span class="text-danger">*</span></label>
+            <input id="patient_id" name="patient_id" type="text" required class="form-control bg-secondary text-light" />
           </div>
           <div class="col-md-6">
             <label for="patient_name" class="form-label">Patient Name</label>
@@ -50,8 +56,8 @@
         </div>
         <div class="row mt-3">
           <div class="col-md-6">
-            <label for="patient_dob" class="form-label">Date of Birth</label>
-            <input id="patient_dob" name="patient_dob" type="date" class="form-control bg-secondary text-light" />
+            <label for="patient_dob" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+            <input id="patient_dob" name="patient_dob" type="date" required class="form-control bg-secondary text-light" />
           </div>
           <div class="col-md-6">
             <label for="patient_gender" class="form-label">Gender</label>
@@ -70,12 +76,12 @@
         <h4 class="mb-3">Step 3: Scan Information</h4>
         <div class="row">
           <div class="col-md-6">
-            <label for="scan_date" class="form-label">Scan Date</label>
-            <input id="scan_date" name="scan_date" type="date" class="form-control bg-secondary text-light" />
+            <label for="scan_date" class="form-label">Scan Date <span class="text-danger">*</span></label>
+            <input id="scan_date" name="scan_date" type="date" required class="form-control bg-secondary text-light" />
           </div>
           <div class="col-md-6">
-            <label for="scan_type" class="form-label">Scan Type</label>
-            <select id="scan_type" name="scan_type" class="form-select bg-secondary text-light">
+            <label for="scan_type" class="form-label">Scan Type <span class="text-danger">*</span></label>
+            <select id="scan_type" name="scan_type" required class="form-select bg-secondary text-light">
               <option value="">Select scan type</option>
               <option value="CT">CT</option>
               <option value="MRI">MRI</option>
@@ -90,8 +96,8 @@
           <textarea id="scan_description" name="scan_description" class="form-control bg-secondary text-light"></textarea>
         </div>
         <div class="mt-3">
-          <label for="scan_series_number" class="form-label">Series Number</label>
-          <input id="scan_series_number" name="scan_series_number" type="text" class="form-control bg-secondary text-light" />
+          <label for="scan_series_number" class="form-label">Series Number <span class="text-danger">*</span></label>
+          <input id="scan_series_number" name="scan_series_number" type="text" required class="form-control bg-secondary text-light" />
         </div>
       </div>
 
@@ -122,7 +128,7 @@
     {% for patient in grouped_datasets %}
       <div class="mb-4 patient-group">
         <button class="btn btn-info w-100 text-start patient-toggle mb-2" type="button" data-patient="{{ loop.index0 }}">
-          <span class="fw-bold">Patient: {{ patient.patient_name or 'Unknown' }}</span>{% if patient.patient_id %} <span class="text-secondary">(ID: {{ patient.patient_id }})</span>{% endif %}
+          <span class="fw-bold">Patient: {{ patient.patient_name or 'Unknown' }}</span>{% if patient.patient_id %} <span class="text-secondary" style="color: #000 !important;">(ID: {{ patient.patient_id }})</span>{% endif %}
         </button>
         <div class="patient-datasets" id="patient-datasets-{{ loop.index0 }}" style="display:none;">
           {% for ds in patient.datasets %}
@@ -130,7 +136,7 @@
               <!-- VIEW MODE -->
               <div class="dataset-info d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div class="d-flex align-items-center gap-3">
-                  {% if ds.files|length > 0 %}
+                  {% if ds.files and ds.files|length > 0 %}
                     {% set f = ds.files[0] %}
                     <a href="{{ url_for('uploads.dataset_detail', ds_id=ds.id) }}">
                       <img src="{{ url_for('uploads.serve_dataset_file', ds_id=ds.id, filename=f.path) }}"
@@ -150,6 +156,9 @@
                       <p class="text-secondary small mb-1">Scan: {{ ds.scan_type }} - {{ ds.scan_date.strftime('%Y-%m-%d') if ds.scan_date }}</p>
                     {% endif %}
                     <p>Status: <span class="fw-bold text-info">{{ ds.tags }}</span></p>
+                    {% if ds.files and ds.files|length > 0 %}
+                      <p class="text-secondary small">Files: {{ ds.files|length }}</p>
+                    {% endif %}
                   </div>
                 </div>
                 <div class="d-flex gap-2">
@@ -234,6 +243,14 @@
                     <option value="Done" {% if ds.tags == 'Done' %}selected{% endif %}>Done</option>
                   </select>
                 </div>
+
+                <!-- File Upload -->
+                <div class="mt-3">
+                  <label for="files-{{ ds.id }}" class="form-label">Upload Additional Files</label>
+                  <input type="file" name="files" multiple webkitdirectory class="form-control bg-secondary text-light" />
+                  <small class="text-muted">You can select multiple files or a directory</small>
+                </div>
+
                 <button type="submit" class="btn btn-success align-self-end mt-2">Save Changes</button>
                 <button type="button" class="btn btn-outline-secondary align-self-end mt-2 cancel-edit-btn">Cancel</button>
               </form>
@@ -245,61 +262,79 @@
   </div>
 
 <script>
-// Function to hide a section
-function hideSection(sectionId) {
-  document.getElementById(sectionId).style.display = 'none';
-}
+document.addEventListener('DOMContentLoaded', function() {
+  // Function to hide a section
+  function hideSection(sectionId) {
+    document.getElementById(sectionId).style.display = 'none';
+  }
 
-// Function to show a section and hide others
-function showSection(sectionId) {
-  // Hide all sections first
-  document.getElementById('new-dataset-section').style.display = 'none';
-  document.getElementById('existing-datasets-section').style.display = 'none';
-  
-  // Show the selected section
-  document.getElementById(sectionId).style.display = 'block';
-  
-  // Scroll to the section
-  document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
-}
+  // Function to show a section and hide others
+  function showSection(sectionId) {
+    // Hide all sections first
+    document.getElementById('new-dataset-section').style.display = 'none';
+    document.getElementById('existing-datasets-section').style.display = 'none';
+    // Show the selected section
+    document.getElementById(sectionId).style.display = 'block';
+    // Scroll to the section
+    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+  }
 
-// Add click handlers to the main buttons
-document.getElementById('new-data-btn').addEventListener('click', () => {
-  showSection('new-dataset-section');
-});
-
-document.getElementById('existing-scans-btn').addEventListener('click', () => {
-  showSection('existing-datasets-section');
-});
-
-// For each card, toggle between view‐mode and inline edit‐mode
-document.querySelectorAll('.dataset-card').forEach(card => {
-  const info = card.querySelector('.dataset-info');
-  const editFrm = card.querySelector('.edit-form');
-  const editBtn = card.querySelector('.edit-btn');
-  const cancel = card.querySelector('.cancel-btn');
-
-  editBtn.addEventListener('click', () => {
-    info.style.display = 'none';
-    editFrm.style.display = 'flex';
+  // Add click handlers to the main buttons
+  document.getElementById('new-data-btn').addEventListener('click', () => {
+    showSection('new-dataset-section');
   });
-  cancel.addEventListener('click', () => {
-    editFrm.style.display = 'none';
-    info.style.display = 'flex';
-  });
-});
 
-// Collapsible patient groups
-document.querySelectorAll('.patient-toggle').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const idx = this.getAttribute('data-patient');
-    const section = document.getElementById('patient-datasets-' + idx);
-    if (section.style.display === 'none') {
-      section.style.display = 'block';
-      this.classList.add('active');
+  document.getElementById('existing-scans-btn').addEventListener('click', () => {
+    showSection('existing-datasets-section');
+  });
+
+  // For each card, toggle between view‐mode and inline edit‐mode
+  document.querySelectorAll('.dataset-card').forEach(card => {
+    const info = card.querySelector('.dataset-info');
+    const editFrm = card.querySelector('.edit-form');
+    const editBtn = card.querySelector('.edit-btn');
+    const cancel = card.querySelector('.cancel-btn');
+
+    if (editBtn && info && editFrm && cancel) {
+      editBtn.addEventListener('click', () => {
+        info.style.display = 'none';
+        editFrm.style.display = 'flex';
+      });
+      cancel.addEventListener('click', () => {
+        editFrm.style.display = 'none';
+        info.style.display = 'flex';
+      });
+    }
+  });
+
+  // Collapsible patient groups
+  document.querySelectorAll('.patient-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const idx = this.getAttribute('data-patient');
+      const section = document.getElementById('patient-datasets-' + idx);
+      if (section) {
+        if (section.style.display === 'none') {
+          section.style.display = 'block';
+          this.classList.add('active');
+        } else {
+          section.style.display = 'none';
+          this.classList.remove('active');
+        }
+      }
+    });
+  });
+
+  // Add client-side validation for file upload
+  document.getElementById('new-dataset-form').addEventListener('submit', function(e) {
+    var filesInput = document.getElementById('files');
+    var fileError = document.getElementById('file-error');
+    if (!filesInput.files || filesInput.files.length === 0) {
+      fileError.style.display = 'block';
+      filesInput.scrollIntoView({behavior: 'smooth', block: 'center'});
+      e.preventDefault();
+      return false;
     } else {
-      section.style.display = 'none';
-      this.classList.remove('active');
+      fileError.style.display = 'none';
     }
   });
 });
