@@ -121,6 +121,7 @@
   <div class="editor-toolbar mb-2"></div>
   <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
     <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
+    <canvas id="temp-canvas2" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
     <canvas id="annotation-canvas" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
   </div>
 </div>
@@ -261,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const imageCanvas = document.getElementById('image-canvas');
     const imageCanvas2 = document.getElementById('image-canvas2');
     const annotationCanvas = document.getElementById('annotation-canvas');
+    const tempCanvas2 = document.getElementById('temp-canvas2');
     const filterForm = document.getElementById('batch-filter-form');
     let contoursVisible = false;
     let currentTool = 'pen';
@@ -303,6 +305,9 @@ document.addEventListener('DOMContentLoaded', function() {
             imageCanvas2.height = img.height;
             annotationCanvas.width = img.width;
             annotationCanvas.height = img.height;
+            tempCanvas2.width = img.width;
+            tempCanvas2.height = img.height;
+
 
             imageCanvas.style.width = annotationCanvas.style.width = img.width + 'px';
             imageCanvas.style.height = annotationCanvas.style.height = img.height + 'px';
@@ -1099,8 +1104,8 @@ function updateMaskSizeLabel() {
 // Function to draw the currently selected mask
 function drawSelectedMask() {
     // Clear the annotation canvas
-    let annoctx = annotationCanvas.getContext('2d');
-    annoctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+    let annoctx = tempCanvas2.getContext('2d');
+    annoctx.clearRect(0, 0, tempCanvas2.width, tempCanvas2.height);
     
     // Convert the binary mask to an overlay image
     const selectedMask = allMasks[currentMaskIndex];
