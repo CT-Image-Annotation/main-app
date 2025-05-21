@@ -1,29 +1,413 @@
 {% extends 'base.html' %}
 
-{% block title %}Welcome to Radiolyze{% endblock %}
+{% block title %}My Datasets{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 80vh;">
-  <a href="https://www.kuh.ku.edu.tr/en" target="_blank" rel="noopener" class="mb-4" style="display: block;">
-    <img src="{{ url_for('static', filename='images/kuh-ingilizce-logo.svg') }}" alt="KUH Logo" style="width: 220px; max-width: 90vw; height: auto; display: block; margin: 0 auto;" />
-  </a>
-  <div class="card bg-dark text-light shadow-lg p-5" style="max-width: 1200px;">
-    <h1 class="display-3 text-center mb-3" style="color:#00cfff;">Radiolyze</h1>
-    <h2 class="text-center mb-4" style="font-weight:400;">Medical Imaging Platform</h2>
-    <p class="lead text-center mb-4">
-      <strong>Radiolyze</strong> is a modern platform for medical image annotation, sharing, and collaboration.<br>
-      <span class="text-info">Our aim:</span> To empower radiologists and researchers with intuitive tools for managing and analyzing medical datasets.
-    </p>
-    <ul class="mb-4">
-      <li>Upload and organize DICOM, PNG, and JPG images</li>
-      <li>Apply advanced filters and segmentations</li>
-      <li>Collaborate with your team</li>
-      <li>Secure, user-friendly, and beautiful</li>
-    </ul>
-    <div class="text-center">
-      <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-2">Log In</a>
-      <a href="{{ url_for('auth.register') }}" class="btn btn-outline-info btn-lg">Sign Up</a>
+<div class="hero-section">
+    <div class="marquee-container">
+        <div class="marquee-track">
+            <img src="/static/images/ct13.png" alt="CT Image 13">
+            <img src="/static/images/ct2.jpg" alt="CT Image 2">
+            <img src="/static/images/ct10.png" alt="CT Image 10">
+            <img src="/static/images/ct7.png" alt="CT Image 7">
+            <img src="/static/images/ct1.jpg" alt="CT Image 1">
+            <img src="/static/images/ct15.png" alt="CT Image 15">
+            <img src="/static/images/ct3.jpg" alt="CT Image 3">
+            <img src="/static/images/ct12.png" alt="CT Image 12">
+            <img src="/static/images/ct5.jpg" alt="CT Image 5">
+            <img src="/static/images/ct8.png" alt="CT Image 8">
+            <img src="/static/images/ct14.png" alt="CT Image 14">
+            <img src="/static/images/ct9.png" alt="CT Image 9">
+            <img src="/static/images/ct11.png" alt="CT Image 11">
+            <img src="/static/images/ct6.jpg" alt="CT Image 6">
+            <img src="/static/images/ct16.png" alt="CT Image 16">
+            <img src="/static/images/ct4.jpg" alt="CT Image 4">
+            <img src="/static/images/000127.png" alt="CT Image 17">
+            <img src="/static/images/ct13.png" alt="CT Image 13">
+            <img src="/static/images/ct2.jpg" alt="CT Image 2">
+            <img src="/static/images/ct10.png" alt="CT Image 10">
+            <img src="/static/images/ct7.png" alt="CT Image 7">
+            <img src="/static/images/ct1.jpg" alt="CT Image 1">
+            <img src="/static/images/ct15.png" alt="CT Image 15">
+            <img src="/static/images/ct3.jpg" alt="CT Image 3">
+            <img src="/static/images/ct12.png" alt="CT Image 12">
+            <img src="/static/images/ct5.jpg" alt="CT Image 5">
+            <img src="/static/images/ct8.png" alt="CT Image 8">
+            <img src="/static/images/ct14.png" alt="CT Image 14">
+            <img src="/static/images/ct9.png" alt="CT Image 9">
+            <img src="/static/images/ct11.png" alt="CT Image 11">
+            <img src="/static/images/ct6.jpg" alt="CT Image 6">
+            <img src="/static/images/ct16.png" alt="CT Image 16">
+            <img src="/static/images/ct4.jpg" alt="CT Image 4">
+            <img src="/static/images/000127.png" alt="CT Image 17">
+        </div>
     </div>
-  </div>
+    <h1 class="animated-headline">Accelerate Medical Imaging Insights with AI-Powered CT Annotation</h1>
+    <p class="animated-subheadline">Annotate. Visualize. Collaborate. All in one browser-based platform tailored for medical professionals.</p>
+    <div class="cta-buttons">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">Get Started Free</a>
+        <a href="#" class="btn btn-secondary">Watch Demo</a>
+        <a href="#" class="btn btn-secondary">Sign in with Hospital Account</a>
+    </div>
 </div>
-{% endblock %} 
+
+<div class="features-section">
+    <h2>Features</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <span class="feature-icon">🤖</span>
+            <h3>Smart AI Tools</h3>
+            <p>Use models like MedSAM for automatic, accurate segmentation.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">✍️</span>
+            <h3>Freehand & Manual Modes</h3>
+            <p>Draw, edit, and annotate precisely with intuitive tools.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🆚</span>
+            <h3>Side-by-Side Comparisons</h3>
+            <p>Easily compare ground truth with predictions.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">📁</span>
+            <h3>DICOM Support</h3>
+            <p>Upload, preview, and annotate .dcm files directly in the browser.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">☁️</span>
+            <h3>Cloud-Based</h3>
+            <p>No installation required — access your projects from anywhere.</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🤝</span>
+            <h3>Collaborative Workspace</h3>
+            <p>Comment, assign, and review annotations with your team.</p>
+        </div>
+    </div>
+</div>
+
+<div class="how-it-works-section">
+    <h2>How It Works</h2>
+    <div class="how-steps">
+        <div class="how-step">
+            <div class="how-icon">1</div>
+            <p>Upload your CT scans</p>
+        </div>
+        <div class="how-step">
+            <div class="how-icon">2</div>
+            <p>Annotate with AI or manual tools</p>
+        </div>
+        <div class="how-step">
+            <div class="how-icon">3</div>
+            <p>Export or integrate with your workflow</p>
+        </div>
+    </div>
+</div>
+
+<div class="use-cases-section">
+    <h2>Who Should Use Radiolyze?</h2>
+    <div class="use-cases-grid">
+        <div class="use-case-item">
+            <img src="{{ url_for('static', filename='images/radiologist.jpg') }}" alt="Radiologist" class="use-case-image">
+            <div class="use-case-overlay">
+                <h3>Radiologists</h3>
+                <p>"Makes annotation fast and reliable!"</p>
+            </div>
+        </div>
+        <div class="use-case-item">
+            <img src="{{ url_for('static', filename='images/researcher.jpg') }}" alt="Medical Researcher" class="use-case-image">
+            <div class="use-case-overlay">
+                <h3>Medical Researchers</h3>
+                <p>"Perfect for large-scale studies."</p>
+            </div>
+        </div>
+        <div class="use-case-item">
+            <img src="{{ url_for('static', filename='images/ai_picture.webp') }}" alt="AI/ML Engineer" class="use-case-image">
+            <div class="use-case-overlay">
+                <h3>AI/ML Engineers</h3>
+                <p>"Easy integration with ML pipelines."</p>
+            </div>
+        </div>
+        <div class="use-case-item">
+            <img src="{{ url_for('static', filename='images/clinical.jpg') }}" alt="Clinical Trials Team" class="use-case-image">
+            <div class="use-case-overlay">
+                <h3>Clinical Trials Teams</h3>
+                <p>"Streamlines multi-user collaboration."</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="trusted-by-section">
+    <h2>Trusted By</h2>
+    <div class="trusted-logos">
+        <a href="https://www.kuh.ku.edu.tr/en" target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='images/kuh-ingilizce-logo.svg') }}" alt="KUH Logo" style="height: 48px; width: auto; filter: brightness(0) invert(1);" />
+        </a>
+        <a href="https://www.mountsinai.org/" target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='images/mountsinai-logo.png') }}" alt="Mount Sinai Logo" style="height: 48px; width: auto; filter: brightness(0) invert(1);" />
+        </a>
+        <a href="https://www.ku.edu.tr/" target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='images/koclogo.png') }}" alt="Koç University Logo" style="height: 48px; width: auto; filter: brightness(0) invert(1);" />
+        </a>
+        <a href="https://www.acadrad.org/" target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='images/acadlogo.png') }}" alt="Academy for Radiology & Biomedical Imaging Research Logo" style="height: 48px; width: auto; filter: brightness(0) invert(1);" />
+        </a>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-links">
+        <a href="#">About Us</a>
+        <a href="#">Privacy & Compliance (HIPAA/GDPR)</a>
+        <a href="#">Contact</a>
+        <a href="#">GitHub / Docs / API Access</a>
+    </div>
+    <div class="social-media">
+        <a href="#">Social Media</a>
+        <a href="#">Newsletter Signup</a>
+    </div>
+</footer>
+
+<style>
+    body {
+        background-color: #343a40;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+    }
+    .hero-section {
+        text-align: center;
+        padding: 4rem 2rem;
+        margin-bottom: 4rem;
+    }
+    .features-section {
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    .how-it-works-section {
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    .use-cases-section {
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    .trusted-by-section {
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    .cta-buttons {
+        margin-top: 2rem;
+    }
+    .cta-buttons .btn {
+        margin: 0.5rem;
+    }
+    footer {
+        text-align: center;
+        padding: 2rem;
+        background-color: #212529;
+    }
+    .footer-links, .social-media {
+        margin-top: 1rem;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .animated-headline {
+        animation: fadeIn 2s ease-in;
+    }
+    .animated-subheadline {
+        animation: fadeIn 2s ease-in 0.5s;
+    }
+    .marquee-container {
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+        width: 100vw;
+        max-width: 100vw;
+        overflow: hidden;
+        background: #000;
+        padding: 0;
+        height: 180px;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        border-radius: 0;
+        margin-top: 0;
+        margin-bottom: 2rem;
+    }
+    .marquee-container::before,
+    .marquee-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        width: 30px;
+        height: 100%;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .marquee-container::before {
+        left: 0;
+        background: linear-gradient(to right, #000 90%, transparent 100%);
+    }
+    .marquee-container::after {
+        right: 0;
+        background: linear-gradient(to left, #000 90%, transparent 100%);
+    }
+    .marquee-track {
+        display: flex;
+        width: max-content;
+        min-width: 200vw;
+        animation: marquee 30s linear infinite;
+    }
+    .marquee-track img {
+        height: 160px;
+        width: 160px;
+        margin: 0 10px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #222;
+        display: block;
+    }
+    @keyframes marquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    .features-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .feature-card {
+        background: rgba(35, 39, 43, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12);
+        width: 260px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), 0 2px 8px 0 rgba(0,0,0,0.15);
+    }
+    .how-step {
+        background: #23272b;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12);
+        width: 200px;
+    }
+    .use-case-item {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .use-case-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .use-case-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1.5rem;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        color: white;
+    }
+    .use-case-overlay h3 {
+        margin: 0 0 0.5rem 0;
+        color: #00cfff;
+        font-size: 1.3rem;
+    }
+    .use-case-overlay p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #ffffff;
+    }
+    .feature-icon {
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+        background: rgba(0, 207, 255, 0.1);
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+        border-radius: 50%;
+        margin: 0 auto 1rem auto;
+    }
+    .feature-card h3 {
+        color: #00cfff;
+        margin-bottom: 0.5rem;
+    }
+    .feature-card p {
+        color: #e9ecef;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    .how-steps {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .how-icon {
+        background: #00bfff;
+        color: #fff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.3rem;
+        margin: 0 auto 1rem auto;
+    }
+    .use-cases-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        margin-top: 2rem;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .use-case-item:hover .use-case-image {
+        transform: scale(1.05);
+    }
+    .trusted-logos {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        margin-top: 2rem;
+        filter: grayscale(1) brightness(0.9);
+    }
+    .trusted-logos img {
+        height: 48px;
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}

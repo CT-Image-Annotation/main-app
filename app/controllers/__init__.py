@@ -9,11 +9,11 @@ from app.controllers.landing import bp as landing_bp
 
 def register_controllers(app: Flask):
     app.register_blueprint(auth_bp)
-    app.register_blueprint(uploads_bp)
-    app.register_blueprint(processing_bp)
+    app.register_blueprint(uploads_bp, url_prefix='/uploads')
+    app.register_blueprint(processing_bp, url_prefix='/process')
     app.register_blueprint(api_bp, url_prefix = "/api")
-    app.register_blueprint(dashboard_bp)
-    app.register_blueprint(datasets_bp)
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+    app.register_blueprint(datasets_bp, url_prefix = "/datasets")
     app.register_blueprint(landing_bp)
 
 

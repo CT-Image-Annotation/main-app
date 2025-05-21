@@ -9,7 +9,7 @@ from app.controllers.processing import FILTER_NAMES
 from app.services.FileService import FileService
 from app.services.DatasetService import DatasetService
 
-bp = Blueprint('uploads', __name__, url_prefix='/uploads')
+bp = Blueprint('uploads', __name__)
 
 @bp.route('/')
 def root():
