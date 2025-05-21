@@ -23,12 +23,47 @@
     pointer-events: auto !important;
     z-index: 2;
   }
+  .glass-card {
+    background: rgba(40, 48, 54, 0.55);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), 0 2px 8px 0 rgba(0,0,0,0.15);
+    border: 1.5px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    position: relative;
+    overflow: hidden;
+  }
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(0,207,255,0.08) 0%, rgba(255,255,255,0.10) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .glass-card > * {
+    position: relative;
+    z-index: 2;
+  }
+  .form-control {
+    background-color: #23272b !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #e9ecef !important;
+  }
+  .form-control:focus {
+    background-color: #2c3136 !important;
+    border-color: #00cfff !important;
+    box-shadow: 0 0 0 0.25rem rgba(0, 207, 255, 0.25) !important;
+  }
+  .form-control::placeholder {
+    color: #6c757d !important;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container d-flex align-items-center justify-content-center" style="min-height: 80vh;">
-  <div class="card bg-dark text-light shadow p-4 w-100" style="max-width: 400px;">
+<div class="d-flex align-items-center justify-content-center" style="min-height: 100vh; background: #111315;">
+  <div class="glass-card position-relative p-4 w-100" style="max-width: 400px;">
     <div class="text-center mb-3">
       <h1 class="mb-1">Create Your Account</h1>
       <p class="text-secondary">Register with your professional credentials to access patient MRI and CT scan records.</p>
@@ -36,16 +71,16 @@
     <form id="registerForm" action="{{ url_for('auth.register') }}" method="POST">
       <div class="mb-3">
         <label for="username" class="form-label">Username</label>
-        <input type="text" id="username" name="username" class="form-control bg-secondary text-light" placeholder="e.g. dr.jones" required />
+        <input type="text" id="username" name="username" class="form-control" placeholder="e.g. dr.jones" required />
       </div>
       <div class="mb-3 password-group">
         <label for="password" class="form-label">Password</label>
-        <input type="password" id="password" name="password" class="form-control bg-secondary text-light" placeholder="Enter password" required />
+        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required />
         <span class="toggle-password" data-target="password" title="Show/Hide Password">👁️</span>
       </div>
       <div class="mb-3 password-group">
         <label for="confirm_password" class="form-label">Confirm Password</label>
-        <input type="password" id="confirm_password" name="confirm_password" class="form-control bg-secondary text-light" placeholder="Repeat password" required />
+        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat password" required />
         <span class="toggle-password" data-target="confirm_password" title="Show/Hide Password">👁️</span>
       </div>
       <div id="pwError" class="text-danger mb-2"></div>

@@ -198,6 +198,7 @@
     </div>
 </div>
 
+<<<<<<< Updated upstream
 <script type="module">
 import { CursorManager } from "{{ url_for('static', filename='js/editor/CursorManager.js') }}";
 
@@ -925,6 +926,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+=======
+<script>
+  // Pass data to JavaScript
+  window.datasetId = {{ dataset.id|tojson }};
+  window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
+asdfasdf
+>>>>>>> Stashed changes
 </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
