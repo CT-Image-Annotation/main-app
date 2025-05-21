@@ -39,3 +39,103 @@
 .folder i, .file i {
   margin-right: 8px;
 } 
+
+/* Add these styles to your CSS file */
+
+/* Ensure touch events work properly */
+#annotation-canvas,
+#image-canvas {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .editor-container {
+    width: 95%;
+    margin: 0 auto;
+  }
+  
+  .editor-wrapper {
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  #image-controls, 
+  #drawing-tools {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  /* Make the control elements take up more space on mobile */
+  #brightness-slider,
+  #contrast-slider,
+  #brush-size,
+  #contour-threshold {
+    width: 80px;
+  }
+  
+  /* Make buttons larger and easier to press on mobile */
+  .btn-sm {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Adjust layout for tools */
+  #drawing-tools {
+    padding: 8px;
+  }
+  
+  /* Add some spacing between controls on mobile */
+  .ms-3 {
+    margin-left: 0.5rem !important;
+  }
+}
+
+/* Fix for iOS Safari scrolling issues */
+html, body {
+  position: relative;
+  overflow-x: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+/* Optional scroll momentum fix */
+.editor-wrapper {
+  -webkit-overflow-scrolling: touch;
+  overflow: auto;
+}
+
+@media (max-width: 767.98px) {
+  /* Adjust button text on very small screens */
+  @media (max-width: 400px) {
+    .btn-sm {
+      padding: 0.25rem 0.4rem;
+      font-size: 0.75rem;
+    }
+    #drawing-tools .btn-sm span {
+      display: none; /* Hide text on very small screens, keep only icons */
+    }
+  }
+  
+  /* Make range inputs take less space */
+  .form-range {
+    min-width: 80px;
+  }
+  
+  /* Additional spacing for mobile */
+  #image-controls, #drawing-tools {
+    margin-bottom: 1rem;
+  }
+  
+  /* Ensure flex items don't grow too large */
+  .d-flex {
+    flex-wrap: wrap;
+  }
+}

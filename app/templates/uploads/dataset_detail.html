@@ -46,32 +46,77 @@
   {% endif %}
 
   <p>Status: <span class="fw-bold text-info">{{ dataset.tags }}</span></p>
-  <div id="image-controls" class="d-flex flex-row align-items-center gap-3 mt-3" style="background:#23272b; border-radius:8px; padding:12px;">
-    <label class="text-light mb-0" for="brightness-slider">Brightness</label>
-    <input type="range" id="brightness-slider" min="-100" max="100" value="0" style="width:120px;">
-    <span id="brightness-value" class="text-light">0</span>
-    <label class="text-light mb-0 ms-3" for="contrast-slider">Contrast</label>
-    <input type="range" id="contrast-slider" min="-100" max="100" value="0" style="width:120px;">
-    <span id="contrast-value" class="text-light">0</span>
-  </div>
-  <div id="drawing-tools" class="d-flex flex-row align-items-center gap-3 mt-3" style="background:#23272b; border-radius:8px; padding:12px;">
-    <button class="btn btn-outline-light btn-sm" id="tool-pen" title="Freehand">✏️ Pen</button>
-    <button class="btn btn-outline-light btn-sm" id="tool-rect" title="Rectangle">▭ Rect</button>
-    <button class="btn btn-outline-light btn-sm" id="tool-circle" title="Circle">◯ Circle</button>
-    <button class="btn btn-outline-light btn-sm" id="tool-eraser" title="Eraser">🧽 Eraser</button>
-    <label class="text-light mb-0 ms-3" for="brush-size">Brush Size</label>
-    <input type="range" id="brush-size" min="1" max="30" value="5" style="width:100px;">
-    <span id="brush-size-value" class="text-light">5</span>
-    <label class="text-light mb-0 ms-3" for="brush-color">Color</label>
-    <input type="color" id="brush-color" value="#00ff00" style="width: 30px; height: 30px;">
-    <button class="btn btn-outline-warning btn-sm ms-3" id="tool-undo" title="Undo">↩️ Undo</button>
-    <button class="btn btn-outline-warning btn-sm" id="tool-redo" title="Redo">↪️ Redo</button>
-    <button class="btn btn-outline-danger btn-sm" id="tool-clear" title="Clear">🗑️ Clear</button>
+
+<!-- Image Controls Section - Modified for Mobile -->
+<div id="image-controls" class="mt-3">
+  <!-- Stack controls vertically on mobile -->
+  <div class="card bg-dark p-3 mb-3 rounded">
+    <div class="row g-2">
+      <!-- Brightness control -->
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-light mb-0 flex-shrink-0 me-1" for="brightness-slider">Brightness</label>
+          <input type="range" id="brightness-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+          <span id="brightness-value" class="text-light flex-shrink-0" style="min-width: 2rem; text-align: right;">0</span>
+        </div>
+      </div>
+      <!-- Contrast control -->
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-light mb-0 flex-shrink-0 me-1" for="contrast-slider">Contrast</label>
+          <input type="range" id="contrast-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+          <span id="contrast-value" class="text-light flex-shrink-0" style="min-width: 2rem; text-align: right;">0</span>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
+
+<!-- Drawing Tools Section - Modified for Mobile -->
+<div id="drawing-tools" class="mt-3">
+  <div class="card bg-dark p-3 mb-3 rounded">
+    <!-- Drawing tools -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button class="btn btn-outline-light btn-sm" id="tool-pen" title="Freehand">✏️ Pen</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-rect" title="Rectangle">▭ Rect</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-circle" title="Circle">◯ Circle</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-eraser" title="Eraser">🧽 Eraser</button>
+    </div>
+    
+    <!-- Brush controls -->
+    <div class="row g-2">
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-light mb-0 flex-shrink-0 me-1" for="brush-size">Brush Size</label>
+          <input type="range" id="brush-size" min="1" max="30" value="5" class="form-range flex-grow-1">
+          <span id="brush-size-value" class="text-light flex-shrink-0" style="min-width: 1.5rem; text-align: right;">5</span>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <label class="text-light mb-0 flex-shrink-0" for="brush-color">Color</label>
+          <input type="color" id="brush-color" value="#00ff00" style="width: 30px; height: 30px;">
+          <div class="ms-auto d-flex gap-1">
+            <button class="btn btn-outline-warning btn-sm" id="tool-undo" title="Undo">↩️</button>
+            <button class="btn btn-outline-warning btn-sm" id="tool-redo" title="Redo">↪️</button>
+            <button class="btn btn-outline-danger btn-sm" id="tool-clear" title="Clear">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
 <!-- Editor Section -->
-<div class="editor-container d-flex flex-column align-items-center my-4">
+<div
+  class="editor-container d-flex flex-row justify-content-center align-items-center flex-wrap w-100 overflow-hidden my-4"
+  style="gap: 3%;"
+>
+    <canvas id="image-canvas2" style="position:relative; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
+
   <div class="editor-toolbar mb-2"></div>
   <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
     <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
@@ -198,7 +243,6 @@
     </div>
 </div>
 
-<<<<<<< Updated upstream
 <script type="module">
 import { CursorManager } from "{{ url_for('static', filename='js/editor/CursorManager.js') }}";
 
@@ -214,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const total = fileIds.length;
     const toolbarEl = document.querySelector('.editor-toolbar');
     const imageCanvas = document.getElementById('image-canvas');
+    const imageCanvas2 = document.getElementById('image-canvas2');
     const annotationCanvas = document.getElementById('annotation-canvas');
     const filterForm = document.getElementById('batch-filter-form');
     let contoursVisible = false;
@@ -242,14 +287,20 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set canvas pixel size to match image
             imageCanvas.width = img.width;
             imageCanvas.height = img.height;
+            imageCanvas2.width = img.width;
+            imageCanvas2.height = img.height;
             annotationCanvas.width = img.width;
             annotationCanvas.height = img.height;
 
             imageCanvas.style.width = annotationCanvas.style.width = img.width + 'px';
             imageCanvas.style.height = annotationCanvas.style.height = img.height + 'px';
+            imageCanvas2.style.width = annotationCanvas.style.width = img.width + 'px';
+            imageCanvas2.style.height = annotationCanvas.style.height = img.height + 'px';
 
             imageCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
             imageCanvas.getContext('2d').drawImage(img, 0, 0);
+            imageCanvas2.getContext('2d').clearRect(0, 0, img.width, img.height);
+            imageCanvas2.getContext('2d').drawImage(img, 0, 0);
             annotationCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
 
             loadPastAnnotations();
@@ -815,80 +866,185 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tool-clear').addEventListener('click', clearAnnotation);
 
     // Save state on drawing start
-    annotationCanvas.addEventListener('mousedown', function(e) {
-        if (currentTool === 'pen' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'eraser') {
-            saveAnnotationState();
-        }
-        drawing = true;
-        const rect = annotationCanvas.getBoundingClientRect();
-        startX = lastX = e.clientX - rect.left;
-        startY = lastY = e.clientY - rect.top;
-        if (currentTool === 'pen' || currentTool === 'eraser') {
-            const ctx = annotationCanvas.getContext('2d');
-            ctx.beginPath();
-            ctx.moveTo(startX, startY);
-        }
-    });
-
-    annotationCanvas.addEventListener('mousemove', function(e) {
-        if (!drawing) return;
-        const rect = annotationCanvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+    annotationCanvas.addEventListener('pointerdown', function(e) {
+    e.preventDefault(); // Prevent default to avoid scrolling/zooming
+    
+    if (currentTool === 'pen' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'eraser') {
+        saveAnnotationState();
+    }
+    
+    // Capture the pointer to track it even if it leaves the canvas area
+    this.setPointerCapture(e.pointerId);
+    
+    drawing = true;
+    
+    // Calculate position relative to canvas
+    const rect = annotationCanvas.getBoundingClientRect();
+    const scaleX = annotationCanvas.width / rect.width;
+    const scaleY = annotationCanvas.height / rect.height;
+    
+    // Scale the coordinates appropriately (handles high DPI screens better)
+    startX = lastX = (e.clientX - rect.left) * scaleX;
+    startY = lastY = (e.clientY - rect.top) * scaleY;
+    
+    if (currentTool === 'pen' || currentTool === 'eraser') {
         const ctx = annotationCanvas.getContext('2d');
-        if (currentTool === 'pen') {
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = brushColor;
-            ctx.lineWidth = brushSize;
-            ctx.lineCap = 'round';
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        } else if (currentTool === 'eraser') {
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.lineWidth = brushSize * 2;
-            ctx.lineCap = 'round';
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        }
-        lastX = x;
-        lastY = y;
-    });
-
-    annotationCanvas.addEventListener('mouseup', function(e) {
-        if (!drawing) return;
-        drawing = false;
-        const rect = annotationCanvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const ctx = annotationCanvas.getContext('2d');
-        if (currentTool === 'rect') {
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = brushColor;
-            ctx.lineWidth = brushSize;
-            ctx.strokeRect(startX, startY, x - startX, y - startY);
-        } else if (currentTool === 'circle') {
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = brushColor;
-            ctx.lineWidth = brushSize;
-            const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
-            ctx.beginPath();
-            ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
-            ctx.stroke();
-        }
-        ctx.globalCompositeOperation = 'source-over';
         ctx.beginPath();
-        syncAnnotation()
+        ctx.moveTo(startX, startY);
+        
+        // For mobile, draw a dot on tap to ensure something appears
+        ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = currentTool === 'eraser' ? brushSize * 2 : brushSize;
+        ctx.lineCap = 'round';
+        ctx.arc(startX, startY, 0.5, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+    }
+});
 
-    });
+annotationCanvas.addEventListener('pointermove', function(e) {
+    if (!drawing) return;
+    
+    // Calculate position with proper scaling
+    const rect = annotationCanvas.getBoundingClientRect();
+    const scaleX = annotationCanvas.width / rect.width;
+    const scaleY = annotationCanvas.height / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    const ctx = annotationCanvas.getContext('2d');
+    
+    if (currentTool === 'pen') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = brushSize;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    } else if (currentTool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = brushSize * 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    } else if (currentTool === 'rect' || currentTool === 'circle') {
+        // Optional: preview of shape while drawing
+        // Requires saving and restoring canvas between moves
+    }
+    
+    lastX = x;
+    lastY = y;
+});
 
-    annotationCanvas.addEventListener('mouseleave', function() {
-        drawing = false;
-        annotationCanvas.getContext('2d').beginPath();
-    });
+annotationCanvas.addEventListener('pointerup', function(e) {
+    if (!drawing) return;
+    
+    drawing = false;
+    
+    // Calculate final position with proper scaling
+    const rect = annotationCanvas.getBoundingClientRect();
+    const scaleX = annotationCanvas.width / rect.width;
+    const scaleY = annotationCanvas.height / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    const ctx = annotationCanvas.getContext('2d');
+    
+    if (currentTool === 'rect') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = brushSize;
+        ctx.strokeRect(startX, startY, x - startX, y - startY);
+    } else if (currentTool === 'circle') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = brushSize;
+        const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+        ctx.beginPath();
+        ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+    
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.beginPath();
+    
+    // Sync annotation to server
+    syncAnnotation();
+    
+    // Release pointer capture
+    this.releasePointerCapture(e.pointerId);
+});
+
+annotationCanvas.addEventListener('pointercancel', function(e) {
+    if (!drawing) return;
+    
+    drawing = false;
+    
+    try {
+        // Make sure we have a valid pointerId before releasing
+        if (e && e.pointerId) {
+            this.releasePointerCapture(e.pointerId);
+        }
+    } catch (err) {
+        console.log('Error releasing pointer capture:', err);
+    }
+    
+    const ctx = annotationCanvas.getContext('2d');
+    ctx.beginPath();
+});
+
+// Add these additional event listeners for better mobile support
+annotationCanvas.addEventListener('touchstart', function(e) {
+    e.preventDefault(); // Prevent scrolling and zooming
+}, { passive: false });
+
+annotationCanvas.addEventListener('touchmove', function(e) {
+    e.preventDefault(); // Prevent scrolling and zooming
+}, { passive: false });
+
+// Prevent scrolling when touching the canvas
+document.body.addEventListener('touchstart', function(e) {
+    if (e.target === annotationCanvas) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// Optional: Add this function to handle window resizing
+window.addEventListener('resize', function() {
+    // Resize canvas elements properly
+    const imageWidth = imageCanvas.width;
+    const imageHeight = imageCanvas.height;
+    
+    // Update wrapper dimensions to match screen size while maintaining aspect ratio
+    const wrapper = imageCanvas.parentElement;
+    const maxWidth = wrapper.parentElement.clientWidth * 0.95; // 95% of container width
+    
+    let newWidth = imageWidth;
+    let newHeight = imageHeight;
+    
+    if (newWidth > maxWidth) {
+        const ratio = maxWidth / newWidth;
+        newWidth = maxWidth;
+        newHeight = imageHeight * ratio;
+    }
+    
+    wrapper.style.width = newWidth + 'px';
+    wrapper.style.height = newHeight + 'px';
+    
+    // Update canvas display sizes (not pixel dimensions)
+    imageCanvas.style.width = annotationCanvas.style.width = newWidth + 'px';
+    imageCanvas.style.height = annotationCanvas.style.height = newHeight + 'px';
+});
 
     document.getElementById('export-stl').addEventListener('click', function() {
         const params = getMeshVolumeParams();
@@ -926,13 +1082,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-=======
-<script>
+
   // Pass data to JavaScript
   window.datasetId = {{ dataset.id|tojson }};
   window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
-asdfasdf
->>>>>>> Stashed changes
 </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
