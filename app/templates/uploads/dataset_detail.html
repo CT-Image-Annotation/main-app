@@ -71,7 +71,9 @@
 </div>
 
 <!-- Editor Section -->
-<div class="editor-container d-flex flex-column align-items-center my-4">
+<div class="editor-container d-flex flex-row justify-content-between align-items-center gap-3 flex-wrap w-100 overflow-hidden my-4">
+    <canvas id="image-canvas2" style="position:relative; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
+
   <div class="editor-toolbar mb-2"></div>
   <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
     <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
@@ -213,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const total = fileIds.length;
     const toolbarEl = document.querySelector('.editor-toolbar');
     const imageCanvas = document.getElementById('image-canvas');
+    const imageCanvas2 = document.getElementById('image-canvas2');
     const annotationCanvas = document.getElementById('annotation-canvas');
     const filterForm = document.getElementById('batch-filter-form');
     let contoursVisible = false;
@@ -241,14 +244,20 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set canvas pixel size to match image
             imageCanvas.width = img.width;
             imageCanvas.height = img.height;
+            imageCanvas2.width = img.width;
+            imageCanvas2.height = img.height;
             annotationCanvas.width = img.width;
             annotationCanvas.height = img.height;
 
             imageCanvas.style.width = annotationCanvas.style.width = img.width + 'px';
             imageCanvas.style.height = annotationCanvas.style.height = img.height + 'px';
+            imageCanvas2.style.width = annotationCanvas.style.width = img.width + 'px';
+            imageCanvas2.style.height = annotationCanvas.style.height = img.height + 'px';
 
             imageCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
             imageCanvas.getContext('2d').drawImage(img, 0, 0);
+            imageCanvas2.getContext('2d').clearRect(0, 0, img.width, img.height);
+            imageCanvas2.getContext('2d').drawImage(img, 0, 0);
             annotationCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
 
             loadPastAnnotations();
