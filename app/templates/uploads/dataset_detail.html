@@ -287,6 +287,18 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMaskIndex = 0; // Current mask index being displayed
 
 
+    function applyTempCanvasToAnnotation(){
+        const tempCtx = tempCanvas2.getContext("2d");
+        const annotationCtx = annotationCanvas.getContext("2d");
+
+        // Copy the temp canvas content onto the annotation canvas
+        annotationCtx.drawImage(tempCanvas2, 0, 0);
+
+        // Clear the temporary canvas
+        tempCtx.clearRect(0, 0, tempCanvas2.width, tempCanvas2.height);
+        syncAnnotation()
+    }
+
 
     function loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, callback) {
         console.log('Loading image from URL:', imageUrl);  // Debug log
@@ -1026,7 +1038,11 @@ function createMaskSelectorUI() {
     selectorContainer.style.borderRadius = '5px';
     selectorContainer.style.zIndex = '9999'; // Very high z-index
     selectorContainer.style.border = '2px solid yellow'; // Add a visible border
-    
+    selectorContainer.style.display = 'flex';
+
+    function closeMaskTool() {
+    selectorContainer.style.display = 'none';
+    }
     // Create mask size label
     const sizeLabel = document.createElement('div');
     sizeLabel.id = 'mask-size-label';
@@ -1057,17 +1073,35 @@ function createMaskSelectorUI() {
         selectNextMask();
     });
     
+    // Create save button
+    const saveButton = document.createElement('button');
+    saveButton.textContent = '💾 Save';
+    saveButton.style.margin = '2px';
+    saveButton.style.padding = '5px 10px';  // Bigger button
+    saveButton.style.fontSize = '16px';     // Bigger text
+    saveButton.addEventListener('click', () => {
+        console.log("Save button clicked");
+        applyTempCanvasToAnnotation();  // your save handler
+        closeMaskTool();
+    });
+
+;
+
+
     // Append elements to container
     selectorContainer.appendChild(upButton);
     selectorContainer.appendChild(sizeLabel);
     selectorContainer.appendChild(downButton);
-    
+    selectorContainer.appendChild(saveButton);
+
     // Add container near the annotation canvas
     const canvasContainer = annotationCanvas.parentElement;
     canvasContainer.style.position = 'relative';
     canvasContainer.appendChild(selectorContainer);
     console.log("Mask selector UI created and appended to:", canvasContainer);
 }
+
+
 
 // Function to get mask size label based on index
 function getMaskSizeLabel(index) {
