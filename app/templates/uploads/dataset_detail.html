@@ -8,6 +8,43 @@
   {% if dataset.description %}
     <p class="text-secondary">{{ dataset.description }}</p>
   {% endif %}
+
+  <!-- Patient Information -->
+  {% if dataset.patient_name %}
+    <div class="card bg-dark text-light p-3 mb-3">
+      <h5 class="mb-3">Patient Information</h5>
+      <div class="row">
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Name:</strong> {{ dataset.patient_name }}</p>
+          <p class="mb-1"><strong>ID:</strong> {{ dataset.patient_id }}</p>
+        </div>
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Date of Birth:</strong> {{ dataset.patient_dob.strftime('%Y-%m-%d') if dataset.patient_dob }}</p>
+          <p class="mb-1"><strong>Gender:</strong> {{ dataset.patient_gender }}</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Scan Information -->
+  {% if dataset.scan_type %}
+    <div class="card bg-dark text-light p-3 mb-3">
+      <h5 class="mb-3">Scan Information</h5>
+      <div class="row">
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Type:</strong> {{ dataset.scan_type }}</p>
+          <p class="mb-1"><strong>Date:</strong> {{ dataset.scan_date.strftime('%Y-%m-%d') if dataset.scan_date }}</p>
+        </div>
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Series Number:</strong> {{ dataset.scan_series_number }}</p>
+          {% if dataset.scan_description %}
+            <p class="mb-1"><strong>Description:</strong> {{ dataset.scan_description }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
   <p>Status: <span class="fw-bold text-info">{{ dataset.tags }}</span></p>
   <div id="image-controls" class="d-flex flex-row align-items-center gap-3 mt-3" style="background:#23272b; border-radius:8px; padding:12px;">
     <label class="text-light mb-0" for="brightness-slider">Brightness</label>
