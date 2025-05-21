@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         // 3. Send to backend
-        fetch("http://localhost:5000/medsam2/predict_combined", {
+        fetch("/medsam2/predict_combined", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
