@@ -814,80 +814,185 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tool-clear').addEventListener('click', clearAnnotation);
 
     // Save state on drawing start
-    annotationCanvas.addEventListener('mousedown', function(e) {
-        if (currentTool === 'pen' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'eraser') {
-            saveAnnotationState();
-        }
-        drawing = true;
-        const rect = annotationCanvas.getBoundingClientRect();
-        startX = lastX = e.clientX - rect.left;
-        startY = lastY = e.clientY - rect.top;
-        if (currentTool === 'pen' || currentTool === 'eraser') {
-            const ctx = annotationCanvas.getContext('2d');
-            ctx.beginPath();
-            ctx.moveTo(startX, startY);
-        }
-    });
-
-    annotationCanvas.addEventListener('mousemove', function(e) {
-        if (!drawing) return;
-        const rect = annotationCanvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+    annotationCanvas.addEventListener('pointerdown', function(e) {
+    e.preventDefault(); // Prevent default to avoid scrolling/zooming
+    
+    if (currentTool === 'pen' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'eraser') {
+        saveAnnotationState();
+    }
+    
+    // Capture the pointer to track it even if it leaves the canvas area
+    this.setPointerCapture(e.pointerId);
+    
+    drawing = true;
+    
+    // Calculate position relative to canvas
+    const rect = annotationCanvas.getBoundingClientRect();
+    const scaleX = annotationCanvas.width / rect.width;
+    const scaleY = annotationCanvas.height / rect.height;
+    
+    // Scale the coordinates appropriately (handles high DPI screens better)
+    startX = lastX = (e.clientX - rect.left) * scaleX;
+    startY = lastY = (e.clientY - rect.top) * scaleY;
+    
+    if (currentTool === 'pen' || currentTool === 'eraser') {
         const ctx = annotationCanvas.getContext('2d');
-        if (currentTool === 'pen') {
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = brushColor;
-            ctx.lineWidth = brushSize;
-            ctx.lineCap = 'round';
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        } else if (currentTool === 'eraser') {
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.lineWidth = brushSize * 2;
-            ctx.lineCap = 'round';
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        }
-        lastX = x;
-        lastY = y;
-    });
-
-    annotationCanvas.addEventListener('mouseup', function(e) {
-        if (!drawing) return;
-        drawing = false;
-        const rect = annotationCanvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const ctx = annotationCanvas.getContext('2d');
-        if (currentTool === 'rect') {
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = brushColor;
-            ctx.lineWidth = brushSize;
-            ctx.strokeRect(startX, startY, x - startX, y - startY);
-        } else if (currentTool === 'circle') {
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = brushColor;
-            ctx.lineWidth = brushSize;
-            const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
-            ctx.beginPath();
-            ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
-            ctx.stroke();
-        }
-        ctx.globalCompositeOperation = 'source-over';
         ctx.beginPath();
-        syncAnnotation()
+        ctx.moveTo(startX, startY);
+        
+        // For mobile, draw a dot on tap to ensure something appears
+        ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = currentTool === 'eraser' ? brushSize * 2 : brushSize;
+        ctx.lineCap = 'round';
+        ctx.arc(startX, startY, 0.5, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+    }
+});
 
-    });
+annotationCanvas.addEventListener('pointermove', function(e) {
+    if (!drawing) return;
+    
+    // Calculate position with proper scaling
+    const rect = annotationCanvas.getBoundingClientRect();
+    const scaleX = annotationCanvas.width / rect.width;
+    const scaleY = annotationCanvas.height / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    const ctx = annotationCanvas.getContext('2d');
+    
+    if (currentTool === 'pen') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = brushSize;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    } else if (currentTool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = brushSize * 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    } else if (currentTool === 'rect' || currentTool === 'circle') {
+        // Optional: preview of shape while drawing
+        // Requires saving and restoring canvas between moves
+    }
+    
+    lastX = x;
+    lastY = y;
+});
 
-    annotationCanvas.addEventListener('mouseleave', function() {
-        drawing = false;
-        annotationCanvas.getContext('2d').beginPath();
-    });
+annotationCanvas.addEventListener('pointerup', function(e) {
+    if (!drawing) return;
+    
+    drawing = false;
+    
+    // Calculate final position with proper scaling
+    const rect = annotationCanvas.getBoundingClientRect();
+    const scaleX = annotationCanvas.width / rect.width;
+    const scaleY = annotationCanvas.height / rect.height;
+    
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    
+    const ctx = annotationCanvas.getContext('2d');
+    
+    if (currentTool === 'rect') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = brushSize;
+        ctx.strokeRect(startX, startY, x - startX, y - startY);
+    } else if (currentTool === 'circle') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = brushSize;
+        const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+        ctx.beginPath();
+        ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+    
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.beginPath();
+    
+    // Sync annotation to server
+    syncAnnotation();
+    
+    // Release pointer capture
+    this.releasePointerCapture(e.pointerId);
+});
+
+annotationCanvas.addEventListener('pointercancel', function(e) {
+    if (!drawing) return;
+    
+    drawing = false;
+    
+    try {
+        // Make sure we have a valid pointerId before releasing
+        if (e && e.pointerId) {
+            this.releasePointerCapture(e.pointerId);
+        }
+    } catch (err) {
+        console.log('Error releasing pointer capture:', err);
+    }
+    
+    const ctx = annotationCanvas.getContext('2d');
+    ctx.beginPath();
+});
+
+// Add these additional event listeners for better mobile support
+annotationCanvas.addEventListener('touchstart', function(e) {
+    e.preventDefault(); // Prevent scrolling and zooming
+}, { passive: false });
+
+annotationCanvas.addEventListener('touchmove', function(e) {
+    e.preventDefault(); // Prevent scrolling and zooming
+}, { passive: false });
+
+// Prevent scrolling when touching the canvas
+document.body.addEventListener('touchstart', function(e) {
+    if (e.target === annotationCanvas) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// Optional: Add this function to handle window resizing
+window.addEventListener('resize', function() {
+    // Resize canvas elements properly
+    const imageWidth = imageCanvas.width;
+    const imageHeight = imageCanvas.height;
+    
+    // Update wrapper dimensions to match screen size while maintaining aspect ratio
+    const wrapper = imageCanvas.parentElement;
+    const maxWidth = wrapper.parentElement.clientWidth * 0.95; // 95% of container width
+    
+    let newWidth = imageWidth;
+    let newHeight = imageHeight;
+    
+    if (newWidth > maxWidth) {
+        const ratio = maxWidth / newWidth;
+        newWidth = maxWidth;
+        newHeight = imageHeight * ratio;
+    }
+    
+    wrapper.style.width = newWidth + 'px';
+    wrapper.style.height = newHeight + 'px';
+    
+    // Update canvas display sizes (not pixel dimensions)
+    imageCanvas.style.width = annotationCanvas.style.width = newWidth + 'px';
+    imageCanvas.style.height = annotationCanvas.style.height = newHeight + 'px';
+});
 
     document.getElementById('export-stl').addEventListener('click', function() {
         const params = getMeshVolumeParams();
