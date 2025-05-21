@@ -106,27 +106,35 @@
 </div>
 
 <div class="use-cases-section">
-    <h2>Use Cases</h2>
+    <h2>Who Should Use Radiolyze?</h2>
     <div class="use-cases-grid">
-        <div class="use-case-card">
-            <span class="use-case-icon">🩺</span>
-            <h3>Radiologists</h3>
-            <p>"Makes annotation fast and reliable!"</p>
+        <div class="use-case-item">
+            <img src="{{ url_for('static', filename='images/radiologist.jpg') }}" alt="Radiologist" class="use-case-image">
+            <div class="use-case-overlay">
+                <h3>Radiologists</h3>
+                <p>"Makes annotation fast and reliable!"</p>
+            </div>
         </div>
-        <div class="use-case-card">
-            <span class="use-case-icon">🔬</span>
-            <h3>Medical Researchers</h3>
-            <p>"Perfect for large-scale studies."</p>
+        <div class="use-case-item">
+            <img src="{{ url_for('static', filename='images/researcher.jpg') }}" alt="Medical Researcher" class="use-case-image">
+            <div class="use-case-overlay">
+                <h3>Medical Researchers</h3>
+                <p>"Perfect for large-scale studies."</p>
+            </div>
         </div>
-        <div class="use-case-card">
-            <span class="use-case-icon">💻</span>
-            <h3>AI/ML Engineers</h3>
-            <p>"Easy integration with ML pipelines."</p>
+        <div class="use-case-item">
+            <img src="{{ url_for('static', filename='images/ai_picture.webp') }}" alt="AI/ML Engineer" class="use-case-image">
+            <div class="use-case-overlay">
+                <h3>AI/ML Engineers</h3>
+                <p>"Easy integration with ML pipelines."</p>
+            </div>
         </div>
-        <div class="use-case-card">
-            <span class="use-case-icon">🏥</span>
-            <h3>Clinical Trials Teams</h3>
-            <p>"Streamlines multi-user collaboration."</p>
+        <div class="use-case-item">
+            <img src="{{ url_for('static', filename='images/clinical.jpg') }}" alt="Clinical Trials Team" class="use-case-image">
+            <div class="use-case-overlay">
+                <h3>Clinical Trials Teams</h3>
+                <p>"Streamlines multi-user collaboration."</p>
+            </div>
         </div>
     </div>
 </div>
@@ -165,10 +173,27 @@
     .hero-section {
         text-align: center;
         padding: 4rem 2rem;
+        margin-bottom: 4rem;
     }
-    .features-section, .how-it-works-section, .use-cases-section, .trusted-by-section {
+    .features-section {
         padding: 2rem;
         text-align: center;
+        margin-bottom: 4rem;
+    }
+    .how-it-works-section {
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    .use-cases-section {
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    .trusted-by-section {
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 4rem;
     }
     .cta-buttons {
         margin-top: 2rem;
@@ -257,22 +282,81 @@
         gap: 2rem;
         margin-top: 2rem;
     }
-    .feature-card,
-    .how-step,
-    .use-case-card {
+    .feature-card {
+        background: rgba(35, 39, 43, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12);
+        width: 260px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), 0 2px 8px 0 rgba(0,0,0,0.15);
+    }
+    .how-step {
         background: #23272b;
         border-radius: 12px;
         padding: 1.5rem;
         text-align: center;
         box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12);
+        width: 200px;
     }
-    .feature-card { width: 260px; }
-    .how-step { width: 200px; }
-    .use-case-card { width: 220px; }
+    .use-case-item {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .use-case-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .use-case-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1.5rem;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        color: white;
+    }
+    .use-case-overlay h3 {
+        margin: 0 0 0.5rem 0;
+        color: #00cfff;
+        font-size: 1.3rem;
+    }
+    .use-case-overlay p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #ffffff;
+    }
     .feature-icon {
         font-size: 2.2rem;
         margin-bottom: 0.5rem;
         display: block;
+        background: rgba(0, 207, 255, 0.1);
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+        border-radius: 50%;
+        margin: 0 auto 1rem auto;
+    }
+    .feature-card h3 {
+        color: #00cfff;
+        margin-bottom: 0.5rem;
+    }
+    .feature-card p {
+        color: #e9ecef;
+        margin: 0;
+        font-size: 0.9rem;
     }
     .how-steps {
         display: flex;
@@ -294,16 +378,16 @@
         margin: 0 auto 1rem auto;
     }
     .use-cases-grid {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
         gap: 2rem;
         margin-top: 2rem;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
     }
-    .use-case-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
-        display: block;
+    .use-case-item:hover .use-case-image {
+        transform: scale(1.05);
     }
     .trusted-logos {
         display: flex;
