@@ -6,6 +6,7 @@ from app.controllers.api import bp as api_bp
 from app.controllers.dashboard import bp as dashboard_bp
 from app.controllers.datasets import bp as datasets_bp
 from app.controllers.landing import bp as landing_bp
+from app.controllers.MEDSAMcontroller import bp as medsam_bp
 
 def register_controllers(app: Flask):
     app.register_blueprint(auth_bp)
@@ -15,6 +16,7 @@ def register_controllers(app: Flask):
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(datasets_bp)
     app.register_blueprint(landing_bp)
+    app.register_blueprint(medsam_bp)
 
 
     

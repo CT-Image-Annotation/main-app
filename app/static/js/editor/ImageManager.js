@@ -1,60 +1,63 @@
-export function ImageManager() {
-    let canvas, ctx;
-    let regions = [];
-  
-    function createCanvas(width, height) {
-      canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      canvas.style.border = "1px solid black";
-      ctx = canvas.getContext("2d");
-      return canvas;
-    }
-  
-    function getElement() {
-      const container = document.createElement("div");
-      container.className = "image-layer";
-      container.style.position = "relative";
-  
-      const sourceImg = document.querySelector("#slide-img");
-  
-      if (!sourceImg) {
-        container.innerText = "Image #slide-img not found.";
-        return container;
-      }
-  
-      const renderCanvas = () => {
-        const w = sourceImg.naturalWidth;
-        const h = sourceImg.naturalHeight;
-        const canvasEl = createCanvas(w, h);
-        ctx.drawImage(sourceImg, 0, 0, w, h);
-        container.appendChild(canvasEl);
-      };
-  
-      if (sourceImg.complete) {
-        renderCanvas();
-      } else {
-        sourceImg.addEventListener("load", renderCanvas);
-      }  
-  
-      return container;
-    }
+/* static/js/editor/ImageManager.js */
+export class ImageManager {
+  constructor({ canvasId, prevId, nextId, sliderId, currentIndexId, fileIds, urlTemplate }) {
+    this.fileIds = fileIds;
+    this.idx = 0;
+    this.total = fileIds.length;
+    this.urlTemplate = urlTemplate;
 
-    function addRegion(region) {
-        regions.push(region);
-    }
+    this.canvas = document.getElementById(canvasId);
+    this.currentIndexEl = document.getElementById(currentIndexId);
+    this.slider = document.getElementById(sliderId);
+    this.prevBtn = document.getElementById(prevId);
+    this.nextBtn = document.getElementById(nextId);
 
-    function setRegions(regions2) {
-        regions = regions2
-    }
-
-    return {
-      getElement,
-      getCanvas: () => canvas,
-      getContext: () => ctx,
-      getRegions: () => regions,
-      addRegion,
-      setRegions,
-    };
+    this.bindEvents();
+    this.updateImage();
   }
-  
+
+  loadImageToCanvas(imageUrl) {
+    const img = new Image();
+    img.onload = () => {
+      const wrapper = this.canvas.parentElement;
+      wrapper.style.width = img.width + 'px';
+      wrapper.style.height = img.height + 'px';
+
+      this.canvas.width = img.width;
+      this.canvas.height = img.height;
+      this.canvas.style.width = img.width + 'px';
+      this.canvas.style.height = img.height + 'px';
+
+      const ctx = this.canvas.getContext('2d');
+      ctx.clearRect(0, 0, img.width, img.height);
+      ctx.drawImage(img, 0, 0);
+    };
+    img.onerror = () => console.error('Failed to load image:', imageUrl);
+    img.src = imageUrl;
+  }
+
+  updateImage() {
+    const fileId = this.fileIds[this.idx];
+    const url = this.urlTemplate.replace('0', fileId) + `?t=${Date.now()}`;
+    this.currentIndexEl.textContent = this.idx + 1;
+    this.slider.value = this.idx + 1;
+    this.loadImageToCanvas(url);
+  }
+
+  bindEvents() {
+    this.prevBtn.addEventListener('click', () => {
+      this.idx = (this.idx - 1 + this.total) % this.total;
+      this.updateImage();
+    });
+
+    this.nextBtn.addEventListener('click', () => {
+      this.idx = (this.idx + 1) % this.total;
+      this.updateImage();
+    });
+
+    this.slider.addEventListener('input', () => {
+      this.idx = +this.slider.value - 1;
+      this.updateImage();
+    });
+  }
+}
