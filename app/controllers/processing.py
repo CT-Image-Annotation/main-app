@@ -567,27 +567,27 @@ def dataset_info(ds_id):
 
 def extract_contours_from_dicom(dicom_path, method='adaptive', user_threshold=50):
     try:
-        # dcm = pydicom.dcmread(dicom_path, force=True)
-        # if not hasattr(dcm, 'pixel_array'):
-        #     return []
-        # img = dcm.pixel_array
-        # img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        dcm = pydicom.dcmread(dicom_path, force=True)
+        if not hasattr(dcm, 'pixel_array'):
+            return []
+        img = dcm.pixel_array
+        img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
 
-        # if method == 'adaptive':
-        #     mask = cv2.adaptiveThreshold(
-        #         img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-        #         cv2.THRESH_BINARY, 51, 2
-        #     )
-        # elif method == 'canny':
-        #     mask = cv2.Canny(img, 50, 150)
-        # elif method == 'manual':
-        #     _, mask = cv2.threshold(img, user_threshold, 255, cv2.THRESH_BINARY)
-        # else:  # fallback to Otsu
-        #     _, mask = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        if method == 'adaptive':
+            mask = cv2.adaptiveThreshold(
+                img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                cv2.THRESH_BINARY, 51, 2
+            )
+        elif method == 'canny':
+            mask = cv2.Canny(img, 50, 150)
+        elif method == 'manual':
+            _, mask = cv2.threshold(img, user_threshold, 255, cv2.THRESH_BINARY)
+        else:  # fallback to Otsu
+            _, mask = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-        # contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        # contour_points = [c.squeeze().tolist() for c in contours if c.shape[0] >= 3]
-        return []#contour_points
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour_points = [c.squeeze().tolist() for c in contours if c.shape[0] >= 3]
+        return contour_points
     except Exception as e:
         print(f"Error extracting contours: {e}")
         return []

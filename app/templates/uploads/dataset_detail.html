@@ -205,6 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Assign Jinja2 variables to JS constants at the top
     const dsId = {{ dataset.id|tojson }};
     const fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
+    console.log(fileIds)
     let idx = 0;
     const currentIndexEl = document.getElementById('current-index');
     const currentSliceEl = document.getElementById('current-slice');
@@ -285,6 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        slider.addEventListener('input', () => {console.log(slider.value); idx = +slider.value - 1;if (currentSliceEl) currentSliceEl.textContent = idx + 1; updateImage(); });
         async function updateImage() {
             const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
             console.log('Updating image with URL:', imageUrl);  // Debug log
@@ -305,7 +307,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (currentSliceEl) currentSliceEl.textContent = idx + 1;
             }
             
-            slider.addEventListener('input', () => {console.log(slider.value); idx = +slider.value - 1;if (currentSliceEl) currentSliceEl.textContent = idx + 1; updateImage(); });
             // Load image and reset annotation canvas
             loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, async function() {
                 // Set up drawing tools on annotationCanvas only
