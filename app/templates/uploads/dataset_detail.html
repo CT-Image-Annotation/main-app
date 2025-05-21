@@ -82,6 +82,7 @@
       <button class="btn btn-outline-light btn-sm" id="tool-rect" title="Rectangle">▭ Rect</button>
       <button class="btn btn-outline-light btn-sm" id="tool-circle" title="Circle">◯ Circle</button>
       <button class="btn btn-outline-light btn-sm" id="tool-eraser" title="Eraser">🧽 Eraser</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-aipoint" title="AIPoint">:() AIPoint</button>
     </div>
     
     <!-- Brush controls -->
@@ -766,6 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('tool-rect').onclick = () => currentTool = 'rect';
     document.getElementById('tool-circle').onclick = () => currentTool = 'circle';
     document.getElementById('tool-eraser').onclick = () => currentTool = 'eraser';
+    document.getElementById('tool-aipoint').onclick = () => currentTool = 'aipoint';
     document.getElementById('brush-size').oninput = function() {
         brushSize = parseInt(this.value, 10);
         document.getElementById('brush-size-value').textContent = this.value;
@@ -902,6 +904,51 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.beginPath();
         ctx.moveTo(startX, startY);
     }
+    else if (currentTool === "aipoint") {
+        const ctx = imageCanvas.getContext('2d');
+        console.log("AIpoint:", startX, ":", startY);
+
+        // 1. Get canvas image as data URL
+        const imageDataURL = ctx.canvas.toDataURL("image/png");
+
+        // 2. Prepare request data
+        const payload = {
+            image: imageDataURL,
+            point_coords: [[startX, startY]],
+            point_labels: [1], 
+            multimask_output: true 
+        };
+
+        // 3. Send to backend
+        fetch("http://localhost:5000/medsam2/predict_combined", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error("Prediction error:", data.error);
+                return;
+            }
+            console.log(data.overlay)
+            // 4. Display overlay if you get it back
+            const overlayImg = new Image();
+            overlayImg.src = data.overlay;
+            overlayImg.onload = () => {
+                // Example: draw overlay on top of canvas
+                let annoctx = annotationCanvas.getContext('2d')
+                annoctx.drawImage( overlayImg, 0, 0);
+            };
+
+            console.log("Score:", data.score);
+        })
+        .catch(err => {
+            console.error("Fetch error:", err);
+        });
+    }
 });
 
 annotationCanvas.addEventListener('pointermove', function(e) {
@@ -939,6 +986,8 @@ annotationCanvas.addEventListener('pointermove', function(e) {
     } else if (currentTool === 'rect' || currentTool === 'circle') {
         // Optional: preview of shape while drawing
         // Requires saving and restoring canvas between moves
+    } else if (currentTool === "aipoint") {
+        
     }
     
     lastX = x;
@@ -965,6 +1014,7 @@ annotationCanvas.addEventListener('pointerup', function(e) {
         ctx.strokeStyle = brushColor;
         ctx.lineWidth = brushSize;
         ctx.strokeRect(startX, startY, x - startX, y - startY);
+    syncAnnotation();
     } else if (currentTool === 'circle') {
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = brushColor;
@@ -973,13 +1023,15 @@ annotationCanvas.addEventListener('pointerup', function(e) {
         ctx.beginPath();
         ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
         ctx.stroke();
+    syncAnnotation();
+    } else if (currentTool === 'pen') {
+        syncAnnotation()
     }
     
     ctx.globalCompositeOperation = 'source-over';
     ctx.beginPath();
     
     // Sync annotation to server
-    syncAnnotation();
     
     // Release pointer capture
     this.releasePointerCapture(e.pointerId);
