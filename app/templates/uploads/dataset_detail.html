@@ -112,10 +112,14 @@
     <label class="text-light mb-0" for="interpolation-slices" style="font-size: 0.95em;">Interp. Slices:</label>
     <input type="number" id="interpolation-slices" min="0" max="10" value="0" class="form-control form-control-sm" style="width:60px;">
   </div>
-  <button id="toggle-contours" class="btn btn-outline-info btn-sm ms-2">Hide Contours</button>
+  <button id="toggle-contours" class="btn btn-outline-info btn-sm ms-2">Show Contours</button>
   <button id="toggle-interpolation" class="btn btn-outline-warning btn-sm ms-2">Enable Interpolation</button>
   <button id="reconstruct-volume" class="btn btn-outline-success btn-sm ms-2">Reconstruct Volume</button>
 </div>
+<div class="d-flex justify-content-center my-3">
+      <input type="range" id="image-slider" class="form-range" style="width:80%; max-width:500px;"
+             min="1" max="{{ files|length }}" value="1">
+    </div>
 
 <!-- Edit Controls -->
 <div id="edit-controls" class="mt-4">
@@ -210,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const imageCanvas = document.getElementById('image-canvas');
     const annotationCanvas = document.getElementById('annotation-canvas');
     const filterForm = document.getElementById('batch-filter-form');
-    let contoursVisible = true;
+    let contoursVisible = false;
     let currentTool = 'pen';
     let brushSize = 5;
     let brushColor = '#00ff00';
@@ -265,8 +269,9 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         img.src = imageUrl;
     }
-
-    if (total > 0) {
+    const slider = document.getElementById('image-slider');
+                    
+    if (true) {
         async function fetchDicomInfo(fileId) {
             try {
                 const response = await fetch(`{{ url_for('processing.dicom_info', file_id=0) }}`.replace('0', fileId));
@@ -279,12 +284,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return { total_slices: 1 };
             }
         }
-
+        
         async function updateImage() {
             const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
             console.log('Updating image with URL:', imageUrl);  // Debug log
             currentIndexEl.textContent = idx + 1;
             toolbarEl.innerHTML = '';
+            slider.value = idx + 1;
             
             // Check if the first file is a DICOM file by checking its extension
             const firstFile = {{ files[0].path|tojson|safe }};
@@ -299,6 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (currentSliceEl) currentSliceEl.textContent = idx + 1;
             }
             
+            slider.addEventListener('input', () => {console.log(slider.value); idx = +slider.value - 1;if (currentSliceEl) currentSliceEl.textContent = idx + 1; updateImage(); });
             // Load image and reset annotation canvas
             loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, async function() {
                 // Set up drawing tools on annotationCanvas only
