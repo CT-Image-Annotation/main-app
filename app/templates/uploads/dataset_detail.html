@@ -1082,6 +1082,7 @@ window.addEventListener('resize', function() {
         }
     });
 });
+
   // Pass data to JavaScript
   window.datasetId = {{ dataset.id|tojson }};
   window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
