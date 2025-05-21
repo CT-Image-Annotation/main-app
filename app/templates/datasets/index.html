@@ -142,10 +142,18 @@
 <div class="trusted-by-section">
     <h2>Trusted By</h2>
     <div class="trusted-logos">
-        <img src="/static/images/logo1.png" alt="Hospital 1">
-        <img src="/static/images/logo2.png" alt="University 2">
-        <img src="/static/images/logo3.png" alt="Research Group 3">
-        <img src="/static/images/logo4.png" alt="Clinic 4">
+        <a href="https://www.kuh.ku.edu.tr/en" target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='images/kuh-ingilizce-logo.svg') }}" alt="KUH Logo" style="height: 48px; width: auto; filter: brightness(0) invert(1);" />
+        </a>
+        <a href="https://www.mountsinai.org/" target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='images/mountsinai-logo.png') }}" alt="Mount Sinai Logo" style="height: 48px; width: auto; filter: brightness(0) invert(1);" />
+        </a>
+        <a href="https://www.ku.edu.tr/" target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='images/koclogo.png') }}" alt="Koç University Logo" style="height: 48px; width: auto; filter: brightness(0) invert(1);" />
+        </a>
+        <a href="https://www.acadrad.org/" target="_blank" rel="noopener">
+            <img src="{{ url_for('static', filename='images/acadlogo.png') }}" alt="Academy for Radiology & Biomedical Imaging Research Logo" style="height: 48px; width: auto; filter: brightness(0) invert(1);" />
+        </a>
     </div>
 </div>
 
