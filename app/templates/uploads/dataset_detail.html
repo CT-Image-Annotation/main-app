@@ -46,28 +46,68 @@
   {% endif %}
 
   <p>Status: <span class="fw-bold text-info">{{ dataset.tags }}</span></p>
-  <div id="image-controls" class="d-flex flex-row align-items-center gap-3 mt-3" style="background:#23272b; border-radius:8px; padding:12px;">
-    <label class="text-light mb-0" for="brightness-slider">Brightness</label>
-    <input type="range" id="brightness-slider" min="-100" max="100" value="0" style="width:120px;">
-    <span id="brightness-value" class="text-light">0</span>
-    <label class="text-light mb-0 ms-3" for="contrast-slider">Contrast</label>
-    <input type="range" id="contrast-slider" min="-100" max="100" value="0" style="width:120px;">
-    <span id="contrast-value" class="text-light">0</span>
+
+<!-- Image Controls Section - Modified for Mobile -->
+<div id="image-controls" class="mt-3">
+  <!-- Stack controls vertically on mobile -->
+  <div class="card bg-dark p-3 mb-3 rounded">
+    <div class="row g-2">
+      <!-- Brightness control -->
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-light mb-0 flex-shrink-0 me-1" for="brightness-slider">Brightness</label>
+          <input type="range" id="brightness-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+          <span id="brightness-value" class="text-light flex-shrink-0" style="min-width: 2rem; text-align: right;">0</span>
+        </div>
+      </div>
+      <!-- Contrast control -->
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-light mb-0 flex-shrink-0 me-1" for="contrast-slider">Contrast</label>
+          <input type="range" id="contrast-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+          <span id="contrast-value" class="text-light flex-shrink-0" style="min-width: 2rem; text-align: right;">0</span>
+        </div>
+      </div>
+    </div>
   </div>
-  <div id="drawing-tools" class="d-flex flex-row align-items-center gap-3 mt-3" style="background:#23272b; border-radius:8px; padding:12px;">
-    <button class="btn btn-outline-light btn-sm" id="tool-pen" title="Freehand">✏️ Pen</button>
-    <button class="btn btn-outline-light btn-sm" id="tool-rect" title="Rectangle">▭ Rect</button>
-    <button class="btn btn-outline-light btn-sm" id="tool-circle" title="Circle">◯ Circle</button>
-    <button class="btn btn-outline-light btn-sm" id="tool-eraser" title="Eraser">🧽 Eraser</button>
-    <label class="text-light mb-0 ms-3" for="brush-size">Brush Size</label>
-    <input type="range" id="brush-size" min="1" max="30" value="5" style="width:100px;">
-    <span id="brush-size-value" class="text-light">5</span>
-    <label class="text-light mb-0 ms-3" for="brush-color">Color</label>
-    <input type="color" id="brush-color" value="#00ff00" style="width: 30px; height: 30px;">
-    <button class="btn btn-outline-warning btn-sm ms-3" id="tool-undo" title="Undo">↩️ Undo</button>
-    <button class="btn btn-outline-warning btn-sm" id="tool-redo" title="Redo">↪️ Redo</button>
-    <button class="btn btn-outline-danger btn-sm" id="tool-clear" title="Clear">🗑️ Clear</button>
+</div>
+
+
+<!-- Drawing Tools Section - Modified for Mobile -->
+<div id="drawing-tools" class="mt-3">
+  <div class="card bg-dark p-3 mb-3 rounded">
+    <!-- Drawing tools -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button class="btn btn-outline-light btn-sm" id="tool-pen" title="Freehand">✏️ Pen</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-rect" title="Rectangle">▭ Rect</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-circle" title="Circle">◯ Circle</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-eraser" title="Eraser">🧽 Eraser</button>
+    </div>
+    
+    <!-- Brush controls -->
+    <div class="row g-2">
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-light mb-0 flex-shrink-0 me-1" for="brush-size">Brush Size</label>
+          <input type="range" id="brush-size" min="1" max="30" value="5" class="form-range flex-grow-1">
+          <span id="brush-size-value" class="text-light flex-shrink-0" style="min-width: 1.5rem; text-align: right;">5</span>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <label class="text-light mb-0 flex-shrink-0" for="brush-color">Color</label>
+          <input type="color" id="brush-color" value="#00ff00" style="width: 30px; height: 30px;">
+          <div class="ms-auto d-flex gap-1">
+            <button class="btn btn-outline-warning btn-sm" id="tool-undo" title="Undo">↩️</button>
+            <button class="btn btn-outline-warning btn-sm" id="tool-redo" title="Redo">↪️</button>
+            <button class="btn btn-outline-danger btn-sm" id="tool-clear" title="Clear">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+</div>
+
 </div>
 
 <!-- Editor Section -->

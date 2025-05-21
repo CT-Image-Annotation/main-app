@@ -111,3 +111,31 @@ html, body {
   -webkit-overflow-scrolling: touch;
   overflow: auto;
 }
+
+@media (max-width: 767.98px) {
+  /* Adjust button text on very small screens */
+  @media (max-width: 400px) {
+    .btn-sm {
+      padding: 0.25rem 0.4rem;
+      font-size: 0.75rem;
+    }
+    #drawing-tools .btn-sm span {
+      display: none; /* Hide text on very small screens, keep only icons */
+    }
+  }
+  
+  /* Make range inputs take less space */
+  .form-range {
+    min-width: 80px;
+  }
+  
+  /* Additional spacing for mobile */
+  #image-controls, #drawing-tools {
+    margin-bottom: 1rem;
+  }
+  
+  /* Ensure flex items don't grow too large */
+  .d-flex {
+    flex-wrap: wrap;
+  }
+}
