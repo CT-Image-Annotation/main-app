@@ -56,38 +56,42 @@ def _array_to_data_url(arr):
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
 
 def _create_overlay(arr, mask, point_coords=None, point_labels=None, box=None, draw_contours=False):
-    """Create overlay with mask and optionally points and box"""
-    overlay = arr.copy()
+    """Create transparent overlay with only the mask visible"""
+    # Create a transparent RGBA overlay
+    overlay = np.zeros((*arr.shape[:2], 4), dtype=np.uint8)
     
-    # More vibrant red for better visibility
-    mask_color = np.array([255, 0, 0], dtype=np.uint8)
-    
-    # Apply the mask directly with higher opacity
-    overlay[mask] = cv2.addWeighted(
-        overlay[mask], 0.4, 
-        np.ones_like(overlay[mask]) * mask_color, 0.6, 
-        0
-    )
+    # Set the mask area to a semi-transparent red
+    overlay[mask] = [255, 0, 0, 128]  # RGBA format: semi-transparent red
     
     # Draw contour of the mask for better visibility (optional)
     if draw_contours:
         contours, _ = cv2.findContours((mask).astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(overlay, contours, -1, (255, 255, 0), 2)  # Yellow contour
+        # Create a temporary image for contours
+        contour_img = np.zeros_like(overlay)
+        cv2.drawContours(contour_img, contours, -1, (255, 255, 0, 255), 2)  # Yellow contour, fully opaque
+        # Combine with the main overlay
+        mask_contour = contour_img[:,:,3] > 0
+        overlay[mask_contour] = contour_img[mask_contour]
     
     # Draw points if provided
     if point_coords is not None and point_labels is not None:
         for i, (x, y) in enumerate(point_coords):
-            color = (0, 255, 0) if point_labels[i] == 1 else (255, 0, 0)  # Green for positive, Red for negative
-            cv2.circle(overlay, (int(x), int(y)), 6, color, -1)
-            cv2.circle(overlay, (int(x), int(y)), 6, (255, 255, 255), 1)  # White border
+            color = (0, 255, 0, 255) if point_labels[i] == 1 else (255, 0, 0, 255)  # RGBA format
+            x, y = int(x), int(y)
+            cv2.circle(overlay, (x, y), 6, color, -1)
+            cv2.circle(overlay, (x, y), 6, (255, 255, 255, 255), 1)  # White border
     
     # Draw box if provided
     if box is not None:
         x1, y1, x2, y2 = box
-        cv2.rectangle(overlay, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        cv2.rectangle(overlay, (x1, y1), (x2, y2), (0, 0, 255, 255), 2)
     
-    return overlay
+    # Convert the RGBA overlay to PNG
+    _, png_data = cv2.imencode('.png', overlay)
+    return png_data
 
+    
 def _serialize_masks(masks, scores):
     """Serialize masks and scores for JSON transmission"""
     all_masks = []

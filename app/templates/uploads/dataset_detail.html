@@ -275,6 +275,17 @@ document.addEventListener('DOMContentLoaded', function() {
     window.annotationHistory = annotationHistory;
     let redoStack = [];
 
+    // Drawing state variables
+    let isDrawing = false;
+    let drawingPath = []; // Store draw path points for weighted average calculation
+
+    // Multi-mask variables
+    let allMasks = []; // Store all available masks
+    let allScores = []; // Store scores for all masks
+    let currentMaskIndex = 0; // Current mask index being displayed
+
+
+
     function loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, callback) {
         console.log('Loading image from URL:', imageUrl);  // Debug log
         const img = new window.Image();
@@ -871,6 +882,8 @@ document.addEventListener('DOMContentLoaded', function() {
     annotationCanvas.addEventListener('pointerdown', function(e) {
     e.preventDefault(); // Prevent default to avoid scrolling/zooming
     
+    
+
     if (currentTool === 'pen' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'eraser') {
         saveAnnotationState();
     }
@@ -934,15 +947,218 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             console.log(data.overlay)
-            // 4. Display overlay if you get it back
-            const overlayImg = new Image();
-            overlayImg.src = data.overlay;
-            overlayImg.onload = () => {
-                // Example: draw overlay on top of canvas
-                let annoctx = annotationCanvas.getContext('2d')
-                annoctx.drawImage( overlayImg, 0, 0);
-            };
 
+            if (data.overlay) {
+    // Reset mask arrays before adding new masks
+    allMasks = [];
+    allScores = [];
+    currentMaskIndex = 0;
+
+    // Check if multiple masks are returned
+    if (data.all_masks && data.all_scores && data.all_masks.length > 0) {
+        console.log("Received multiple masks:", data.all_masks.length);
+        // Store all masks and scores
+        allMasks = data.all_masks;
+        allScores = data.all_scores;
+        
+        // Sort masks by size (number of true pixels) - smallest first
+        const maskSizes = allMasks.map(mask => mask.filter(Boolean).length);
+        console.log("Mask sizes:", maskSizes);
+        
+        // Create array to hold the original indices
+        const indices = Array.from({ length: allMasks.length }, (_, i) => i);
+        
+        // Sort indices by mask sizes
+        indices.sort((a, b) => maskSizes[a] - maskSizes[b]);
+        
+        // Reorder masks and scores based on size
+        allMasks = indices.map(i => allMasks[i]);
+        allScores = indices.map(i => allScores[i]);
+        
+        // Start with the smallest mask (S)
+        currentMaskIndex = 0;
+        
+        console.log("Masks reordered by size: S, M, L");
+        
+        // Create mask selector UI
+        createMaskSelectorUI();
+        
+        // Draw the initial mask (S)
+        drawSelectedMask();
+        
+    } else { // Draw single mask
+        // 4. Draw overlay on top of canvas
+        const overlayImg = new Image();
+        overlayImg.src = data.overlay;
+        overlayImg.onload = () => {
+            // Example: draw overlay on top of canvas
+            let annoctx = annotationCanvas.getContext('2d');
+            annoctx.drawImage(overlayImg, 0, 0);
+        };
+    }
+}
+
+// Function to create mask selector UI
+function createMaskSelectorUI() {
+    // Remove existing selector if it exists
+    const existingSelector = document.getElementById('mask-selector');
+    console.log("Creating mask selector UI");
+
+    if (existingSelector) {
+        existingSelector.remove();
+    }
+    
+    // Create container for mask selector
+    const selectorContainer = document.createElement('div');
+    selectorContainer.id = 'mask-selector';
+    selectorContainer.style.position = 'absolute';
+    selectorContainer.style.top = '10px';
+    selectorContainer.style.left = '10px'; // Change from right to left
+    selectorContainer.style.display = 'flex';
+    selectorContainer.style.flexDirection = 'column';
+    selectorContainer.style.background = 'rgba(0, 0, 0, 0.7)'; // Darker background
+    selectorContainer.style.padding = '8px';
+    selectorContainer.style.borderRadius = '5px';
+    selectorContainer.style.zIndex = '9999'; // Very high z-index
+    selectorContainer.style.border = '2px solid yellow'; // Add a visible border
+    
+    // Create mask size label
+    const sizeLabel = document.createElement('div');
+    sizeLabel.id = 'mask-size-label';
+    sizeLabel.style.textAlign = 'center';
+    sizeLabel.style.fontWeight = 'bold';
+    sizeLabel.style.color = 'white'; // White text for better visibility
+    sizeLabel.textContent = getMaskSizeLabel(currentMaskIndex);
+    
+    // Create up button
+    const upButton = document.createElement('button');
+    upButton.textContent = '▲';
+    upButton.style.margin = '2px';
+    upButton.style.padding = '5px 10px'; // Bigger button
+    upButton.style.fontSize = '16px'; // Bigger text
+    upButton.addEventListener('click', () => {
+        console.log("Up button clicked");
+        selectPreviousMask();
+    });
+    
+    // Create down button
+    const downButton = document.createElement('button');
+    downButton.textContent = '▼';
+    downButton.style.margin = '2px';
+    downButton.style.padding = '5px 10px'; // Bigger button
+    downButton.style.fontSize = '16px'; // Bigger text
+    downButton.addEventListener('click', () => {
+        console.log("Down button clicked");
+        selectNextMask();
+    });
+    
+    // Append elements to container
+    selectorContainer.appendChild(upButton);
+    selectorContainer.appendChild(sizeLabel);
+    selectorContainer.appendChild(downButton);
+    
+    // Add container near the annotation canvas
+    const canvasContainer = annotationCanvas.parentElement;
+    canvasContainer.style.position = 'relative';
+    canvasContainer.appendChild(selectorContainer);
+    console.log("Mask selector UI created and appended to:", canvasContainer);
+}
+
+// Function to get mask size label based on index
+function getMaskSizeLabel(index) {
+    const sizes = ['S', 'M', 'L'];
+    return sizes[Math.min(index, sizes.length - 1)];
+}
+
+// Function to select next mask (larger)
+function selectNextMask() {
+    if (currentMaskIndex < allMasks.length - 1) {
+        currentMaskIndex++;
+        updateMaskSizeLabel();
+        drawSelectedMask();
+    }
+}
+
+// Function to select previous mask (smaller)
+function selectPreviousMask() {
+    if (currentMaskIndex > 0) {
+        currentMaskIndex--;
+        updateMaskSizeLabel();
+        drawSelectedMask();
+    }
+}
+
+// Function to update the mask size label
+function updateMaskSizeLabel() {
+    const label = document.getElementById('mask-size-label');
+    if (label) {
+        label.textContent = getMaskSizeLabel(currentMaskIndex);
+    }
+}
+
+// Function to draw the currently selected mask
+function drawSelectedMask() {
+    // Clear the annotation canvas
+    let annoctx = annotationCanvas.getContext('2d');
+    annoctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+    
+    // Convert the binary mask to an overlay image
+    const selectedMask = allMasks[currentMaskIndex];
+    const score = allScores[currentMaskIndex];
+    
+    // You'll need to implement this function based on how your masks are stored
+    // and how they should be displayed
+    const overlayData = convertMaskToOverlay(selectedMask);
+    
+    // Draw the overlay on the canvas
+    const overlayImg = new Image();
+    overlayImg.src = overlayData;
+    overlayImg.onload = () => {
+        annoctx.drawImage(overlayImg, 0, 0);
+    };
+    
+    // Optionally display the mask score somewhere
+    console.log(`Displaying mask ${currentMaskIndex} (${getMaskSizeLabel(currentMaskIndex)}), score: ${score}`);
+}
+
+// Function to convert a binary mask to an overlay image
+// This is a placeholder - you'll need to implement based on your specific needs
+function convertMaskToOverlay(mask) {
+    // This implementation depends on how your masks are structured
+    // For example, if your masks are binary arrays and need to be converted to colored overlays
+    
+    // Example implementation (assuming mask is a flat array of boolean values):
+    const width = annotationCanvas.width;
+    const height = annotationCanvas.height;
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = width;
+    tempCanvas.height = height;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    // Create an ImageData object
+    const imageData = tempCtx.createImageData(width, height);
+    
+    // Fill the imageData based on the mask
+    for (let i = 0; i < mask.length; i++) {
+        const pixelIndex = i * 4;
+        if (mask[i]) {
+            // Set pixel to semi-transparent color (e.g., blue)
+            imageData.data[pixelIndex] = 255;      // R
+            imageData.data[pixelIndex + 1] = 0;  // G
+            imageData.data[pixelIndex + 2] = 0;// B
+            imageData.data[pixelIndex + 3] = 128;// A
+        } else {
+            // Set pixel to transparent
+            imageData.data[pixelIndex + 3] = 0;  // A
+        }
+    }
+    
+    // Put the image data on the temp canvas
+    tempCtx.putImageData(imageData, 0, 0);
+    
+    // Return the data URL of the temp canvas
+    return tempCanvas.toDataURL();
+}
             console.log("Score:", data.score);
         })
         .catch(err => {
