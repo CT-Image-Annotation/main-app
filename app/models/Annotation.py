@@ -15,10 +15,18 @@ class Annotation(BaseModel):
     file_id = db.Column(db.Integer, db.ForeignKey('resources.id'), unique=True)
     file = db.relationship('Resource', backref=db.backref('annotation_file', uselist=False), lazy=True, foreign_keys=[file_id])
 
+    mappings = db.relationship(
+        'AnnotationMapping',
+        back_populates='annotation',
+        cascade='all, delete-orphan',
+        lazy=True
+    )
+
     def serialize(self):
         base = self.file.serialize() if self.file else {}
         base.update({
             "annotatee_id": self.resource_id,
-            "annotation_id": self.id
+            "annotation_id": self.id,
+            "mappings": [{"color": m.color, "label": m.label} for m in self.mappings]
         })
         return base

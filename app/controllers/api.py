@@ -145,3 +145,9 @@ def downloadLastAnnotation(resource_id):
         return {},404
 
     return send_file(os.path.join(current_app.config['UPLOAD_FOLDER'],annotation_resource.file.path))
+
+@bp.route("/annotation/load-last/<int:resource_id>/mapping")
+def mappingOfLastAnnotation(resource_id):
+    annotation_resource = AnnotationService.read_last(resource_id)
+
+    return annotation_resource.mappings
