@@ -720,6 +720,9 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               currentIndexEl.textContent = idx + 1;
               toolbarEl.innerHTML = '';
               slider.value = idx + 1;
+              
+              const annotationCtx = annotationCanvas.getContext('2d');
+              const annotationData = annotationCtx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height);
 
               // Check if the first file is a DICOM file by checking its extension
               const firstFile = {{ files[0].path|tojson|safe }};
@@ -736,6 +739,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
 
               // Load image and reset annotation canvas
               loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, async function() {
+                                  annotationCtx.putImageData(annotationData, 0, 0);
                   // Set up drawing tools on annotationCanvas only
                   const imageManager = {
                       getContext: () => annotationCanvas.getContext('2d'),
