@@ -45,7 +45,6 @@ instance/
 .env.local
 
 # Model files
-models/
 *.pth
 *.pt
 *.h5

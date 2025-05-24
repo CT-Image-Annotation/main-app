@@ -1,7 +1,8 @@
 import random
-from flask import session
+from flask import json, session
 
 from app.models.Annotation import Annotation
+from app.models.AnnotationMapping import AnnotationMapping
 from app.services.BaseService import Base
 
 from app.extensions import db
@@ -32,8 +33,18 @@ class AnnotationService(Base):
             resource_id=params.get("resource_id"),
             file_id=annotation_file.id,
         )
-        
         db.session.add(annotation)
+
+        mappings = params.get("mappings", [])
+        raw_mappings = params.get("mappings")
+        mappings = json.loads(raw_mappings) if raw_mappings else []
+        
+        for mapping in mappings:
+            if "color" in mapping and "label" in mapping:
+                annotation.mappings.append(
+                    AnnotationMapping(color=mapping["color"], label=mapping["label"])
+                )
+
         db.session.commit()
         return annotation
     
