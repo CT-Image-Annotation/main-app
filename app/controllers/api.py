@@ -149,5 +149,7 @@ def downloadLastAnnotation(resource_id):
 @bp.route("/annotation/load-last/<int:resource_id>/mapping")
 def mappingOfLastAnnotation(resource_id):
     annotation_resource = AnnotationService.read_last(resource_id)
+    if not annotation_resource:
+        return {},404
 
-    return annotation_resource.mappings
+    return [mp.serialize() for mp in annotation_resource.mappings]

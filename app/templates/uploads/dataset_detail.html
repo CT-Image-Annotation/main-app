@@ -1197,6 +1197,30 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           };
 
           img.src = url;
+
+          const url2 = `/api/annotation/load-last/${RELATED_RESOURCE_ID}/mapping`;
+
+          fetch(url2)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not OK');
+              }
+              return response.json();
+            })
+            .then(data => {
+              // Assume data is an array of objects with "color" and "label"
+              data.forEach((item, index) => {
+                annotationsTable.addRow({
+                  id: index + 1,  // or rows.length + 1 if rows is defined somewhere else
+                  color: item.color || window.brushColor, // fallback to brushColor if undefined
+                  label: item.label || "New Label"
+                });
+              });
+            })
+            .catch(error => {
+              console.error('Fetching or processing failed:', error);
+            });
+          
       }
       function syncAnnotation() {
           const ctx = annotationCanvas.getContext('2d');
@@ -1912,6 +1936,8 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           });
           }
       });
+
+      window.annotationsTable = annotationsTable;
   });
 
     // Pass data to JavaScript
