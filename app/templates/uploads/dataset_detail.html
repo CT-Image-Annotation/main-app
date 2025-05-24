@@ -335,23 +335,6 @@
         >50</span
       >
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <label
-        class="text-light mb-0"
-        for="interpolation-slices"
-        style="font-size: 0.95em"
-        >Interp. Slices:</label
-      >
-      <input
-        type="number"
-        id="interpolation-slices"
-        min="0"
-        max="10"
-        value="0"
-        class="form-control form-control-sm"
-        style="width: 60px"
-      />
-    </div>
     <button id="toggle-contours" class="btn btn-outline-info btn-sm ms-2">
       Show Contours
     </button>
@@ -560,12 +543,10 @@
       let currentTool = 'pen';
       let brushSize = 5;
       let brushColor = '#00ff00';
-      window.brushColor = brushColor;
       let drawing = false;
       let startX = 0, startY = 0;
       let lastX = 0, lastY = 0;
       let interpolationEnabled = false;
-      let interpolationSlices = 0;
       let annotationHistory = [];
       window.annotationHistory = annotationHistory;
       let redoStack = [];
@@ -589,6 +570,24 @@
             const b = parseInt(hex.substring(4, 6), 16);
             return [r, g, b, alpha];
         }
+
+        function rgbaToHex(rgba, includeAlpha = false) {
+            if (!(rgba instanceof Uint8ClampedArray || Array.isArray(rgba))) {
+                throw new TypeError('Expected a Uint8ClampedArray or Array of length 4');
+            }
+            const [r, g, b, a = 255] = rgba;
+            // clamp and ensure integers
+            const channels = [r, g, b, a].map(v =>
+                Math.max(0, Math.min(255, Math.round(v)))
+            );
+            // convert each to two-digit hex
+            const hexParts = channels.map(v => v.toString(16).padStart(2, '0'));
+            // assemble
+            return includeAlpha
+                ? `#${hexParts[0]}${hexParts[1]}${hexParts[2]}${hexParts[3]}`
+                : `#${hexParts[0]}${hexParts[1]}${hexParts[2]}`;
+            }
+
       function applyTempCanvasToAnnotation(){
           const tempCtx = tempCanvas2.getContext("2d");
           const annotationCtx = annotationCanvas.getContext("2d");
@@ -746,7 +745,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
                   };
                   const cursorManager = CursorManager(imageManager);
                   toolbarEl.innerHTML = ""; // Clear previous buttons
-                  //toolbarEl.appendChild(cursorManager.getElement());
                   cursorManager.bindCanvas(annotationCanvas);
 
                   // --- Draw contours ---
@@ -757,8 +755,27 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           }
 
           async function drawExtendedContours(idx, annotationCanvas) {
-              const ctx = annotationCanvas.getContext('2d');
-              ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+              // Create a temporary canvas for contours if it doesn't exist
+              let contourCanvas = document.getElementById('contour-canvas');
+              if (!contourCanvas) {
+                  contourCanvas = document.createElement('canvas');
+                  contourCanvas.id = 'contour-canvas';
+                  contourCanvas.style.position = 'absolute';
+                  contourCanvas.style.top = '0';
+                  contourCanvas.style.left = '0';
+                  contourCanvas.style.zIndex = '3';
+                  contourCanvas.style.width = '100%';
+                  contourCanvas.style.height = '100%';
+                  annotationCanvas.parentElement.appendChild(contourCanvas);
+              }
+
+              // Set contour canvas size to match annotation canvas
+              contourCanvas.width = annotationCanvas.width;
+              contourCanvas.height = annotationCanvas.height;
+
+              const ctx = contourCanvas.getContext('2d');
+              ctx.clearRect(0, 0, contourCanvas.width, contourCanvas.height);
+
               const method = document.getElementById('contour-method')?.value || 'adaptive';
               const threshold = document.getElementById('contour-threshold')?.value || 50;
 
@@ -797,44 +814,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               const prevContours = await fetchContours(idx - 1);
               const currentContours = await fetchContours(idx);
               const nextContours = await fetchContours(idx + 1);
-
-              // Draw interpolated contours if enabled
-              if (interpolationEnabled && interpolationSlices > 0) {
-                  if (prevContours && currentContours) {
-                      // Interpolate between previous and current slice
-                      const response = await fetch('/process/interpolate-contours', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                              contour1: prevContours[0],
-                              contour2: currentContours[0],
-                              num_slices: interpolationSlices
-                          })
-                      });
-                      const data = await response.json();
-                      data.interpolated.forEach((contour, i) => {
-                          const alpha = 0.3 * (1 - (i + 1) / (interpolationSlices + 1));
-                          drawContours([contour], 'rgba(0,0,255,0.5)', 1, alpha);
-                      });
-                  }
-                  if (currentContours && nextContours) {
-                      // Interpolate between current and next slice
-                      const response = await fetch('/process/interpolate-contours', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                              contour1: currentContours[0],
-                              contour2: nextContours[0],
-                              num_slices: interpolationSlices
-                          })
-                      });
-                      const data = await response.json();
-                      data.interpolated.forEach((contour, i) => {
-                          const alpha = 0.3 * ((i + 1) / (interpolationSlices + 1));
-                          drawContours([contour], 'rgba(255,0,0,0.5)', 1, alpha);
-                      });
-                  }
-              }
 
               // Draw the main contours
               drawContours(prevContours, 'rgba(0,0,255,0.5)', 1, 0.5);
@@ -904,19 +883,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
                       const finalUrl = `${imageUrl}?t=${timestamp}`;
 
                       // Reload the current image to show the applied filter
-                      loadImageToCanvas(finalUrl, imageCanvas, annotationCanvas, function() {
-                          // Set up drawing tools on annotationCanvas only
-                          const imageManager = {
-                              getContext: () => annotationCanvas.getContext('2d'),
-                              getCanvas: () => annotationCanvas,
-                              getRegions: () => [], // You can implement region tracking if needed
-                              addRegion: () => {},
-                          };
-                          const cursorManager = CursorManager(imageManager);
-                          toolbarEl.innerHTML = ""; // Clear previous buttons
-                          toolbarEl.appendChild(cursorManager.getElement());
-                          cursorManager.bindCanvas(annotationCanvas);
-                      });
+                      updateImage();
                   } else {
                       console.error('Failed to apply filter:', data.message);
                   }
@@ -1005,7 +972,16 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           document.getElementById('toggle-contours').addEventListener('click', function() {
               contoursVisible = !contoursVisible;
               this.textContent = contoursVisible ? 'Hide Contours' : 'Show Contours';
-              updateImage();
+              
+              // Show/hide contour canvas instead of redrawing everything
+              const contourCanvas = document.getElementById('contour-canvas');
+              if (contourCanvas) {
+                  contourCanvas.style.display = contoursVisible ? 'block' : 'none';
+              }
+              
+              if (contoursVisible) {
+                  updateImage();
+              }
           });
 
         // Add event listeners to update image on slider change
@@ -1030,13 +1006,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
             document.getElementById('opacity-value').textContent = this.value;
             updateCanvasFilter();
         });
-        // Add event listeners for interpolation controls
-        document.getElementById('interpolation-slices').addEventListener('change', function() {
-            interpolationSlices = parseInt(this.value) || 0;
-            if (contoursVisible) {
-                updateImage();
-            }
-        });
 
           document.getElementById('toggle-interpolation').addEventListener('click', function() {
               interpolationEnabled = !interpolationEnabled;
@@ -1055,7 +1024,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           return {
               method: document.getElementById('contour-method').value,
               threshold: document.getElementById('contour-threshold').value,
-              numInterp: document.getElementById('interpolation-slices').value,
               smooth: document.getElementById('smooth-volume').checked,
               smoothFactor: document.getElementById('smooth-factor').value / 100,
               fillHoles: document.getElementById('fill-holes').checked
@@ -1155,7 +1123,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           brushSize = parseInt(this.value, 10);
           document.getElementById('brush-size-value').textContent = this.value;
       };
-      document.getElementById('brush-color').oninput = function() { brushColor = this.value; window.brushColor = brushColor};
+      document.getElementById('brush-color').oninput = function() { brushColor = this.value};
 
       function loadPastAnnotations() {
           const ctx = annotationCanvas.getContext('2d');
@@ -1180,6 +1148,30 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           };
 
           img.src = url;
+
+          const url2 = `/api/annotation/load-last/${RELATED_RESOURCE_ID}/mapping`;
+
+          fetch(url2)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not OK');
+              }
+              return response.json();
+            })
+            .then(data => {
+              // Assume data is an array of objects with "color" and "label"
+              data.forEach((item, index) => {
+                annotationsTable.addRow({
+                  id: index + 1,  // or rows.length + 1 if rows is defined somewhere else
+                  color: item.color || window.brushColor, // fallback to brushColor if undefined
+                  label: item.label || "New Label"
+                });
+              });
+            })
+            .catch(error => {
+              console.error('Fetching or processing failed:', error);
+            });
+          
       }
       function syncAnnotation() {
           const ctx = annotationCanvas.getContext('2d');
@@ -1191,6 +1183,8 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               const formData = new FormData();
               formData.append("file", blob, "annotation.png");
               formData.append("resource_id", RELATED_RESOURCE_ID);
+
+              formData.append("mappings", JSON.stringify(annotationsTable.getAllRows()))
 
               fetch("/api/annotation/create", {
                   method: "POST",
@@ -1354,8 +1348,9 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       } else if(currentTool === 'colorpicker'){
         const ctx = annotationCanvas.getContext('2d');
         let selectedPixel = ctx.getImageData(startX,startY,1,1).data
-        console.log(selectedPixel)
-
+        let newBrushColor = rgbaToHex(selectedPixel);
+        brushColor = newBrushColor;
+        console.log("Brush changed to: ", newBrushColor);
       }
       else if (currentTool === "aipoint") {
           const ctx = imageCanvas.getContext('2d');
@@ -1482,7 +1477,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       upButton.style.fontSize = '16px'; // Bigger text
       upButton.addEventListener('click', () => {
           console.log("Up button clicked");
-          selectPreviousMask();
+          selectNextMask();
       });
 
       // Create down button
@@ -1493,7 +1488,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       downButton.style.fontSize = '16px'; // Bigger text
       downButton.addEventListener('click', () => {
           console.log("Down button clicked");
-          selectNextMask();
+          selectPreviousMask();
       });
 
       // Create save button
@@ -1774,7 +1769,6 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           const url = `/process/export-volume/${dsId}?` + new URLSearchParams({
               method: params.method,
               threshold: params.threshold,
-              num_interp: params.numInterp,
               smooth: params.smooth,
               smooth_factor: params.smoothFactor,
               fill_holes: params.fillHoles
@@ -1788,7 +1782,6 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
               const response = await fetch(`/process/volume/${dsId}?` + new URLSearchParams({
                   method: params.method,
                   threshold: params.threshold,
-                  num_interp: params.numInterp,
                   smooth: params.smooth,
                   smooth_factor: params.smoothFactor,
                   fill_holes: params.fillHoles
@@ -1804,6 +1797,94 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
               alert('Failed to reconstruct volume');
           }
       });
+      window.colorMappings = {}
+      const annotationsTable = new SimpleAnnotationsTable({
+          tableId: 'annotations-table',
+          tbodyId: 'annotations-tbody',
+          onRowSelect: function(rowData) {
+              // Update the selected info display
+              document.getElementById('selected-info').textContent = `ID ${rowData.id} - ${rowData.label}`;
+              document.getElementById('selected-color').textContent = rowData.color;
+              
+              // Log the selected row data and color for your use
+              console.log('Selected row:', rowData);
+              console.log('Selected color:', rowData.color);
+              
+              // You can use the selected color here for your drawing tools
+              // For example, update the brush color:
+              const brushColorInput = document.getElementById('brush-color');
+              if (brushColorInput) {
+                  brushColorInput.value = rowData.color;
+              }
+              
+              return rowData.color; // Return the color
+          },
+          onColorChange: function(rowData, row) {
+              // Handle color change
+              
+              if (annotationsTable.selectedRowId === rowData.id) {
+                  document.getElementById('selected-color').textContent = rowData.color;
+              }
+          },
+          onRowDelete: function(rowData) {
+              // Handle row deletion
+              console.log('Row deleted:', rowData);
+              
+              // Clear selection info if deleted row was selected
+              document.getElementById('selected-info').textContent = 'None';
+              document.getElementById('selected-color').textContent = '-';
+          },
+          onLabelChange: function(rowData, row, oldValue) {
+              // Handle label change
+              console.log('Label changed from:', oldValue, 'to:', rowData.label);
+          }
+      });
+
+          // Set up label editing for existing rows
+      document.querySelectorAll('.label-input').forEach(input => {
+          const row = input.closest('tr');
+          annotationsTable.setupLabelEditing(input, row);
+      });
+      
+      // Example function to get currently selected color
+      window.getSelectedAnnotationColor = function() {
+          return annotationsTable.getSelectedColor();
+      };
+
+      // Example function to get selected row data
+      window.getSelectedAnnotationData = function() {
+          return annotationsTable.getSelectedRowData();
+      };
+
+      // Example function to add new annotation
+      window.addNewAnnotation = function(id, color, label) {
+          return annotationsTable.addRow({
+              id: id,
+              color: color,
+              label: label
+          });
+      };
+
+      // Example function to select row by ID
+      window.selectAnnotationById = function(id) {
+          annotationsTable.selectRowById(id);
+      };
+
+      annotationCanvas.addEventListener('pointerup', function(e) {
+          const rows = annotationsTable.getAllRows()
+
+          const colorExists = rows.some(row => row.color === window.brushColor);
+
+          if(!colorExists){
+              annotationsTable.addRow({
+              id: rows.length + 1,
+              color: window.brushColor,
+              label: "New Label"
+          });
+          }
+      });
+
+      window.annotationsTable = annotationsTable;
   });
 
     // Pass data to JavaScript
@@ -1811,102 +1892,24 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
     window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
 </script>
 
+<style>
+.selected-row {
+    background-color: rgba(0, 123, 255, 0.3) !important;
+    border-left: 4px solid #007bff !important;
+}
+
+.selected-row:hover {
+    background-color: rgba(0, 123, 255, 0.4) !important;
+}
+
+#annotations-tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+</style>
+
 <!-- JavaScript for Simple Table Functionality -->
 <script src="{{ url_for('static', filename='js/editor/tableManager.js') }}"></script>
 
-<script>
-    
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the simple annotations table
-    window.colorMappings = {}
-    const annotationsTable = new SimpleAnnotationsTable({
-        tableId: 'annotations-table',
-        tbodyId: 'annotations-tbody',
-        onRowSelect: function(rowData) {
-            // Update the selected info display
-            document.getElementById('selected-info').textContent = `ID ${rowData.id} - ${rowData.label}`;
-            document.getElementById('selected-color').textContent = rowData.color;
-            
-            // Log the selected row data and color for your use
-            console.log('Selected row:', rowData);
-            console.log('Selected color:', rowData.color);
-            
-            // You can use the selected color here for your drawing tools
-            // For example, update the brush color:
-            const brushColorInput = document.getElementById('brush-color');
-            if (brushColorInput) {
-                brushColorInput.value = rowData.color;
-            }
-            
-            return rowData.color; // Return the color
-        },
-        onColorChange: function(rowData, row) {
-            // Handle color change
-            
-            if (annotationsTable.selectedRowId === rowData.id) {
-                document.getElementById('selected-color').textContent = rowData.color;
-            }
-        },
-        onRowDelete: function(rowData) {
-            // Handle row deletion
-            console.log('Row deleted:', rowData);
-            
-            // Clear selection info if deleted row was selected
-            document.getElementById('selected-info').textContent = 'None';
-            document.getElementById('selected-color').textContent = '-';
-        },
-        onLabelChange: function(rowData, row, oldValue) {
-            // Handle label change
-            console.log('Label changed from:', oldValue, 'to:', rowData.label);
-        }
-    });
-
-        // Set up label editing for existing rows
-    document.querySelectorAll('.label-input').forEach(input => {
-        const row = input.closest('tr');
-        annotationsTable.setupLabelEditing(input, row);
-    });
-    
-    // Example function to get currently selected color
-    window.getSelectedAnnotationColor = function() {
-        return annotationsTable.getSelectedColor();
-    };
-
-    // Example function to get selected row data
-    window.getSelectedAnnotationData = function() {
-        return annotationsTable.getSelectedRowData();
-    };
-
-    // Example function to add new annotation
-    window.addNewAnnotation = function(id, color, label) {
-        return annotationsTable.addRow({
-            id: id,
-            color: color,
-            label: label
-        });
-    };
-
-    // Example function to select row by ID
-    window.selectAnnotationById = function(id) {
-        annotationsTable.selectRowById(id);
-    };
-
-    const annotationCanvas = document.getElementById('annotation-canvas');
-    annotationCanvas.addEventListener('pointerup', function(e) {
-        const rows = annotationsTable.getAllRows()
-
-        const colorExists = rows.some(row => row.color === window.brushColor);
-
-        if(!colorExists){
-            annotationsTable.addRow({
-            id: rows.length + 1,
-            color: window.brushColor,
-            label: "New Label"
-        });
-        }
-    });
-});
-    </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
 {% endblock %}
