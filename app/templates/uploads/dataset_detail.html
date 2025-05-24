@@ -708,19 +708,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               const annotationCtx = annotationCanvas.getContext('2d');
               const annotationData = annotationCtx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height);
 
-              // Check if the first file is a DICOM file by checking its extension
-              const firstFile = {{ files[0].path|tojson|safe }};
-              const isDicom = firstFile.toLowerCase().endsWith('.dcm');
-              console.log('First file:', firstFile);  // Debug log
-              console.log('Is DICOM:', isDicom);  // Debug log
-
-              if (isDicom) {
-                  // Fetch DICOM info for the current file
-                  const dicomInfo = await fetchDicomInfo(fileIds[idx]);
-                  if (totalSlicesEl) totalSlicesEl.textContent = dicomInfo.total_slices || total;
-                  if (currentSliceEl) currentSliceEl.textContent = idx + 1;
-              }
-
               // Load image and reset annotation canvas
               loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, async function() {
                   // Restore annotation content
@@ -756,6 +743,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
                   contourCanvas.style.zIndex = '3';
                   contourCanvas.style.width = '100%';
                   contourCanvas.style.height = '100%';
+                  contourCanvas.style.pointerEvents = 'none'; // Make canvas non-interactive
                   annotationCanvas.parentElement.appendChild(contourCanvas);
               }
 
