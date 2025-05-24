@@ -233,6 +233,11 @@ class SimpleAnnotationsTable {
         const row = document.createElement('tr');
         row.setAttribute('data-id', data.id);
         row.style.cursor = 'pointer';
+
+        if (!data.id) {
+            data.id = this.length() + 1
+            console.log("GENERATING ID")
+        }
         
         row.innerHTML = `
             <td>${data.id}</td>
@@ -375,6 +380,11 @@ class SimpleAnnotationsTable {
             const hex = parseInt(x).toString(16);
             return hex.length === 1 ? '0' + hex : hex;
         }).join('');
+    }
+
+    length() {
+        const tbody = document.getElementById(this.tbodyId);
+        return tbody.children.length;
     }
 }
 

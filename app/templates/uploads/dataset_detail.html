@@ -170,13 +170,6 @@
           </div>
           <div class="col-12 col-md-6">
             <div class="d-flex align-items-center flex-wrap gap-2">
-              <label class="text-light mb-0 flex-shrink-0" for="brush-color">Color</label>
-              <input
-                type="color"
-                id="brush-color"
-                value="#00ff00"
-                style="width: 30px; height: 30px"
-              />
               <div class="ms-auto d-flex gap-1">
                 <button
                   class="btn btn-outline-warning btn-sm"
@@ -236,6 +229,7 @@
       <div class="card-header">
         <h5 class="mb-0">Annotations</h5>
         <small class="text-muted">Click rows to select • Click colors to change</small>
+        <button id="annot-new-color">New Color</button>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
@@ -1172,7 +1166,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           brushSize = parseInt(this.value, 10);
           document.getElementById('brush-size-value').textContent = this.value;
       };
-      document.getElementById('brush-color').onclick = function() { brushColor = this.value};
 
       function loadPastAnnotations() {
           const ctx = annotationCanvas.getContext('2d');
@@ -1211,8 +1204,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               // Assume data is an array of objects with "color" and "label"
               data.forEach((item, index) => {
                 annotationsTable.addRow({
-                  id: index + 1,  // or rows.length + 1 if rows is defined somewhere else
-                  color: item.color || window.brushColor, // fallback to brushColor if undefined
+                  color: item.color || brushColor, // fallback to brushColor if undefined
                   label: item.label || "New Label"
                 });
               });
@@ -1863,13 +1855,7 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
               console.log('Selected row:', rowData);
               console.log('Selected color:', rowData.color);
               
-              // You can use the selected color here for your drawing tools
-              // For example, update the brush color:
-              const brushColorInput = document.getElementById('brush-color');
-              if (brushColorInput) {
-                  brushColorInput.value = rowData.color;
-              }
-              
+              brushColor = rowData.color;
               return rowData.color; // Return the color
           },
           onColorChange: function(rowData, row) {
@@ -1878,6 +1864,7 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
               if (annotationsTable.selectedRowId === rowData.id) {
                   document.getElementById('selected-color').textContent = rowData.color;
               }
+              brushColor = rowData.color;
           },
           onRowDelete: function(rowData) {
               // Handle row deletion
@@ -1910,9 +1897,8 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
       };
 
       // Example function to add new annotation
-      window.addNewAnnotation = function(id, color, label) {
+      window.addNewAnnotation = function(color, label) {
           return annotationsTable.addRow({
-              id: id,
               color: color,
               label: label
           });
@@ -1926,18 +1912,42 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
       annotationCanvas.addEventListener('pointerup', function(e) {
           const rows = annotationsTable.getAllRows()
 
-          const colorExists = rows.some(row => row.color === window.brushColor);
-
+          const colorExists = rows.some(row => row.color === brushColor);
+          console.log(brushColor)
           if(!colorExists){
               annotationsTable.addRow({
-              id: rows.length + 1,
-              color: window.brushColor,
-              label: "New Label"
-          });
+                color: brushColor,
+                label: "New Label"
+            });
           }
       });
 
       window.annotationsTable = annotationsTable;
+
+      document.getElementById('annot-new-color').addEventListener('click', () => {
+        // Generate random RGB components (0-255)
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
+
+        // Alpha is 255 (fully opaque)
+        const a = 255;
+
+        // You can store it as an rgba string or an object; here I use rgba string:
+        const toHex = (c) => c.toString(16).padStart(2, '0');
+
+      // Compose the hex color string
+        const hexColor = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        brushColor = hexColor;
+
+        // Log or do something with the new color
+        console.log('New brushColor:', brushColor);
+
+        annotationsTable.addRow({
+              color: brushColor,
+              label: "New Label"
+        });
+    });
   });
 
     // Pass data to JavaScript
