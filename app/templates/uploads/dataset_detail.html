@@ -1,775 +1,1076 @@
 {% extends 'base.html' %}
-
-{% block title %}Dataset – {{ dataset.name }}{% endblock %}
-
+{% block title %}Dataset – {{ dataset.name }} {% endblock %}
 {% block content %}
 <div class="dashboard-header mb-4">
   <h1 class="mb-2">{{ dataset.name }}</h1>
   {% if dataset.description %}
-    <p class="text-secondary">{{ dataset.description }}</p>
+  <p class="text-secondary">{{ dataset.description }}</p>
   {% endif %}
 
   <!-- Patient Information -->
   {% if dataset.patient_name %}
-    <div class="card bg-dark text-light p-3 mb-3">
-      <h5 class="mb-3">Patient Information</h5>
-      <div class="row">
-        <div class="col-md-6">
-          <p class="mb-1"><strong>Name:</strong> {{ dataset.patient_name }}</p>
-          <p class="mb-1"><strong>ID:</strong> {{ dataset.patient_id }}</p>
-        </div>
-        <div class="col-md-6">
-          <p class="mb-1"><strong>Date of Birth:</strong> {{ dataset.patient_dob.strftime('%Y-%m-%d') if dataset.patient_dob }}</p>
-          <p class="mb-1"><strong>Gender:</strong> {{ dataset.patient_gender }}</p>
-        </div>
+  <div class="card bg-dark text-light p-3 mb-3">
+    <h5 class="mb-3">Patient Information</h5>
+    <div class="row">
+      <div class="col-md-6">
+        <p class="mb-1"><strong>Name:</strong> {{ dataset.patient_name }}</p>
+        <p class="mb-1"><strong>ID:</strong> {{ dataset.patient_id }}</p>
+      </div>
+      <div class="col-md-6">
+        <p class="mb-1">
+          <strong>Date of Birth:</strong> {{
+          dataset.patient_dob.strftime('%Y-%m-%d') if dataset.patient_dob }}
+        </p>
+        <p class="mb-1">
+          <strong>Gender:</strong> {{ dataset.patient_gender }}
+        </p>
       </div>
     </div>
+  </div>
   {% endif %}
 
   <!-- Scan Information -->
   {% if dataset.scan_type %}
-    <div class="card bg-dark text-light p-3 mb-3">
-      <h5 class="mb-3">Scan Information</h5>
-      <div class="row">
-        <div class="col-md-6">
-          <p class="mb-1"><strong>Type:</strong> {{ dataset.scan_type }}</p>
-          <p class="mb-1"><strong>Date:</strong> {{ dataset.scan_date.strftime('%Y-%m-%d') if dataset.scan_date }}</p>
-        </div>
-        <div class="col-md-6">
-          <p class="mb-1"><strong>Series Number:</strong> {{ dataset.scan_series_number }}</p>
-          {% if dataset.scan_description %}
-            <p class="mb-1"><strong>Description:</strong> {{ dataset.scan_description }}</p>
-          {% endif %}
-        </div>
+  <div class="card bg-dark text-light p-3 mb-3">
+    <h5 class="mb-3">Scan Information</h5>
+    <div class="row">
+      <div class="col-md-6">
+        <p class="mb-1"><strong>Type:</strong> {{ dataset.scan_type }}</p>
+        <p class="mb-1">
+          <strong>Date:</strong> {{ dataset.scan_date.strftime('%Y-%m-%d') if
+          dataset.scan_date }}
+        </p>
+      </div>
+      <div class="col-md-6">
+        <p class="mb-1">
+          <strong>Series Number:</strong> {{ dataset.scan_series_number }}
+        </p>
+        {% if dataset.scan_description %}
+        <p class="mb-1">
+          <strong>Description:</strong> {{ dataset.scan_description }}
+        </p>
+        {% endif %}
       </div>
     </div>
+  </div>
   {% endif %}
 
   <p>Status: <span class="fw-bold text-info">{{ dataset.tags }}</span></p>
 
-<!-- Image Controls Section - Modified for Mobile -->
-<div id="image-controls" class="mt-3">
-  <!-- Stack controls vertically on mobile -->
-  <div class="card bg-dark p-3 mb-3 rounded">
-    <div class="row g-2">
+  <!-- Image Controls Section - Modified for Mobile -->
+  <div id="image-controls" class="mt-3">
+    <!-- Stack controls vertically on mobile -->
+    <div class="card bg-dark p-3 mb-3 rounded">
+      <div class="row g-2">
         <!-- Brightness -->
-  <div class="col-12 col-md-4">
-    <div class="d-flex align-items-center gap-2">
-      <label class="text-light mb-0 flex-shrink-0 me-1" for="brightness-slider">Brightness</label>
-      <input type="range" id="brightness-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
-      <span id="brightness-value" class="text-light flex-shrink-0" style="min-width:2rem;text-align:right;">0</span>
-    </div>
-  </div>
+        <div class="col-12 col-md-4">
+          <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0 flex-shrink-0 me-1" for="brightness-slider">Brightness</label>
+            <input type="range" id="brightness-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+            <span id="brightness-value" class="text-light flex-shrink-0" style="min-width:2rem;text-align:right;">0</span>
+          </div>
+        </div>
 
-  <!-- Contrast -->
-  <div class="col-12 col-md-4">
-    <div class="d-flex align-items-center gap-2">
-      <label class="text-light mb-0 flex-shrink-0 me-1" for="contrast-slider">Contrast</label>
-      <input type="range" id="contrast-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
-      <span id="contrast-value" class="text-light flex-shrink-0" style="min-width:2rem;text-align:right;">0</span>
-    </div>
-  </div>
+        <!-- Contrast -->
+        <div class="col-12 col-md-4">
+          <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0 flex-shrink-0 me-1" for="contrast-slider">Contrast</label>
+            <input type="range" id="contrast-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+            <span id="contrast-value" class="text-light flex-shrink-0" style="min-width:2rem;text-align:right;">0</span>
+          </div>
+        </div>
 
-  <!-- Annotation Opacity -->
-  <div class="col-12 col-md-4">
-    <div class="d-flex align-items-center gap-2">
-      <label class="text-light mb-0 flex-shrink-0 me-1" for="opacity-slider">Annotation Visibilty</label>
-      <input type="range" id="opacity-slider" min="0" max="100" value="50" class="form-range flex-grow-1">
-      <span id="opacity-value" class="text-light flex-shrink-0" style="min-width:2rem;text-align:right;">50%</span>
-    </div>
-  </div>
-</div>
-
-
-<!-- Drawing Tools Section - Modified for Mobile -->
-<div id="drawing-tools" class="mt-3">
-  <div class="card bg-dark p-3 mb-3 rounded">
-    <!-- Drawing tools -->
-    <div class="d-flex flex-wrap gap-2 mb-3">
-      <button class="btn btn-outline-light btn-sm" id="tool-pen" title="Freehand">✏️ Pen</button>
-      <button class="btn btn-outline-light btn-sm" id="tool-rect" title="Rectangle">▭ Rect</button>
-      <button class="btn btn-outline-light btn-sm" id="tool-circle" title="Circle">◯ Circle</button>
-      <button class="btn btn-outline-light btn-sm" id="tool-eraser" title="Eraser">🧽 Eraser</button>
-      <button class="btn btn-outline-light btn-sm" id="tool-aipoint" title="AIPoint">:() AIPoint</button>
-    </div>
-    
-    <!-- Brush controls -->
-    <div class="row g-2">
-      <div class="col-12 col-md-6">
-        <div class="d-flex align-items-center gap-2">
-          <label class="text-light mb-0 flex-shrink-0 me-1" for="brush-size">Brush Size</label>
-          <input type="range" id="brush-size" min="1" max="30" value="5" class="form-range flex-grow-1">
-          <span id="brush-size-value" class="text-light flex-shrink-0" style="min-width: 1.5rem; text-align: right;">5</span>
+        <!-- Annotation Opacity -->
+        <div class="col-12 col-md-4">
+          <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0 flex-shrink-0 me-1" for="opacity-slider">Annotation Visibility</label>
+            <input type="range" id="opacity-slider" min="0" max="100" value="50" class="form-range flex-grow-1">
+            <span id="opacity-value" class="text-light flex-shrink-0" style="min-width:2rem;text-align:right;">50%</span>
+          </div>
         </div>
       </div>
-      <div class="col-12 col-md-6">
-        <div class="d-flex align-items-center flex-wrap gap-2">
-          <label class="text-light mb-0 flex-shrink-0" for="brush-color">Color</label>
-          <input type="color" id="brush-color" value="#00ff00" style="width: 30px; height: 30px;">
-          <div class="ms-auto d-flex gap-1">
-            <button class="btn btn-outline-warning btn-sm" id="tool-undo" title="Undo">↩️</button>
-            <button class="btn btn-outline-warning btn-sm" id="tool-redo" title="Redo">↪️</button>
-            <button class="btn btn-outline-danger btn-sm" id="tool-clear" title="Clear">🗑️</button>
+    </div>
+
+    <!-- Drawing Tools Section - Modified for Mobile -->
+    <div id="drawing-tools" class="mt-3">
+      <div class="card bg-dark p-3 mb-3 rounded">
+        <!-- Drawing tools -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button
+            class="btn btn-outline-light btn-sm"
+            id="tool-pen"
+            title="Freehand"
+          >
+            ✏️ Pen
+          </button>
+          <button
+            class="btn btn-outline-light btn-sm"
+            id="tool-rect"
+            title="Rectangle"
+          >
+            ▭ Rect
+          </button>
+          <button
+            class="btn btn-outline-light btn-sm"
+            id="tool-circle"
+            title="Circle"
+          >
+            ◯ Circle
+          </button>
+          <button
+            class="btn btn-outline-light btn-sm"
+            id="tool-eraser"
+            title="Eraser"
+          >
+            🧽 Eraser
+          </button>
+          <button
+            class="btn btn-outline-light btn-sm"
+            id="tool-aipoint"
+            title="AIPoint"
+          >
+            🎯 AIPoint
+          </button>
+          <button
+            class="btn btn-outline-light btn-sm"
+            id="tool-fill"
+            title="Fill"
+          >
+            🪣 Fill
+          </button>
+          <button
+            class="btn btn-outline-light btn-sm"
+            id="tool-colorpicker"
+            title="Color Picker"
+          >
+            🎨 Color Picker
+          </button>
+        </div>
+
+        <!-- Brush controls -->
+        <div class="row g-2">
+          <div class="col-12 col-md-6">
+            <div class="d-flex align-items-center gap-2">
+              <label class="text-light mb-0 flex-shrink-0 me-1" for="brush-size">Brush Size</label>
+              <input
+                type="range"
+                id="brush-size"
+                min="1"
+                max="30"
+                value="5"
+                class="form-range flex-grow-1"
+              />
+              <span
+                id="brush-size-value"
+                class="text-light flex-shrink-0"
+                style="min-width: 1.5rem; text-align: right"
+                >5</span
+              >
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <label class="text-light mb-0 flex-shrink-0" for="brush-color">Color</label>
+              <input
+                type="color"
+                id="brush-color"
+                value="#00ff00"
+                style="width: 30px; height: 30px"
+              />
+              <div class="ms-auto d-flex gap-1">
+                <button
+                  class="btn btn-outline-warning btn-sm"
+                  id="tool-undo"
+                  title="Undo"
+                >
+                  ↩️
+                </button>
+                <button
+                  class="btn btn-outline-warning btn-sm"
+                  id="tool-redo"
+                  title="Redo"
+                >
+                  ↪️
+                </button>
+                <button
+                  class="btn btn-outline-danger btn-sm"
+                  id="tool-clear"
+                  title="Clear"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-</div>
+  <!-- Main Editor Section with Two-Column Layout -->
+  <div class="row my-4">
+    <!-- Left Column: Image Editor -->
+    <div class="col-lg-8">
+      <div class="editor-container d-flex flex-column align-items-center w-100">
+        <canvas id="image-canvas2" style="position:relative; top:0; left:0; z-index:1; width:100%; height:100%; display: none;"></canvas>
 
-<!-- Main Editor Section with Two-Column Layout -->
-<div class="row my-4">
-  <!-- Left Column: Image Editor -->
-  <div class="col-lg-8">
-    <div class="editor-container d-flex flex-column align-items-center w-100">
-      <canvas id="image-canvas2" style="position:relative; top:0; left:0; z-index:1; width:100%; height:100%; display: none;"></canvas>
+        <div class="editor-toolbar mb-2"></div>
+        <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
+          <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
+          <canvas id="temp-canvas2" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
+          <canvas id="annotation-canvas" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%; opacity: 50%;"></canvas> 
+        </div>   
+      </div>
 
-      <div class="editor-toolbar mb-2"></div>
-      <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
-        <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
-        <canvas id="temp-canvas2" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
-        <canvas id="annotation-canvas" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%; opacity: 50%;"></canvas> 
-      </div>   
+      <p class="text-center text-light mt-3">
+        Image <span id="current-index">1</span> of {{ files|length }}
+        {% if files and files[0].mime == 'application/dicom' %}
+        | Slice <span id="current-slice">1</span> of <span id="total-slices">1</span>
+        {% endif %}
+      </p>
     </div>
 
-    <p class="text-center text-light mt-3">
-      Image <span id="current-index">1</span> of {{ files|length }}
-      {% if files and files[0].mime == 'application/dicom' %}
-      | Slice <span id="current-slice">1</span> of <span id="total-slices">1</span>
-      {% endif %}
-    </p>
+    <!-- Right Column: Annotations Table -->
+    <div class="col-lg-4">
+      <div class="card bg-dark text-light h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Annotations</h5>
+          <button class="btn btn-sm btn-outline-light" id="add-annotation" title="Add New Annotation">
+            <i class="fas fa-plus"></i> Add
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+            <table class="table table-dark table-hover mb-0" id="annotations-table">
+              <thead class="table-secondary sticky-top">
+                <tr>
+                  <th scope="col" style="width: 15%;">ID</th>
+                  <th scope="col" style="width: 20%;">Color</th>
+                  <th scope="col" style="width: 50%;">Label</th>
+                  <th scope="col" style="width: 15%;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="annotations-tbody">
+                <!-- Sample data - replace with dynamic content -->
+                <tr data-annotation-id="1">
+                  <td>1</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="color-preview" style="width: 20px; height: 20px; background-color: #ff0000; border-radius: 3px; border: 1px solid #ccc;"></div>
+                      <small class="text-muted">#ff0000</small>
+                    </div>
+                  </td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Tumor" readonly>
+                  </td>
+                  <td>
+                    <div class="btn-group-vertical btn-group-sm">
+                      <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr data-annotation-id="2">
+                  <td>2</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="color-preview" style="width: 20px; height: 20px; background-color: #00ff00; border-radius: 3px; border: 1px solid #ccc;"></div>
+                      <small class="text-muted">#00ff00</small>
+                    </div>
+                  </td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Healthy Tissue" readonly>
+                  </td>
+                  <td>
+                    <div class="btn-group-vertical btn-group-sm">
+                      <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr data-annotation-id="3">
+                  <td>3</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="color-preview" style="width: 20px; height: 20px; background-color: #0000ff; border-radius: 3px; border: 1px solid #ccc;"></div>
+                      <small class="text-muted">#0000ff</small>
+                    </div>
+                  </td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Blood Vessel" readonly>
+                  </td>
+                  <td>
+                    <div class="btn-group-vertical btn-group-sm">
+                      <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-footer text-center">
+          <small class="text-muted">
+            <span id="annotation-count">3</span> annotations
+          </small>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Right Column: Annotations Table -->
-  <div class="col-lg-4">
-    <div class="card bg-dark text-light h-100">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Annotations</h5>
-        <button class="btn btn-sm btn-outline-light" id="add-annotation" title="Add New Annotation">
-          <i class="fas fa-plus"></i> Add
+  <!-- Slim, professional toolbar -->
+  <div
+    class="d-flex flex-wrap justify-content-center align-items-center gap-3 py-2 mb-3"
+    style="background: #23272b; border-radius: 0.5rem"
+  >
+    <div class="btn-group me-2" role="group" aria-label="Navigation">
+      <button
+        id="prev"
+        class="btn btn-outline-light btn-sm"
+        title="Previous Image"
+      >
+        ◀
+      </button>
+      <button id="next" class="btn btn-outline-light btn-sm" title="Next Image">
+        ▶
+      </button>
+      <button
+        id="prev-slice"
+        class="btn btn-outline-light btn-sm"
+        title="Previous Slice"
+      >
+        ↑
+      </button>
+      <button
+        id="next-slice"
+        class="btn btn-outline-light btn-sm"
+        title="Next Slice"
+      >
+        ↓
+      </button>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <label
+        class="text-light mb-0"
+        for="contour-method"
+        style="font-size: 0.95em"
+        >Contour:</label
+      >
+      <select id="contour-method" class="form-select form-select-sm w-auto">
+        <option value="adaptive">Adaptive</option>
+        <option value="canny">Canny</option>
+        <option value="manual">Manual Threshold</option>
+        <option value="otsu">Otsu</option>
+      </select>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <label
+        class="text-light mb-0"
+        for="contour-threshold"
+        style="font-size: 0.95em"
+        >Threshold:</label
+      >
+      <input
+        type="range"
+        id="contour-threshold"
+        min="0"
+        max="255"
+        value="50"
+        class="form-range w-auto"
+        style="width: 120px"
+      />
+      <span
+        id="contour-threshold-value"
+        class="text-light ms-1"
+        style="font-size: 0.95em"
+        >50</span
+      >
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <label
+        class="text-light mb-0"
+        for="interpolation-slices"
+        style="font-size: 0.95em"
+        >Interp. Slices:</label
+      >
+      <input
+        type="number"
+        id="interpolation-slices"
+        min="0"
+        max="10"
+        value="0"
+        class="form-control form-control-sm"
+        style="width: 60px"
+      />
+    </div>
+    <button id="toggle-contours" class="btn btn-outline-info btn-sm ms-2">
+      Show Contours
+    </button>
+    <button id="toggle-interpolation" class="btn btn-outline-warning btn-sm ms-2">
+      Enable Interpolation
+    </button>
+    <button id="reconstruct-volume" class="btn btn-outline-success btn-sm ms-2">
+      Reconstruct Volume
+    </button>
+  </div>
+
+  <div class="d-flex justify-content-center my-3">
+    <input
+      type="range"
+      id="image-slider"
+      class="form-range"
+      style="width: 80%; max-width: 500px"
+      min="1"
+      max="{{ files|length }}"
+      value="1"
+    />
+  </div>
+
+  <!-- Edit Controls -->
+  <div id="edit-controls" class="mt-4">
+    <form
+      id="batch-filter-form"
+      method="POST"
+      action="{{ url_for('processing.batch_apply', ds_id=dataset.id) }}"
+      class="d-flex flex-wrap gap-2 justify-content-center mb-3"
+    >
+      {% for name in filter_names %}
+      <button
+        type="submit"
+        name="filter_name"
+        value="{{ name }}"
+        class="btn btn-outline-info"
+      >
+        {{ name }}
+      </button>
+      {% endfor %}
+    </form>
+    <div class="d-flex gap-2 justify-content-center align-items-center mb-2">
+      <a
+        href="{{ url_for('processing.batch_undo', ds_id=dataset.id) }}"
+        class="btn btn-outline-warning"
+        >Undo All</a
+      >
+      <a
+        href="{{ url_for('processing.batch_reset', ds_id=dataset.id) }}"
+        class="btn btn-outline-danger"
+        >Reset All</a
+      >
+      <a
+        href="{{ url_for('processing.batch_download', ds_id=dataset.id) }}"
+        class="btn btn-outline-success"
+        >Download All</a
+      >
+      {% if files and files[0].mime == 'application/dicom' %}
+      <button id="check-structure" class="btn btn-outline-info">
+        Check Dataset Structure
+      </button>
+      {% endif %}
+    </div>
+    {% if processes %}
+    <p class="mt-3">
+      <strong>Applied Filters:</strong>
+      <span class="text-info">{{ processes | join(' → ') }}</span>
+    </p>
+    {% endif %}
+    <div
+      id="dataset-structure-info"
+      class="mt-3 text-center"
+      style="display: none"
+    >
+      <div class="spinner-border text-info" role="status" style="display: none">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3D Viewer Section -->
+  <div class="mt-4">
+    <div
+      id="mesh-viewer"
+      style="width: 100%; height: 500px; background: #111; border-radius: 0.5rem"
+    ></div>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-2">
+      <div class="d-flex align-items-center gap-2">
+        <button id="show-mesh" class="btn btn-outline-info btn-sm">
+          Show Mesh
+        </button>
+        <button id="reset-camera" class="btn btn-outline-light btn-sm">
+          Reset View
+        </button>
+        <button id="export-stl" class="btn btn-outline-success btn-sm">
+          Export STL
         </button>
       </div>
-      <div class="card-body p-0">
-        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-          <table class="table table-dark table-hover mb-0" id="annotations-table">
-            <thead class="table-secondary sticky-top">
-              <tr>
-                <th scope="col" style="width: 15%;">ID</th>
-                <th scope="col" style="width: 20%;">Color</th>
-                <th scope="col" style="width: 50%;">Label</th>
-                <th scope="col" style="width: 15%;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="annotations-tbody">
-              <!-- Sample data - replace with dynamic content -->
-              <tr data-annotation-id="1">
-                <td>1</td>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="color-preview" style="width: 20px; height: 20px; background-color: #ff0000; border-radius: 3px; border: 1px solid #ccc;"></div>
-                    <small class="text-muted">#ff0000</small>
-                  </div>
-                </td>
-                <td>
-                  <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Tumor" readonly>
-                </td>
-                <td>
-                  <div class="btn-group-vertical btn-group-sm">
-                    <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr data-annotation-id="2">
-                <td>2</td>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="color-preview" style="width: 20px; height: 20px; background-color: #00ff00; border-radius: 3px; border: 1px solid #ccc;"></div>
-                    <small class="text-muted">#00ff00</small>
-                  </div>
-                </td>
-                <td>
-                  <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Healthy Tissue" readonly>
-                </td>
-                <td>
-                  <div class="btn-group-vertical btn-group-sm">
-                    <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr data-annotation-id="3">
-                <td>3</td>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="color-preview" style="width: 20px; height: 20px; background-color: #0000ff; border-radius: 3px; border: 1px solid #ccc;"></div>
-                    <small class="text-muted">#0000ff</small>
-                  </div>
-                </td>
-                <td>
-                  <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Blood Vessel" readonly>
-                </td>
-                <td>
-                  <div class="btn-group-vertical btn-group-sm">
-                    <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="d-flex align-items-center gap-2">
+        <label
+          class="text-light mb-0"
+          for="mesh-opacity"
+          style="font-size: 0.95em"
+          >Opacity:</label
+        >
+        <input
+          type="range"
+          id="mesh-opacity"
+          min="0"
+          max="100"
+          value="100"
+          class="form-range"
+          style="width: 100px"
+        />
       </div>
-      <div class="card-footer text-center">
-        <small class="text-muted">
-          <span id="annotation-count">3</span> annotations
-        </small>
+      <div class="d-flex align-items-center gap-2">
+        <label class="text-light mb-0" for="mesh-color" style="font-size: 0.95em"
+          >Color:</label
+        >
+        <select
+          id="mesh-color"
+          class="form-select form-select-sm"
+          style="width: 120px"
+        >
+          <option value="blue">Blue</option>
+          <option value="red">Red</option>
+          <option value="green">Green</option>
+          <option value="yellow">Yellow</option>
+          <option value="purple">Purple</option>
+        </select>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Slim, professional toolbar -->
-<div class="d-flex flex-wrap justify-content-center align-items-center gap-3 py-2 mb-3" style="background: #23272b; border-radius: 0.5rem;">
-  <div class="btn-group me-2" role="group" aria-label="Navigation">
-    <button id="prev" class="btn btn-outline-light btn-sm" title="Previous Image">◀</button>
-    <button id="next" class="btn btn-outline-light btn-sm" title="Next Image">▶</button>
-    <button id="prev-slice" class="btn btn-outline-light btn-sm" title="Previous Slice">↑</button>
-    <button id="next-slice" class="btn btn-outline-light btn-sm" title="Next Slice">↓</button>
-  </div>
-  <div class="d-flex align-items-center gap-2">
-    <label class="text-light mb-0" for="contour-method" style="font-size: 0.95em;">Contour:</label>
-    <select id="contour-method" class="form-select form-select-sm w-auto">
-      <option value="adaptive">Adaptive</option>
-      <option value="canny">Canny</option>
-      <option value="manual">Manual Threshold</option>
-      <option value="otsu">Otsu</option>
-    </select>
-  </div>
-  <div class="d-flex align-items-center gap-2">
-    <label class="text-light mb-0" for="contour-threshold" style="font-size: 0.95em;">Threshold:</label>
-    <input type="range" id="contour-threshold" min="0" max="255" value="50" class="form-range w-auto" style="width:120px;">
-    <span id="contour-threshold-value" class="text-light ms-1" style="font-size: 0.95em;">50</span>
-  </div>
-  <div class="d-flex align-items-center gap-2">
-    <label class="text-light mb-0" for="interpolation-slices" style="font-size: 0.95em;">Interp. Slices:</label>
-    <input type="number" id="interpolation-slices" min="0" max="10" value="0" class="form-control form-control-sm" style="width:60px;">
-  </div>
-  <button id="toggle-contours" class="btn btn-outline-info btn-sm ms-2">Show Contours</button>
-  <button id="toggle-interpolation" class="btn btn-outline-warning btn-sm ms-2">Enable Interpolation</button>
-  <button id="reconstruct-volume" class="btn btn-outline-success btn-sm ms-2">Reconstruct Volume</button>
-</div>
-<div class="d-flex justify-content-center my-3">
-      <input type="range" id="image-slider" class="form-range" style="width:80%; max-width:500px;"
-             min="1" max="{{ files|length }}" value="1">
-    </div>
-
-<!-- Edit Controls -->
-<div id="edit-controls" class="mt-4">
-  <form id="batch-filter-form" method="POST" action="{{ url_for('processing.batch_apply', ds_id=dataset.id) }}" class="d-flex flex-wrap gap-2 justify-content-center mb-3">
-    {% for name in filter_names %}
-      <button type="submit" name="filter_name" value="{{ name }}" class="btn btn-outline-info">{{ name }}</button>
-    {% endfor %}
-  </form>
-  <div class="d-flex gap-2 justify-content-center align-items-center mb-2">
-    <a href="{{ url_for('processing.batch_undo', ds_id=dataset.id) }}" class="btn btn-outline-warning">Undo All</a>
-    <a href="{{ url_for('processing.batch_reset', ds_id=dataset.id) }}" class="btn btn-outline-danger">Reset All</a>
-    <a href="{{ url_for('processing.batch_download', ds_id=dataset.id) }}" class="btn btn-outline-success">Download All</a>
-    {% if files and files[0].mime == 'application/dicom' %}
-    <button id="check-structure" class="btn btn-outline-info">Check Dataset Structure</button>
-    {% endif %}
-  </div>
-  {% if processes %}
-    <p class="mt-3"><strong>Applied Filters:</strong> <span class="text-info">{{ processes | join(' → ') }}</span></p>
-  {% endif %}
-  <div id="dataset-structure-info" class="mt-3 text-center" style="display: none;">
-      <div class="spinner-border text-info" role="status" style="display: none;">
-          <span class="visually-hidden">Loading...</span>
+      <div class="d-flex align-items-center gap-2">
+        <label class="text-light mb-0" for="render-mode" style="font-size: 0.95em"
+          >Mode:</label
+        >
+        <select
+          id="render-mode"
+          class="form-select form-select-sm"
+          style="width: 120px"
+        >
+          <option value="solid">Solid</option>
+          <option value="wireframe">Wireframe</option>
+          <option value="points">Points</option>
+        </select>
       </div>
-  </div>
-</div>
-
-<!-- 3D Viewer Section -->
-<div class="mt-4">
-    <div id="mesh-viewer" style="width: 100%; height: 500px; background: #111; border-radius: 0.5rem;"></div>
-    <div class="d-flex flex-wrap justify-content-center gap-3 mt-2">
-        <div class="d-flex align-items-center gap-2">
-            <button id="show-mesh" class="btn btn-outline-info btn-sm">Show Mesh</button>
-            <button id="reset-camera" class="btn btn-outline-light btn-sm">Reset View</button>
-            <button id="export-stl" class="btn btn-outline-success btn-sm">Export STL</button>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <label class="text-light mb-0" for="mesh-opacity" style="font-size: 0.95em;">Opacity:</label>
-            <input type="range" id="mesh-opacity" min="0" max="100" value="100" class="form-range" style="width:100px;">
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <label class="text-light mb-0" for="mesh-color" style="font-size: 0.95em;">Color:</label>
-            <select id="mesh-color" class="form-select form-select-sm" style="width:120px;">
-                <option value="blue">Blue</option>
-                <option value="red">Red</option>
-                <option value="green">Green</option>
-                <option value="yellow">Yellow</option>
-                <option value="purple">Purple</option>
-            </select>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <label class="text-light mb-0" for="render-mode" style="font-size: 0.95em;">Mode:</label>
-            <select id="render-mode" class="form-select form-select-sm" style="width:120px;">
-                <option value="solid">Solid</option>
-                <option value="wireframe">Wireframe</option>
-                <option value="points">Points</option>
-            </select>
-        </div>
     </div>
     <div class="d-flex flex-wrap justify-content-center gap-3 mt-2">
-        <div class="d-flex align-items-center gap-2">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="smooth-volume">
-                <label class="form-check-label text-light" for="smooth-volume">Smooth Volume</label>
-            </div>
+      <div class="d-flex align-items-center gap-2">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="smooth-volume" />
+          <label class="form-check-label text-light" for="smooth-volume"
+            >Smooth Volume</label
+          >
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <label class="text-light mb-0" for="smooth-factor" style="font-size: 0.95em;">Smooth Factor:</label>
-            <input type="range" id="smooth-factor" min="0" max="200" value="100" class="form-range" style="width:100px;">
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <label
+          class="text-light mb-0"
+          for="smooth-factor"
+          style="font-size: 0.95em"
+          >Smooth Factor:</label
+        >
+        <input
+          type="range"
+          id="smooth-factor"
+          min="0"
+          max="200"
+          value="100"
+          class="form-range"
+          style="width: 100px"
+        />
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="fill-holes" />
+          <label class="form-check-label text-light" for="fill-holes"
+            >Fill Holes</label
+          >
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="fill-holes">
-                <label class="form-check-label text-light" for="fill-holes">Fill Holes</label>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <script type="module">
-import { CursorManager } from "{{ url_for('static', filename='js/editor/CursorManager.js') }}";
+  import { CursorManager } from "{{ url_for('static', filename='js/editor/CursorManager.js') }}";
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Assign Jinja2 variables to JS constants at the top
-    const dsId = {{ dataset.id|tojson }};
-    const fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
-    console.log(fileIds)
-    let idx = 0;
-    const currentIndexEl = document.getElementById('current-index');
-    const currentSliceEl = document.getElementById('current-slice');
-    const totalSlicesEl = document.getElementById('total-slices');
-    const total = fileIds.length;
-    const toolbarEl = document.querySelector('.editor-toolbar');
-    const imageCanvas = document.getElementById('image-canvas');
-    const imageCanvas2 = document.getElementById('image-canvas2');
-    const annotationCanvas = document.getElementById('annotation-canvas');
-    const tempCanvas2 = document.getElementById('temp-canvas2');
-    const filterForm = document.getElementById('batch-filter-form');
-    let contoursVisible = false;
-    let currentTool = 'pen';
-    let brushSize = 5;
-    let brushColor = '#00ff00';
-    let drawing = false;
-    let startX = 0, startY = 0;
-    let lastX = 0, lastY = 0;
-    let interpolationEnabled = false;
-    let interpolationSlices = 0;
-    let annotationHistory = [];
-    window.annotationHistory = annotationHistory;
-    let redoStack = [];
+  document.addEventListener('DOMContentLoaded', function() {
+      // Assign Jinja2 variables to JS constants at the top
+      const dsId = {{ dataset.id|tojson }};
+      const fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
+      console.log(fileIds)
+      let idx = 0;
+      const currentIndexEl = document.getElementById('current-index');
+      const currentSliceEl = document.getElementById('current-slice');
+      const totalSlicesEl = document.getElementById('total-slices');
+      const total = fileIds.length;
+      const toolbarEl = document.querySelector('.editor-toolbar');
+      const imageCanvas = document.getElementById('image-canvas');
+      const imageCanvas2 = document.getElementById('image-canvas2');
+      const annotationCanvas = document.getElementById('annotation-canvas');
+      const tempCanvas2 = document.getElementById('temp-canvas2');
+      const filterForm = document.getElementById('batch-filter-form');
+      let contoursVisible = false;
+      let currentTool = 'pen';
+      let brushSize = 5;
+      let brushColor = '#00ff00';
+      window.brushColor = brushColor;
+      let drawing = false;
+      let startX = 0, startY = 0;
+      let lastX = 0, lastY = 0;
+      let interpolationEnabled = false;
+      let interpolationSlices = 0;
+      let annotationHistory = [];
+      window.annotationHistory = annotationHistory;
+      let redoStack = [];
 
-    // Drawing state variables
-    let isDrawing = false;
-    let drawingPath = []; // Store draw path points for weighted average calculation
+      // Drawing state variables
+      let isDrawing = false;
+      let drawingPath = []; // Store draw path points for weighted average calculation
 
-    // Multi-mask variables
-    let allMasks = []; // Store all available masks
-    let allScores = []; // Store scores for all masks
-    let currentMaskIndex = 0; // Current mask index being displayed
+      // Multi-mask variables
+      let allMasks = []; // Store all available masks
+      let allScores = []; // Store scores for all masks
+      let currentMaskIndex = 0; // Current mask index being displayed
 
+        function hexToRgba(hex, alpha = 255) {
+            hex = hex.replace('#', '');
+            if (hex.length === 3) {
+                hex = hex.split('').map(c => c + c).join('');
+            }
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return [r, g, b, alpha];
+        }
+      function applyTempCanvasToAnnotation(){
+          const tempCtx = tempCanvas2.getContext("2d");
+          const annotationCtx = annotationCanvas.getContext("2d");
 
-    function applyTempCanvasToAnnotation(){
-        const tempCtx = tempCanvas2.getContext("2d");
-        const annotationCtx = annotationCanvas.getContext("2d");
+          // Copy the temp canvas content onto the annotation canvas
+          annotationCtx.drawImage(tempCanvas2, 0, 0);
 
-        // Copy the temp canvas content onto the annotation canvas
-        annotationCtx.drawImage(tempCanvas2, 0, 0);
-
-        // Clear the temporary canvas
-        tempCtx.clearRect(0, 0, tempCanvas2.width, tempCanvas2.height);
-        syncAnnotation()
-    }
-
-
-    function loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, callback) {
-        console.log('Loading image from URL:', imageUrl);  // Debug log
-        const img = new window.Image();
-        img.onload = function() {
-            console.log('Image loaded successfully');  // Debug log
-            // Set wrapper size to match image
-            const wrapper = imageCanvas.parentElement;
-            wrapper.style.width = img.width + 'px';
-            wrapper.style.height = img.height + 'px';
-
-            // Set canvas pixel size to match image
-            imageCanvas.width = img.width;
-            imageCanvas.height = img.height;
-            imageCanvas2.width = img.width;
-            imageCanvas2.height = img.height;
-            annotationCanvas.width = img.width;
-            annotationCanvas.height = img.height;
-            tempCanvas2.width = img.width;
-            tempCanvas2.height = img.height;
+          // Clear the temporary canvas
+          tempCtx.clearRect(0, 0, tempCanvas2.width, tempCanvas2.height);
+          syncAnnotation()
+      }
 
 
-            imageCanvas.style.width = annotationCanvas.style.width = img.width + 'px';
-            imageCanvas.style.height = annotationCanvas.style.height = img.height + 'px';
-            imageCanvas2.style.width = annotationCanvas.style.width = img.width + 'px';
-            imageCanvas2.style.height = annotationCanvas.style.height = img.height + 'px';
+      function loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, callback) {
+          console.log('Loading image from URL:', imageUrl);  // Debug log
+          const img = new window.Image();
+          img.onload = function() {
+              console.log('Image loaded successfully');  // Debug log
+              // Set wrapper size to match image
+              const wrapper = imageCanvas.parentElement;
+              wrapper.style.width = img.width + 'px';
+              wrapper.style.height = img.height + 'px';
 
-            imageCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
-            imageCanvas.getContext('2d').drawImage(img, 0, 0);
-            imageCanvas2.getContext('2d').clearRect(0, 0, img.width, img.height);
-            imageCanvas2.getContext('2d').drawImage(img, 0, 0);
-            annotationCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
+              // Set canvas pixel size to match image
+              imageCanvas.width = img.width;
+              imageCanvas.height = img.height;
+              imageCanvas2.width = img.width;
+              imageCanvas2.height = img.height;
+              annotationCanvas.width = img.width;
+              annotationCanvas.height = img.height;
+              tempCanvas2.width = img.width;
+              tempCanvas2.height = img.height;
 
-            loadPastAnnotations();
 
+              imageCanvas.style.width = annotationCanvas.style.width = img.width + 'px';
+              imageCanvas.style.height = annotationCanvas.style.height = img.height + 'px';
+              imageCanvas2.style.width = annotationCanvas.style.width = img.width + 'px';
+              imageCanvas2.style.height = annotationCanvas.style.height = img.height + 'px';
+
+              imageCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
+              imageCanvas.getContext('2d').drawImage(img, 0, 0);
+              imageCanvas2.getContext('2d').clearRect(0, 0, img.width, img.height);
+              imageCanvas2.getContext('2d').drawImage(img, 0, 0);
+              annotationCanvas.getContext('2d').clearRect(0, 0, img.width, img.height);
+
+              loadPastAnnotations();
+
+
+
+              if (callback) callback();
+          };
+          img.onerror = function(error) {
+              console.error('Failed to load image:', imageUrl, error);  // Debug log
+              // Show error message on canvas
+              const ctx = imageCanvas.getContext('2d');
+              ctx.fillStyle = '#f8f9fa';
+              ctx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
+              ctx.fillStyle = '#dc3545';
+              ctx.font = '16px Arial';
+              ctx.textAlign = 'center';
+              ctx.fillText('Failed to load image', imageCanvas.width/2, imageCanvas.height/2);
+          };
+          img.src = imageUrl;
+      }
+      const slider = document.getElementById('image-slider');
+
+      // Hard-coded circle generator for different brush sizes
+function drawCircle(ctx, centerX, centerY, radius) {
+    const diameter = radius * 2;
+    const startX = Math.floor(centerX - radius);
+    const startY = Math.floor(centerY - radius);
+    
+    // Pre-calculate radius squared for efficiency
+    const radiusSquared = radius * radius;
+    
+    // Draw pixel by pixel to avoid aliasing
+    for (let y = 0; y < diameter; y++) {
+        for (let x = 0; x < diameter; x++) {
+            // Calculate distance from center
+            const dx = x - radius;
+            const dy = y - radius;
+            const distanceSquared = dx * dx + dy * dy;
             
-
-            if (callback) callback();
-        };
-        img.onerror = function(error) {
-            console.error('Failed to load image:', imageUrl, error);  // Debug log
-            // Show error message on canvas
-            const ctx = imageCanvas.getContext('2d');
-            ctx.fillStyle = '#f8f9fa';
-            ctx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
-            ctx.fillStyle = '#dc3545';
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Failed to load image', imageCanvas.width/2, imageCanvas.height/2);
-        };
-        img.src = imageUrl;
+            // If pixel is within circle, draw it
+            if (distanceSquared <= radiusSquared) {
+                ctx.fillRect(startX + x, startY + y, 1, 1);
+            }
+        }
     }
-    const slider = document.getElementById('image-slider');
-                    
-    if (true) {
-        async function fetchDicomInfo(fileId) {
-            try {
-                const response = await fetch(`{{ url_for('processing.dicom_info', file_id=0) }}`.replace('0', fileId));
-                if (!response.ok) throw new Error('Failed to fetch DICOM info');
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
-                return data;
-            } catch (error) {
-                console.error('Error fetching DICOM info:', error);
-                return { total_slices: 1 };
-            }
-        }
-        
-        slider.addEventListener('input', () => {console.log(slider.value); idx = +slider.value - 1;if (currentSliceEl) currentSliceEl.textContent = idx + 1; updateImage(); });
-        async function updateImage() {
-            const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
-            console.log('Updating image with URL:', imageUrl);  // Debug log
-            currentIndexEl.textContent = idx + 1;
-            toolbarEl.innerHTML = '';
-            slider.value = idx + 1;
-            
-            // Check if the first file is a DICOM file by checking its extension
-            const firstFile = {{ files[0].path|tojson|safe }};
-            const isDicom = firstFile.toLowerCase().endsWith('.dcm');
-            console.log('First file:', firstFile);  // Debug log
-            console.log('Is DICOM:', isDicom);  // Debug log
-            
-            if (isDicom) {
-                // Fetch DICOM info for the current file
-                const dicomInfo = await fetchDicomInfo(fileIds[idx]);
-                if (totalSlicesEl) totalSlicesEl.textContent = dicomInfo.total_slices || total;
-                if (currentSliceEl) currentSliceEl.textContent = idx + 1;
-            }
-            
-            // Load image and reset annotation canvas
-            loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, async function() {
-                // Set up drawing tools on annotationCanvas only
-                const imageManager = {
-                    getContext: () => annotationCanvas.getContext('2d'),
-                    getCanvas: () => annotationCanvas,
-                    getRegions: () => [], // You can implement region tracking if needed
-                    addRegion: () => {},
-                };
-                const cursorManager = CursorManager(imageManager);
-                toolbarEl.innerHTML = ""; // Clear previous buttons
-                //toolbarEl.appendChild(cursorManager.getElement());
-                cursorManager.bindCanvas(annotationCanvas);
+}
 
-                // --- Draw contours ---
-                if (contoursVisible) {
-                    await drawExtendedContours(idx, annotationCanvas);
-                }
-            });
-        }
+// Your modified drawing function
+function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
+    const half = size / 2;
+    const dx = x - lastX;
+    const dy = y - lastY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const steps = Math.ceil(distance / (size / 2));
 
-        async function drawExtendedContours(idx, annotationCanvas) {
-            const ctx = annotationCanvas.getContext('2d');
-            ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
-            const method = document.getElementById('contour-method')?.value || 'adaptive';
-            const threshold = document.getElementById('contour-threshold')?.value || 50;
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const interpX = lastX + dx * t;
+        const interpY = lastY + dy * t;
 
-            // Helper to fetch contours
-            async function fetchContours(sliceIdx) {
-                if (sliceIdx < 0 || sliceIdx >= fileIds.length) return null;
-                let url = `/process/contours/${fileIds[sliceIdx]}?method=${method}`;
-                if (method === 'manual') url += `&threshold=${threshold}`;
-                const response = await fetch(url);
-                const data = await response.json();
-                return data.contours;
-            }
+        // Use circular brush instead of square
+        drawCircle(ctx, interpX, interpY, half);
+    }
 
-            // Helper to draw contours
-            function drawContours(contours, color, width, alpha=1.0) {
-                if (!contours) return;
-                ctx.save();
-                ctx.strokeStyle = color;
-                ctx.globalAlpha = alpha;
-                ctx.lineWidth = width;
-                contours.forEach(contour => {
-                    if (contour.length < 2) return;
-                    ctx.beginPath();
-                    ctx.moveTo(contour[0][0], contour[0][1]);
-                    for (let i = 1; i < contour.length; i++) {
-                        ctx.lineTo(contour[i][0], contour[i][1]);
-                    }
-                    ctx.closePath();
-                    ctx.stroke();
-                });
-                ctx.globalAlpha = 1.0;
-                ctx.restore();
-            }
+    return { x, y }; // Return new last position
+}
 
-            // Fetch contours for current and adjacent slices
-            const prevContours = await fetchContours(idx - 1);
-            const currentContours = await fetchContours(idx);
-            const nextContours = await fetchContours(idx + 1);
+      if (true) {
+          async function fetchDicomInfo(fileId) {
+              try {
+                  const response = await fetch(`{{ url_for('processing.dicom_info', file_id=0) }}`.replace('0', fileId));
+                  if (!response.ok) throw new Error('Failed to fetch DICOM info');
+                  const data = await response.json();
+                  if (data.error) throw new Error(data.error);
+                  return data;
+              } catch (error) {
+                  console.error('Error fetching DICOM info:', error);
+                  return { total_slices: 1 };
+              }
+          }
 
-            // Draw interpolated contours if enabled
-            if (interpolationEnabled && interpolationSlices > 0) {
-                if (prevContours && currentContours) {
-                    // Interpolate between previous and current slice
-                    const response = await fetch('/process/interpolate-contours', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contour1: prevContours[0],
-                            contour2: currentContours[0],
-                            num_slices: interpolationSlices
-                        })
-                    });
-                    const data = await response.json();
-                    data.interpolated.forEach((contour, i) => {
-                        const alpha = 0.3 * (1 - (i + 1) / (interpolationSlices + 1));
-                        drawContours([contour], 'rgba(0,0,255,0.5)', 1, alpha);
-                    });
-                }
-                if (currentContours && nextContours) {
-                    // Interpolate between current and next slice
-                    const response = await fetch('/process/interpolate-contours', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contour1: currentContours[0],
-                            contour2: nextContours[0],
-                            num_slices: interpolationSlices
-                        })
-                    });
-                    const data = await response.json();
-                    data.interpolated.forEach((contour, i) => {
-                        const alpha = 0.3 * ((i + 1) / (interpolationSlices + 1));
-                        drawContours([contour], 'rgba(255,0,0,0.5)', 1, alpha);
-                    });
-                }
-            }
+          slider.addEventListener('input', () => {console.log(slider.value); idx = +slider.value - 1;if (currentSliceEl) currentSliceEl.textContent = idx + 1; updateImage(); });
+          async function updateImage() {
+              const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
+              console.log('Updating image with URL:', imageUrl);  // Debug log
+              currentIndexEl.textContent = idx + 1;
+              toolbarEl.innerHTML = '';
+              slider.value = idx + 1;
 
-            // Draw the main contours
-            drawContours(prevContours, 'rgba(0,0,255,0.5)', 1, 0.5);
-            drawContours(nextContours, 'rgba(255,0,0,0.5)', 1, 0.5);
-            drawContours(currentContours, 'lime', 2, 1.0);
-        }
+              // Check if the first file is a DICOM file by checking its extension
+              const firstFile = {{ files[0].path|tojson|safe }};
+              const isDicom = firstFile.toLowerCase().endsWith('.dcm');
+              console.log('First file:', firstFile);  // Debug log
+              console.log('Is DICOM:', isDicom);  // Debug log
 
-        // Handle slice navigation
-        if (document.getElementById('prev-slice')) {
-            document.getElementById('prev-slice').addEventListener('click', function() {
-                if (idx > 0) {
-                    idx--;
-                    if (currentSliceEl) currentSliceEl.textContent = idx + 1;
-                    console.log('Previous slice:', idx + 1);  // Debug log
-                    updateImage();
-                }
-            });
+              if (isDicom) {
+                  // Fetch DICOM info for the current file
+                  const dicomInfo = await fetchDicomInfo(fileIds[idx]);
+                  if (totalSlicesEl) totalSlicesEl.textContent = dicomInfo.total_slices || total;
+                  if (currentSliceEl) currentSliceEl.textContent = idx + 1;
+              }
 
-            document.getElementById('next-slice').addEventListener('click', function() {
-                if (idx < total - 1) {
-                    idx++;
-                    if (currentSliceEl) currentSliceEl.textContent = idx + 1;
-                    console.log('Next slice:', idx + 1);  // Debug log
-                    updateImage();
-                }
-            });
-        }
+              // Load image and reset annotation canvas
+              loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, async function() {
+                  // Set up drawing tools on annotationCanvas only
+                  const imageManager = {
+                      getContext: () => annotationCanvas.getContext('2d'),
+                      getCanvas: () => annotationCanvas,
+                      getRegions: () => [], // You can implement region tracking if needed
+                      addRegion: () => {},
+                  };
+                  const cursorManager = CursorManager(imageManager);
+                  toolbarEl.innerHTML = ""; // Clear previous buttons
+                  //toolbarEl.appendChild(cursorManager.getElement());
+                  cursorManager.bindCanvas(annotationCanvas);
 
-        document.getElementById('prev').addEventListener('click', function() {
-            idx = (idx - 1 + total) % total;
-            if (currentSliceEl) currentSliceEl.textContent = idx + 1;
-            updateImage();
-        });
+                  // --- Draw contours ---
+                  if (contoursVisible) {
+                      await drawExtendedContours(idx, annotationCanvas);
+                  }
+              });
+          }
 
-        document.getElementById('next').addEventListener('click', function() {
-            idx = (idx + 1) % total;
-            if (currentSliceEl) currentSliceEl.textContent = idx + 1;
-            updateImage();
-        });
+          async function drawExtendedContours(idx, annotationCanvas) {
+              const ctx = annotationCanvas.getContext('2d');
+              ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+              const method = document.getElementById('contour-method')?.value || 'adaptive';
+              const threshold = document.getElementById('contour-threshold')?.value || 50;
 
-        // Handle filter form submission
-        filterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData();
-            const filterName = e.submitter.value; // Get the value from the clicked button
-            formData.append('filter_name', filterName);
-            
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update the processes list if it exists
-                    const processesEl = document.querySelector('#edit-controls p');
-                    if (processesEl) {
-                        processesEl.innerHTML = `<strong>Applied Filters:</strong> ${data.processes.join(' → ')}`;
-                    }
-                    
-                    // Add a timestamp to force image reload
-                    const timestamp = new Date().getTime();
-                    const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
-                    const finalUrl = `${imageUrl}?t=${timestamp}`;
-                    
-                    // Reload the current image to show the applied filter
-                    loadImageToCanvas(finalUrl, imageCanvas, annotationCanvas, function() {
-                        // Set up drawing tools on annotationCanvas only
-                        const imageManager = {
-                            getContext: () => annotationCanvas.getContext('2d'),
-                            getCanvas: () => annotationCanvas,
-                            getRegions: () => [], // You can implement region tracking if needed
-                            addRegion: () => {},
-                        };
-                        const cursorManager = CursorManager(imageManager);
-                        toolbarEl.innerHTML = ""; // Clear previous buttons
-                        toolbarEl.appendChild(cursorManager.getElement());
-                        cursorManager.bindCanvas(annotationCanvas);
-                    });
-                } else {
-                    console.error('Failed to apply filter:', data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error applying filter:', error);
-            });
-        });
+              // Helper to fetch contours
+              async function fetchContours(sliceIdx) {
+                  if (sliceIdx < 0 || sliceIdx >= fileIds.length) return null;
+                  let url = `/process/contours/${fileIds[sliceIdx]}?method=${method}`;
+                  if (method === 'manual') url += `&threshold=${threshold}`;
+                  const response = await fetch(url);
+                  const data = await response.json();
+                  return data.contours;
+              }
 
-        // Add dataset structure check
-        const checkStructureBtn = document.getElementById('check-structure');
-        if (checkStructureBtn) {
-            checkStructureBtn.addEventListener('click', async function() {
-                const infoDiv = document.getElementById('dataset-structure-info');
-                const spinner = infoDiv.querySelector('.spinner-border');
-                
-                try {
-                    // Show loading spinner
-                    infoDiv.style.display = 'block';
-                    spinner.style.display = 'inline-block';
-                    infoDiv.innerHTML = ''; // Clear previous content
-                    infoDiv.appendChild(spinner);
-                    
-                    const response = await fetch(`{{ url_for('processing.dataset_info', ds_id=dataset.id) }}`);
-                    const data = await response.json();
-                    
-                    // Hide spinner
-                    spinner.style.display = 'none';
-                    
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Failed to fetch dataset info');
-                    }
-                    
-                    if (data.error) {
-                        infoDiv.innerHTML = `
-                            <div class="card bg-danger text-light p-3">
-                                <h5>Error</h5>
-                                <p>${data.error}</p>
-                                ${data.file_path ? `<p class="small">File path: ${data.file_path}</p>` : ''}
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    infoDiv.innerHTML = `
-                        <div class="card bg-secondary text-light p-3">
-                            <h5>Dataset Structure Information</h5>
-                            <p>Type: <strong>${data.is_multi_slice ? 'Multi-slice' : 'Single-slice'}</strong> DICOM</p>
-                            <p>Total Files: ${data.total_files}</p>
-                            <p>DICOM Files: ${data.dicom_files}</p>
-                            <p>Total Slices: ${data.total_slices}</p>
-                            <hr class="border-light">
-                            <h6>DICOM Metadata</h6>
-                            <p>Modality: ${data.modality}</p>
-                            <p>Image Size: ${data.rows} × ${data.columns} pixels</p>
-                            <p>Bits Allocated: ${data.bits_allocated}</p>
-                            <p>Samples per Pixel: ${data.samples_per_pixel}</p>
-                            ${data.warning ? `<p class="text-warning">${data.warning}</p>` : ''}
-                            <hr class="border-light">
-                            <p class="small text-muted">File path: ${data.file_path}</p>
-                        </div>
-                    `;
-                } catch (error) {
-                    // Hide spinner
-                    spinner.style.display = 'none';
-                    
-                    console.error('Error checking dataset structure:', error);
-                    infoDiv.innerHTML = `
-                        <div class="card bg-danger text-light p-3">
-                            <h5>Error</h5>
-                            <p>${error.message}</p>
-                        </div>
-                    `;
-                }
-            });
-        }
+              // Helper to draw contours
+              function drawContours(contours, color, width, alpha=1.0) {
+                  if (!contours) return;
+                  ctx.save();
+                  ctx.strokeStyle = color;
+                  ctx.globalAlpha = alpha;
+                  ctx.lineWidth = width;
+                  contours.forEach(contour => {
+                      if (contour.length < 2) return;
+                      ctx.beginPath();
+                      ctx.moveTo(contour[0][0], contour[0][1]);
+                      for (let i = 1; i < contour.length; i++) {
+                          ctx.lineTo(contour[i][0], contour[i][1]);
+                      }
+                      ctx.closePath();
+                      ctx.stroke();
+                  });
+                  ctx.globalAlpha = 1.0;
+                  ctx.restore();
+              }
 
-        // Add event listeners to update the threshold value and trigger updateImage on change
-        document.getElementById('contour-threshold').addEventListener('input', function() {
-            document.getElementById('contour-threshold-value').textContent = this.value;
-        });
-        document.getElementById('contour-method').addEventListener('change', updateImage);
-        document.getElementById('contour-threshold').addEventListener('change', updateImage);
+              // Fetch contours for current and adjacent slices
+              const prevContours = await fetchContours(idx - 1);
+              const currentContours = await fetchContours(idx);
+              const nextContours = await fetchContours(idx + 1);
 
-        // Add event listener for the button
-        document.getElementById('toggle-contours').addEventListener('click', function() {
-            contoursVisible = !contoursVisible;
-            this.textContent = contoursVisible ? 'Hide Contours' : 'Show Contours';
-            updateImage();
-        });
+              // Draw interpolated contours if enabled
+              if (interpolationEnabled && interpolationSlices > 0) {
+                  if (prevContours && currentContours) {
+                      // Interpolate between previous and current slice
+                      const response = await fetch('/process/interpolate-contours', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                              contour1: prevContours[0],
+                              contour2: currentContours[0],
+                              num_slices: interpolationSlices
+                          })
+                      });
+                      const data = await response.json();
+                      data.interpolated.forEach((contour, i) => {
+                          const alpha = 0.3 * (1 - (i + 1) / (interpolationSlices + 1));
+                          drawContours([contour], 'rgba(0,0,255,0.5)', 1, alpha);
+                      });
+                  }
+                  if (currentContours && nextContours) {
+                      // Interpolate between current and next slice
+                      const response = await fetch('/process/interpolate-contours', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                              contour1: currentContours[0],
+                              contour2: nextContours[0],
+                              num_slices: interpolationSlices
+                          })
+                      });
+                      const data = await response.json();
+                      data.interpolated.forEach((contour, i) => {
+                          const alpha = 0.3 * ((i + 1) / (interpolationSlices + 1));
+                          drawContours([contour], 'rgba(255,0,0,0.5)', 1, alpha);
+                      });
+                  }
+              }
+
+              // Draw the main contours
+              drawContours(prevContours, 'rgba(0,0,255,0.5)', 1, 0.5);
+              drawContours(nextContours, 'rgba(255,0,0,0.5)', 1, 0.5);
+              drawContours(currentContours, 'lime', 2, 1.0);
+          }
+
+          // Handle slice navigation
+          if (document.getElementById('prev-slice')) {
+              document.getElementById('prev-slice').addEventListener('click', function() {
+                  if (idx > 0) {
+                      idx--;
+                      if (currentSliceEl) currentSliceEl.textContent = idx + 1;
+                      console.log('Previous slice:', idx + 1);  // Debug log
+                      updateImage();
+                  }
+              });
+
+              document.getElementById('next-slice').addEventListener('click', function() {
+                  if (idx < total - 1) {
+                      idx++;
+                      if (currentSliceEl) currentSliceEl.textContent = idx + 1;
+                      console.log('Next slice:', idx + 1);  // Debug log
+                      updateImage();
+                  }
+              });
+          }
+
+          document.getElementById('prev').addEventListener('click', function() {
+              idx = (idx - 1 + total) % total;
+              if (currentSliceEl) currentSliceEl.textContent = idx + 1;
+              updateImage();
+          });
+
+          document.getElementById('next').addEventListener('click', function() {
+              idx = (idx + 1) % total;
+              if (currentSliceEl) currentSliceEl.textContent = idx + 1;
+              updateImage();
+          });
+
+          // Handle filter form submission
+          filterForm.addEventListener('submit', function(e) {
+              e.preventDefault();
+              const formData = new FormData();
+              const filterName = e.submitter.value; // Get the value from the clicked button
+              formData.append('filter_name', filterName);
+
+              fetch(this.action, {
+                  method: 'POST',
+                  body: formData,
+                  headers: {
+                      'X-Requested-With': 'XMLHttpRequest'
+                  }
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      // Update the processes list if it exists
+                      const processesEl = document.querySelector('#edit-controls p');
+                      if (processesEl) {
+                          processesEl.innerHTML = `<strong>Applied Filters:</strong> ${data.processes.join(' → ')}`;
+                      }
+
+                      // Add a timestamp to force image reload
+                      const timestamp = new Date().getTime();
+                      const imageUrl = `{{ url_for('processing.image', file_id=0) }}`.replace('0', fileIds[idx]);
+                      const finalUrl = `${imageUrl}?t=${timestamp}`;
+
+                      // Reload the current image to show the applied filter
+                      loadImageToCanvas(finalUrl, imageCanvas, annotationCanvas, function() {
+                          // Set up drawing tools on annotationCanvas only
+                          const imageManager = {
+                              getContext: () => annotationCanvas.getContext('2d'),
+                              getCanvas: () => annotationCanvas,
+                              getRegions: () => [], // You can implement region tracking if needed
+                              addRegion: () => {},
+                          };
+                          const cursorManager = CursorManager(imageManager);
+                          toolbarEl.innerHTML = ""; // Clear previous buttons
+                          toolbarEl.appendChild(cursorManager.getElement());
+                          cursorManager.bindCanvas(annotationCanvas);
+                      });
+                  } else {
+                      console.error('Failed to apply filter:', data.message);
+                  }
+              })
+              .catch(error => {
+                  console.error('Error applying filter:', error);
+              });
+          });
+
+          // Add dataset structure check
+          const checkStructureBtn = document.getElementById('check-structure');
+          if (checkStructureBtn) {
+              checkStructureBtn.addEventListener('click', async function() {
+                  const infoDiv = document.getElementById('dataset-structure-info');
+                  const spinner = infoDiv.querySelector('.spinner-border');
+
+                  try {
+                      // Show loading spinner
+                      infoDiv.style.display = 'block';
+                      spinner.style.display = 'inline-block';
+                      infoDiv.innerHTML = ''; // Clear previous content
+                      infoDiv.appendChild(spinner);
+
+                      const response = await fetch(`{{ url_for('processing.dataset_info', ds_id=dataset.id) }}`);
+                      const data = await response.json();
+
+                      // Hide spinner
+                      spinner.style.display = 'none';
+
+                      if (!response.ok) {
+                          throw new Error(data.error || 'Failed to fetch dataset info');
+                      }
+
+                      if (data.error) {
+                          infoDiv.innerHTML = `
+                              <div class="card bg-danger text-light p-3">
+                                  <h5>Error</h5>
+                                  <p>${data.error}</p>
+                                  ${data.file_path ? `<p class="small">File path: ${data.file_path}</p>` : ''}
+                              </div>
+                          `;
+                          return;
+                      }
+
+                      infoDiv.innerHTML = `
+                          <div class="card bg-secondary text-light p-3">
+                              <h5>Dataset Structure Information</h5>
+                              <p>Type: <strong>${data.is_multi_slice ? 'Multi-slice' : 'Single-slice'}</strong> DICOM</p>
+                              <p>Total Files: ${data.total_files}</p>
+                              <p>DICOM Files: ${data.dicom_files}</p>
+                              <p>Total Slices: ${data.total_slices}</p>
+                              <hr class="border-light">
+                              <h6>DICOM Metadata</h6>
+                              <p>Modality: ${data.modality}</p>
+                              <p>Image Size: ${data.rows} × ${data.columns} pixels</p>
+                              <p>Bits Allocated: ${data.bits_allocated}</p>
+                              <p>Samples per Pixel: ${data.samples_per_pixel}</p>
+                              ${data.warning ? `<p class="text-warning">${data.warning}</p>` : ''}
+                              <hr class="border-light">
+                              <p class="small text-muted">File path: ${data.file_path}</p>
+                          </div>
+                      `;
+                  } catch (error) {
+                      // Hide spinner
+                      spinner.style.display = 'none';
+
+                      console.error('Error checking dataset structure:', error);
+                      infoDiv.innerHTML = `
+                          <div class="card bg-danger text-light p-3">
+                              <h5>Error</h5>
+                              <p>${error.message}</p>
+                          </div>
+                      `;
+                  }
+              });
+          }
+
+          // Add event listeners to update the threshold value and trigger updateImage on change
+          document.getElementById('contour-threshold').addEventListener('input', function() {
+              document.getElementById('contour-threshold-value').textContent = this.value;
+          });
+          document.getElementById('contour-method').addEventListener('change', updateImage);
+          document.getElementById('contour-threshold').addEventListener('change', updateImage);
+
+          // Add event listener for the button
+          document.getElementById('toggle-contours').addEventListener('click', function() {
+              contoursVisible = !contoursVisible;
+              this.textContent = contoursVisible ? 'Hide Contours' : 'Show Contours';
+              updateImage();
+          });
 
         // Add event listeners to update image on slider change
         function updateCanvasFilter() {
@@ -801,480 +1102,549 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        document.getElementById('toggle-interpolation').addEventListener('click', function() {
-            interpolationEnabled = !interpolationEnabled;
-            this.textContent = interpolationEnabled ? 'Disable Interpolation' : 'Enable Interpolation';
-            if (contoursVisible) {
-                updateImage();
-            }
-        });
+          document.getElementById('toggle-interpolation').addEventListener('click', function() {
+              interpolationEnabled = !interpolationEnabled;
+              this.textContent = interpolationEnabled ? 'Disable Interpolation' : 'Enable Interpolation';
+              if (contoursVisible) {
+                  updateImage();
+              }
+          });
 
-        // Initialize the first image
-        updateImage();
-    }
+          // Initialize the first image
+          updateImage();
+      }
 
-    // Helper to collect mesh/volume parameters
-    function getMeshVolumeParams() {
-        return {
-            method: document.getElementById('contour-method').value,
-            threshold: document.getElementById('contour-threshold').value,
-            numInterp: document.getElementById('interpolation-slices').value,
-            smooth: document.getElementById('smooth-volume').checked,
-            smoothFactor: document.getElementById('smooth-factor').value / 100,
-            fillHoles: document.getElementById('fill-holes').checked
-        };
-    }
+      // Helper to collect mesh/volume parameters
+      function getMeshVolumeParams() {
+          return {
+              method: document.getElementById('contour-method').value,
+              threshold: document.getElementById('contour-threshold').value,
+              numInterp: document.getElementById('interpolation-slices').value,
+              smooth: document.getElementById('smooth-volume').checked,
+              smoothFactor: document.getElementById('smooth-factor').value / 100,
+              fillHoles: document.getElementById('fill-holes').checked
+          };
+      }
 
-    document.getElementById('show-mesh').addEventListener('click', async function() {
-        const params = getMeshVolumeParams();
-        const url = `/process/mesh/${dsId}?method=${params.method}&threshold=${params.threshold}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data.error) {
-            alert(data.error);
-            return;
-        }
-        renderMesh(data.vertices, data.faces);
-    });
+      document.getElementById('show-mesh').addEventListener('click', async function() {
+          const params = getMeshVolumeParams();
+          const url = `/process/mesh/${dsId}?method=${params.method}&threshold=${params.threshold}`;
+          const response = await fetch(url);
+          const data = await response.json();
+          if (data.error) {
+              alert(data.error);
+              return;
+          }
+          renderMesh(data.vertices, data.faces);
+      });
 
-    // Add color mapping
-    const colorMap = {
-        blue: new THREE.Color(0.2, 0.6, 1.0),
-        red: new THREE.Color(1.0, 0.2, 0.2),
-        green: new THREE.Color(0.2, 1.0, 0.2),
-        yellow: new THREE.Color(1.0, 1.0, 0.2),
-        purple: new THREE.Color(0.8, 0.2, 1.0)
-    };
+      // Add color mapping
+      const colorMap = {
+          blue: new THREE.Color(0.2, 0.6, 1.0),
+          red: new THREE.Color(1.0, 0.2, 0.2),
+          green: new THREE.Color(0.2, 1.0, 0.2),
+          yellow: new THREE.Color(1.0, 1.0, 0.2),
+          purple: new THREE.Color(0.8, 0.2, 1.0)
+      };
 
-    function renderMesh(vertices, faces) {
-        const container = document.getElementById('mesh-viewer');
-        container.innerHTML = '';
-        console.log('Vertices:', vertices.length, 'Faces:', faces.length);
-        if (vertices.length === 0 || faces.length === 0) {
-            container.innerHTML = '<div style="color:white;text-align:center;padding:2em;">No mesh data to display.</div>';
-            return;
-        }
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+      function renderMesh(vertices, faces) {
+          const container = document.getElementById('mesh-viewer');
+          container.innerHTML = '';
+          console.log('Vertices:', vertices.length, 'Faces:', faces.length);
+          if (vertices.length === 0 || faces.length === 0) {
+              container.innerHTML = '<div style="color:white;text-align:center;padding:2em;">No mesh data to display.</div>';
+              return;
+          }
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(45, container.offsetWidth / container.offsetHeight, 0.1, 1000);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(container.offsetWidth, container.offsetHeight);
-        container.appendChild(renderer.domElement);
+          const renderer = new THREE.WebGLRenderer({ antialias: true });
+          renderer.setSize(container.offsetWidth, container.offsetHeight);
+          container.appendChild(renderer.domElement);
 
-        const geometry = new THREE.BufferGeometry();
-        const verts = new Float32Array(vertices.flat());
-        const indices = new Uint32Array(faces.flat());
-        geometry.setAttribute('position', new THREE.BufferAttribute(verts, 3));
-        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-        geometry.computeVertexNormals();
+          const geometry = new THREE.BufferGeometry();
+          const verts = new Float32Array(vertices.flat());
+          const indices = new Uint32Array(faces.flat());
+          geometry.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+          geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+          geometry.computeVertexNormals();
 
-        // Center the geometry and get size
-        geometry.computeBoundingBox();
-        geometry.center();
-        const size = geometry.boundingBox.getSize(new THREE.Vector3());
-        console.log('Mesh size:', size);
+          // Center the geometry and get size
+          geometry.computeBoundingBox();
+          geometry.center();
+          const size = geometry.boundingBox.getSize(new THREE.Vector3());
+          console.log('Mesh size:', size);
 
-        // Use a basic material for debugging
-        const material = new THREE.MeshNormalMaterial({ wireframe: false });
-        const mesh = new THREE.Mesh(geometry, material);
+          // Use a basic material for debugging
+          const material = new THREE.MeshNormalMaterial({ wireframe: false });
+          const mesh = new THREE.Mesh(geometry, material);
 
-        // Auto-scale mesh for visibility
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = 100 / maxDim;
-        mesh.scale.set(scale, scale, scale);
+          // Auto-scale mesh for visibility
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = 100 / maxDim;
+          mesh.scale.set(scale, scale, scale);
 
-        scene.add(mesh);
+          scene.add(mesh);
 
-        // Adjust camera position based on mesh size
-        camera.position.set(0, 0, maxDim * scale * 1.5 + 50);
-        camera.lookAt(0, 0, 0);
+          // Adjust camera position based on mesh size
+          camera.position.set(0, 0, maxDim * scale * 1.5 + 50);
+          camera.lookAt(0, 0, 0);
 
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(0, 0, 100);
-        scene.add(light);
+          const light = new THREE.DirectionalLight(0xffffff, 1);
+          light.position.set(0, 0, 100);
+          scene.add(light);
 
-        // Attach OrbitControls to THREE if needed
-        if (window.OrbitControls) {
-            THREE.OrbitControls = window.OrbitControls;
-        }
-        // Add orbit controls
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+          // Attach OrbitControls to THREE if needed
+          if (window.OrbitControls) {
+              THREE.OrbitControls = window.OrbitControls;
+          }
+          // Add orbit controls
+          const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-        animate();
-    }
+          function animate() {
+              requestAnimationFrame(animate);
+              renderer.render(scene, camera);
+          }
+          animate();
+      }
 
-    document.getElementById('tool-pen').onclick = () => currentTool = 'pen';
-    document.getElementById('tool-rect').onclick = () => currentTool = 'rect';
-    document.getElementById('tool-circle').onclick = () => currentTool = 'circle';
-    document.getElementById('tool-eraser').onclick = () => currentTool = 'eraser';
-    document.getElementById('tool-aipoint').onclick = () => currentTool = 'aipoint';
-    document.getElementById('brush-size').oninput = function() {
-        brushSize = parseInt(this.value, 10);
-        document.getElementById('brush-size-value').textContent = this.value;
-    };
-    document.getElementById('brush-color').oninput = function() { brushColor = this.value; };
+      document.getElementById('tool-pen').onclick = () => currentTool = 'pen';
+      document.getElementById('tool-rect').onclick = () => currentTool = 'rect';
+      document.getElementById('tool-circle').onclick = () => currentTool = 'circle';
+      document.getElementById('tool-eraser').onclick = () => currentTool = 'eraser';
+      document.getElementById('tool-aipoint').onclick = () => currentTool = 'aipoint';
+      document.getElementById('tool-fill').onclick = () => currentTool = 'fill';
+      document.getElementById('tool-colorpicker').onclick = () => currentTool = 'colorpicker';
+      document.getElementById('brush-size').oninput = function() {
+          brushSize = parseInt(this.value, 10);
+          document.getElementById('brush-size-value').textContent = this.value;
+      };
+      document.getElementById('brush-color').oninput = function() { brushColor = this.value; };
 
-    function loadPastAnnotations() {
+      function loadPastAnnotations() {
+          const ctx = annotationCanvas.getContext('2d');
+          let RELATED_RESOURCE_ID = fileIds[idx]
+
+          // Construct the URL to load the last annotation
+          const url = `/api/annotation/load-last/${RELATED_RESOURCE_ID}`;
+
+          const img = new Image();
+          img.onload = function() {
+              // Resize canvas if needed
+              annotationCanvas.width = img.width;
+              annotationCanvas.height = img.height;
+
+              // Draw the annotation image on the annotation canvas
+              ctx.clearRect(0, 0, img.width, img.height);
+              ctx.drawImage(img, 0, 0);
+          };
+
+          img.onerror = function(err) {
+              console.error('Failed to load annotation image:', err);
+          };
+
+          img.src = url;
+      }
+      function syncAnnotation() {
+          const ctx = annotationCanvas.getContext('2d');
+
+          let RELATED_RESOURCE_ID = fileIds[idx]
+
+          // Convert canvas to Blob
+          annotationCanvas.toBlob((blob) => {
+              const formData = new FormData();
+              formData.append("file", blob, "annotation.png");
+              formData.append("resource_id", RELATED_RESOURCE_ID);
+
+              fetch("/api/annotation/create", {
+                  method: "POST",
+                  body: formData
+              })
+              .then(response => {
+                  if (!response.ok) throw new Error("Failed to upload annotation");
+                  return response.json();
+              })
+              .then(data => {
+                  console.log("Annotation saved:", data);
+              })
+              .catch(error => {
+                  console.error("Error saving annotation:", error);
+              });
+          }, "image/png");
+      }
+      
+      function floodFill(startX, startY, selectedColor, targetColor) {
         const ctx = annotationCanvas.getContext('2d');
-        let RELATED_RESOURCE_ID = fileIds[idx]
-        
-        // Construct the URL to load the last annotation
-        const url = `/api/annotation/load-last/${RELATED_RESOURCE_ID}`;
+        const canvasWidth = annotationCanvas.width;
+        const canvasHeight = annotationCanvas.height;
 
-        const img = new Image();
-        img.onload = function() {
-            // Resize canvas if needed
-            annotationCanvas.width = img.width;
-            annotationCanvas.height = img.height;
+        const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+        const data = imageData.data;
 
-            // Draw the annotation image on the annotation canvas
-            ctx.clearRect(0, 0, img.width, img.height);
-            ctx.drawImage(img, 0, 0);
-        };
+        const toVisit = [];
+        const visited = new Set();
 
-        img.onerror = function(err) {
-            console.error('Failed to load annotation image:', err);
-        };
+        const pixelIndex = (x, y) => (y * canvasWidth + x) * 4;
+        const pixelKey = (x, y) => `${x},${y}`;
 
-        img.src = url;
-    }
-    function syncAnnotation() {
-        const ctx = annotationCanvas.getContext('2d');
-
-        let RELATED_RESOURCE_ID = fileIds[idx]
-        
-        // Convert canvas to Blob
-        annotationCanvas.toBlob((blob) => {
-            const formData = new FormData();
-            formData.append("file", blob, "annotation.png");
-            formData.append("resource_id", RELATED_RESOURCE_ID);
-
-            fetch("/api/annotation/create", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) throw new Error("Failed to upload annotation");
-                return response.json();
-            })
-            .then(data => {
-                console.log("Annotation saved:", data);
-            })
-            .catch(error => {
-                console.error("Error saving annotation:", error);
-            });
-        }, "image/png");
-    }
-
-    // Helper to save the current annotation state
-    function saveAnnotationState() {
-        const ctx = annotationCanvas.getContext('2d');
-        annotationHistory.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
-        // Clear redo stack on new action
-        redoStack = [];
-
-    }
-
-    // Undo function
-    function undoAnnotation() {
-        if (annotationHistory.length > 0) {
-            const ctx = annotationCanvas.getContext('2d');
-            redoStack.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
-            const prev = annotationHistory.pop();
-            ctx.putImageData(prev, 0, 0);
+        function colorsMatch(a, b) {
+            return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
         }
-    }
 
-    // Redo function
-    function redoAnnotation() {
-        if (redoStack.length > 0) {
-            const ctx = annotationCanvas.getContext('2d');
-            annotationHistory.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
-            const next = redoStack.pop();
-            ctx.putImageData(next, 0, 0);
+        function getPixelColor(x, y) {
+            const index = pixelIndex(x, y);
+            return [data[index], data[index + 1], data[index + 2], data[index + 3]];
         }
+
+        function setPixelColor(x, y, color) {
+            const index = pixelIndex(x, y);
+            data[index] = color[0];
+            data[index + 1] = color[1];
+            data[index + 2] = color[2];
+            data[index + 3] = color[3];
+        }
+
+        const originalColor = getPixelColor(startX, startY);
+        if (colorsMatch(originalColor, targetColor)) return;
+
+        toVisit.push([startX, startY]);
+        while (toVisit.length > 0) {
+            const [x, y] = toVisit.pop();
+
+            const key = pixelKey(x, y);
+            if (visited.has(key)) continue;
+            visited.add(key);
+            
+            const currentColor = getPixelColor(x, y);
+            if (colorsMatch(currentColor, targetColor)) continue;
+            if (!colorsMatch(currentColor, selectedColor)) continue;
+            setPixelColor(x, y, targetColor);
+
+            if (x > 0) toVisit.push([x - 1, y]);
+            if (x < canvasWidth - 1) toVisit.push([x + 1, y]);
+            if (y > 0) toVisit.push([x, y - 1]);
+            if (y < canvasHeight - 1) toVisit.push([x, y + 1]);
+        }
+
+        ctx.putImageData(imageData, 0, 0);
     }
 
-    // Clear function
-    function clearAnnotation() {
+      // Helper to save the current annotation state
+      function saveAnnotationState() {
+          const ctx = annotationCanvas.getContext('2d');
+          annotationHistory.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+          // Clear redo stack on new action
+          redoStack = [];
+
+      }
+
+      // Undo function
+      function undoAnnotation() {
+          if (annotationHistory.length > 0) {
+              const ctx = annotationCanvas.getContext('2d');
+              redoStack.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+              const prev = annotationHistory.pop();
+              ctx.putImageData(prev, 0, 0);
+          }
+      }
+
+      // Redo function
+      function redoAnnotation() {
+          if (redoStack.length > 0) {
+              const ctx = annotationCanvas.getContext('2d');
+              annotationHistory.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+              const next = redoStack.pop();
+              ctx.putImageData(next, 0, 0);
+          }
+      }
+
+      // Clear function
+      function clearAnnotation() {
+          const ctx = annotationCanvas.getContext('2d');
+          saveAnnotationState();
+          ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+      }
+
+      // Wire up the buttons
+      document.getElementById('tool-undo').addEventListener('click', undoAnnotation);
+      document.getElementById('tool-redo').addEventListener('click', redoAnnotation);
+      document.getElementById('tool-clear').addEventListener('click', clearAnnotation);
+
+      // Save state on drawing start
+      annotationCanvas.addEventListener('pointerdown', function(e) {
+      e.preventDefault(); // Prevent default to avoid scrolling/zooming
+
+
+
+      if (currentTool === 'pen' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'eraser') {
+          saveAnnotationState();
+      }
+
+      // Capture the pointer to track it even if it leaves the canvas area
+      this.setPointerCapture(e.pointerId);
+
+      drawing = true;
+
+      // Calculate position relative to canvas
+      const rect = annotationCanvas.getBoundingClientRect();
+      const scaleX = annotationCanvas.width / rect.width;
+      const scaleY = annotationCanvas.height / rect.height;
+
+      // Scale the coordinates appropriately (handles high DPI screens better)
+      startX = lastX = (e.clientX - rect.left) * scaleX;
+      startY = lastY = (e.clientY - rect.top) * scaleY;
+
+      if (currentTool === 'pen' || currentTool === 'eraser') {
+    // const ctx = annotationCanvas.getContext('2d');
+    // const size = currentTool === 'eraser' ? brushSize * 2 : brushSize;
+    // const half = size / 2;
+
+    // ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    // ctx.fillStyle = brushColor;
+
+    // ctx.fillRect(
+    //     Math.floor(startX - half),
+    //     Math.floor(startY - half),
+    //     size,
+    //     size
+    // );
+
+    // lastX = startX;
+    // lastY = startY;
+} else if(currentTool === 'fill') {
         const ctx = annotationCanvas.getContext('2d');
-        saveAnnotationState();
-        ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
-    }
-
-    // Wire up the buttons
-    document.getElementById('tool-undo').addEventListener('click', undoAnnotation);
-    document.getElementById('tool-redo').addEventListener('click', redoAnnotation);
-    document.getElementById('tool-clear').addEventListener('click', clearAnnotation);
-
-    // Save state on drawing start
-    annotationCanvas.addEventListener('pointerdown', function(e) {
-    e.preventDefault(); // Prevent default to avoid scrolling/zooming
-    
-    
-
-    if (currentTool === 'pen' || currentTool === 'rect' || currentTool === 'circle' || currentTool === 'eraser') {
-        saveAnnotationState();
-    }
-    
-    // Capture the pointer to track it even if it leaves the canvas area
-    this.setPointerCapture(e.pointerId);
-    
-    drawing = true;
-        // Calculate position relative to canvas
-    const rect = annotationCanvas.getBoundingClientRect();
-    const scaleX = annotationCanvas.width / rect.width;
-    const scaleY = annotationCanvas.height / rect.height;
-    
-    // Scale the coordinates appropriately (handles high DPI screens better)
-    startX = lastX = (e.clientX - rect.left) * scaleX;
-    startY = lastY = (e.clientY - rect.top) * scaleY;
-    
-    if (currentTool === 'pen' || currentTool === 'eraser') {
+        let selectedPixel = ctx.getImageData(startX,startY,1,1).data
+        floodFill(Math.floor(startX), Math.floor(startY), selectedPixel, hexToRgba(brushColor));
+      } else if(currentTool = 'colorpicker'){
         const ctx = annotationCanvas.getContext('2d');
-        //ctx.globalAlpha = currentTool === 'pen' ? 0.3 : 1.0;
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        
-        // For mobile, draw a dot on tap to ensure something appears
-        ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
-        ctx.strokeStyle = brushColor;
-        ctx.lineWidth = currentTool === 'eraser' ? brushSize * 2 : brushSize;
-        ctx.lineCap = 'round';
-        ctx.arc(startX, startY, 0.5, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-    }
-    else if (currentTool === "aipoint") {
-        const ctx = imageCanvas.getContext('2d');
-        console.log("AIpoint:", startX, ":", startY);
+        let selectedPixel = ctx.getImageData(startX,startY,1,1).data
+        console.log(selectedPixel)
+      }
+      else if (currentTool === "aipoint") {
+          const ctx = imageCanvas.getContext('2d');
+          console.log("AIpoint:", startX, ":", startY);
 
-        // 1. Get canvas image as data URL
-        const imageDataURL = ctx.canvas.toDataURL("image/png");
+          // 1. Get canvas image as data URL
+          const imageDataURL = ctx.canvas.toDataURL("image/png");
 
-        // 2. Prepare request data
-        const payload = {
-            image: imageDataURL,
-            point_coords: [[startX, startY]],
-            point_labels: [1], 
-            multimask_output: true 
-        };
+          // 2. Prepare request data
+          const payload = {
+              image: imageDataURL,
+              point_coords: [[startX, startY]],
+              point_labels: [1],
+              multimask_output: true
+          };
 
-        // 3. Send to backend
-        fetch("/medsam2/predict_combined", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                console.error("Prediction error:", data.error);
-                return;
-            }
-            console.log(data.overlay)
+          // 3. Send to backend
+          fetch("/medsam2/predict_combined", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json"
+              },
+              body: JSON.stringify(payload)
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.error) {
+                  console.error("Prediction error:", data.error);
+                  return;
+              }
+              console.log(data.overlay)
 
-            if (data.overlay) {
-    // Reset mask arrays before adding new masks
-    allMasks = [];
-    allScores = [];
-    currentMaskIndex = 0;
+              if (data.overlay) {
+      // Reset mask arrays before adding new masks
+      allMasks = [];
+      allScores = [];
+      currentMaskIndex = 0;
 
-    // Check if multiple masks are returned
-    if (data.all_masks && data.all_scores && data.all_masks.length > 0) {
-        console.log("Received multiple masks:", data.all_masks.length);
-        // Store all masks and scores
-        allMasks = data.all_masks;
-        allScores = data.all_scores;
-        
-        // Sort masks by size (number of true pixels) - smallest first
-        const maskSizes = allMasks.map(mask => mask.filter(Boolean).length);
-        console.log("Mask sizes:", maskSizes);
-        
-        // Create array to hold the original indices
-        const indices = Array.from({ length: allMasks.length }, (_, i) => i);
-        
-        // Sort indices by mask sizes
-        indices.sort((a, b) => maskSizes[a] - maskSizes[b]);
-        
-        // Reorder masks and scores based on size
-        allMasks = indices.map(i => allMasks[i]);
-        allScores = indices.map(i => allScores[i]);
-        
-        // Start with the smallest mask (S)
-        currentMaskIndex = 0;
-        
-        console.log("Masks reordered by size: S, M, L");
-        
-        // Create mask selector UI
-        createMaskSelectorUI();
-        
-        // Draw the initial mask (S)
-        drawSelectedMask();
-        
-    } else { // Draw single mask
-        // 4. Draw overlay on top of canvas
-        const overlayImg = new Image();
-        overlayImg.src = data.overlay;
-        overlayImg.onload = () => {
-            // Example: draw overlay on top of canvas
-            let annoctx = annotationCanvas.getContext('2d');
-            annoctx.drawImage(overlayImg, 0, 0);
-        };
-    }
-}
+      // Check if multiple masks are returned
+      if (data.all_masks && data.all_scores && data.all_masks.length > 0) {
+          console.log("Received multiple masks:", data.all_masks.length);
+          // Store all masks and scores
+          allMasks = data.all_masks;
+          allScores = data.all_scores;
 
-// Function to create mask selector UI
-function createMaskSelectorUI() {
-    // Remove existing selector if it exists
-    const existingSelector = document.getElementById('mask-selector');
-    console.log("Creating mask selector UI");
+          // Sort masks by size (number of true pixels) - smallest first
+          const maskSizes = allMasks.map(mask => mask.filter(Boolean).length);
+          console.log("Mask sizes:", maskSizes);
 
-    if (existingSelector) {
-        existingSelector.remove();
-    }
-    
-    // Create container for mask selector
-    const selectorContainer = document.createElement('div');
-    selectorContainer.id = 'mask-selector';
-    selectorContainer.style.position = 'absolute';
-    selectorContainer.style.top = '10px';
-    selectorContainer.style.left = '10px'; // Change from right to left
-    selectorContainer.style.display = 'flex';
-    selectorContainer.style.flexDirection = 'column';
-    selectorContainer.style.background = 'rgba(0, 0, 0, 0.7)'; // Darker background
-    selectorContainer.style.padding = '8px';
-    selectorContainer.style.borderRadius = '5px';
-    selectorContainer.style.zIndex = '9999'; // Very high z-index
-    selectorContainer.style.border = '2px solid yellow'; // Add a visible border
-    selectorContainer.style.display = 'flex';
+          // Create array to hold the original indices
+          const indices = Array.from({ length: allMasks.length }, (_, i) => i);
 
-    function closeMaskTool() {
-    selectorContainer.style.display = 'none';
-    }
-    // Create mask size label
-    const sizeLabel = document.createElement('div');
-    sizeLabel.id = 'mask-size-label';
-    sizeLabel.style.textAlign = 'center';
-    sizeLabel.style.fontWeight = 'bold';
-    sizeLabel.style.color = 'white'; // White text for better visibility
-    sizeLabel.textContent = getMaskSizeLabel(currentMaskIndex);
-    
-    // Create up button
-    const upButton = document.createElement('button');
-    upButton.textContent = '▲';
-    upButton.style.margin = '2px';
-    upButton.style.padding = '5px 10px'; // Bigger button
-    upButton.style.fontSize = '16px'; // Bigger text
-    upButton.addEventListener('click', () => {
-        console.log("Up button clicked");
-        selectPreviousMask();
-    });
-    
-    // Create down button
-    const downButton = document.createElement('button');
-    downButton.textContent = '▼';
-    downButton.style.margin = '2px';
-    downButton.style.padding = '5px 10px'; // Bigger button
-    downButton.style.fontSize = '16px'; // Bigger text
-    downButton.addEventListener('click', () => {
-        console.log("Down button clicked");
-        selectNextMask();
-    });
-    
-    // Create save button
-    const saveButton = document.createElement('button');
-    saveButton.textContent = '💾 Save';
-    saveButton.style.margin = '2px';
-    saveButton.style.padding = '5px 10px';  // Bigger button
-    saveButton.style.fontSize = '16px';     // Bigger text
-    saveButton.addEventListener('click', () => {
-        console.log("Save button clicked");
-        applyTempCanvasToAnnotation();  // your save handler
-        closeMaskTool();
-    });
+          // Sort indices by mask sizes
+          indices.sort((a, b) => maskSizes[a] - maskSizes[b]);
 
-;
+          // Reorder masks and scores based on size
+          allMasks = indices.map(i => allMasks[i]);
+          allScores = indices.map(i => allScores[i]);
+
+          // Start with the smallest mask (S)
+          currentMaskIndex = 0;
+
+          console.log("Masks reordered by size: S, M, L");
+
+          // Create mask selector UI
+          createMaskSelectorUI();
+
+          // Draw the initial mask (S)
+          drawSelectedMask();
+
+      } else { // Draw single mask
+          // 4. Draw overlay on top of canvas
+          const overlayImg = new Image();
+          overlayImg.src = data.overlay;
+          overlayImg.onload = () => {
+              // Example: draw overlay on top of canvas
+              let annoctx = annotationCanvas.getContext('2d');
+              annoctx.drawImage(overlayImg, 0, 0);
+          };
+      }
+  }
+
+  // Function to create mask selector UI
+  function createMaskSelectorUI() {
+      // Remove existing selector if it exists
+      const existingSelector = document.getElementById('mask-selector');
+      console.log("Creating mask selector UI");
+
+      if (existingSelector) {
+          existingSelector.remove();
+      }
+
+      // Create container for mask selector
+      const selectorContainer = document.createElement('div');
+      selectorContainer.id = 'mask-selector';
+      selectorContainer.style.position = 'absolute';
+      selectorContainer.style.top = '10px';
+      selectorContainer.style.left = '10px'; // Change from right to left
+      selectorContainer.style.display = 'flex';
+      selectorContainer.style.flexDirection = 'column';
+      selectorContainer.style.background = 'rgba(0, 0, 0, 0.7)'; // Darker background
+      selectorContainer.style.padding = '8px';
+      selectorContainer.style.borderRadius = '5px';
+      selectorContainer.style.zIndex = '9999'; // Very high z-index
+      selectorContainer.style.border = '2px solid yellow'; // Add a visible border
+      selectorContainer.style.display = 'flex';
+
+      function closeMaskTool() {
+      selectorContainer.style.display = 'none';
+      }
+      // Create mask size label
+      const sizeLabel = document.createElement('div');
+      sizeLabel.id = 'mask-size-label';
+      sizeLabel.style.textAlign = 'center';
+      sizeLabel.style.fontWeight = 'bold';
+      sizeLabel.style.color = 'white'; // White text for better visibility
+      sizeLabel.textContent = getMaskSizeLabel(currentMaskIndex);
+
+      // Create up button
+      const upButton = document.createElement('button');
+      upButton.textContent = '▲';
+      upButton.style.margin = '2px';
+      upButton.style.padding = '5px 10px'; // Bigger button
+      upButton.style.fontSize = '16px'; // Bigger text
+      upButton.addEventListener('click', () => {
+          console.log("Up button clicked");
+          selectPreviousMask();
+      });
+
+      // Create down button
+      const downButton = document.createElement('button');
+      downButton.textContent = '▼';
+      downButton.style.margin = '2px';
+      downButton.style.padding = '5px 10px'; // Bigger button
+      downButton.style.fontSize = '16px'; // Bigger text
+      downButton.addEventListener('click', () => {
+          console.log("Down button clicked");
+          selectNextMask();
+      });
+
+      // Create save button
+      const saveButton = document.createElement('button');
+      saveButton.textContent = '💾 Save';
+      saveButton.style.margin = '2px';
+      saveButton.style.padding = '5px 10px';  // Bigger button
+      saveButton.style.fontSize = '16px';     // Bigger text
+      saveButton.addEventListener('click', () => {
+          console.log("Save button clicked");
+          applyTempCanvasToAnnotation();  // your save handler
+          closeMaskTool();
+      });
+
+  ;
 
 
-    // Append elements to container
-    selectorContainer.appendChild(upButton);
-    selectorContainer.appendChild(sizeLabel);
-    selectorContainer.appendChild(downButton);
-    selectorContainer.appendChild(saveButton);
+      // Append elements to container
+      selectorContainer.appendChild(upButton);
+      selectorContainer.appendChild(sizeLabel);
+      selectorContainer.appendChild(downButton);
+      selectorContainer.appendChild(saveButton);
 
-    // Add container near the annotation canvas
-    const canvasContainer = annotationCanvas.parentElement;
-    canvasContainer.style.position = 'relative';
-    canvasContainer.appendChild(selectorContainer);
-    console.log("Mask selector UI created and appended to:", canvasContainer);
-}
+      // Add container near the annotation canvas
+      const canvasContainer = annotationCanvas.parentElement;
+      canvasContainer.style.position = 'relative';
+      canvasContainer.appendChild(selectorContainer);
+      console.log("Mask selector UI created and appended to:", canvasContainer);
+  }
 
 
 
-// Function to get mask size label based on index
-function getMaskSizeLabel(index) {
-    const sizes = ['S', 'M', 'L'];
-    return sizes[Math.min(index, sizes.length - 1)];
-}
+  // Function to get mask size label based on index
+  function getMaskSizeLabel(index) {
+      const sizes = ['S', 'M', 'L'];
+      return sizes[Math.min(index, sizes.length - 1)];
+  }
 
-// Function to select next mask (larger)
-function selectNextMask() {
-    if (currentMaskIndex < allMasks.length - 1) {
-        currentMaskIndex++;
-        updateMaskSizeLabel();
-        drawSelectedMask();
-    }
-}
+  // Function to select next mask (larger)
+  function selectNextMask() {
+      if (currentMaskIndex < allMasks.length - 1) {
+          currentMaskIndex++;
+          updateMaskSizeLabel();
+          drawSelectedMask();
+      }
+  }
 
-// Function to select previous mask (smaller)
-function selectPreviousMask() {
-    if (currentMaskIndex > 0) {
-        currentMaskIndex--;
-        updateMaskSizeLabel();
-        drawSelectedMask();
-    }
-}
+  // Function to select previous mask (smaller)
+  function selectPreviousMask() {
+      if (currentMaskIndex > 0) {
+          currentMaskIndex--;
+          updateMaskSizeLabel();
+          drawSelectedMask();
+      }
+  }
 
-// Function to update the mask size label
-function updateMaskSizeLabel() {
-    const label = document.getElementById('mask-size-label');
-    if (label) {
-        label.textContent = getMaskSizeLabel(currentMaskIndex);
-    }
-}
+  // Function to update the mask size label
+  function updateMaskSizeLabel() {
+      const label = document.getElementById('mask-size-label');
+      if (label) {
+          label.textContent = getMaskSizeLabel(currentMaskIndex);
+      }
+  }
 
-// Function to draw the currently selected mask
-function drawSelectedMask() {
-    // Clear the annotation canvas
-    let annoctx = tempCanvas2.getContext('2d');
-    annoctx.clearRect(0, 0, tempCanvas2.width, tempCanvas2.height);
-    
-    // Convert the binary mask to an overlay image
-    const selectedMask = allMasks[currentMaskIndex];
-    const score = allScores[currentMaskIndex];
-    
-    // You'll need to implement this function based on how your masks are stored
-    // and how they should be displayed
-    const overlayData = convertMaskToOverlay(selectedMask);
-    
-    // Draw the overlay on the canvas
-    const overlayImg = new Image();
-    overlayImg.src = overlayData;
-    overlayImg.onload = () => {
-        annoctx.drawImage(overlayImg, 0, 0);
-    };
-    
-    // Optionally display the mask score somewhere
-    console.log(`Displaying mask ${currentMaskIndex} (${getMaskSizeLabel(currentMaskIndex)}), score: ${score}`);
-}
+  // Function to draw the currently selected mask
+  function drawSelectedMask() {
+      // Clear the annotation canvas
+      let annoctx = tempCanvas2.getContext('2d');
+      annoctx.clearRect(0, 0, tempCanvas2.width, tempCanvas2.height);
+
+      // Convert the binary mask to an overlay image
+      const selectedMask = allMasks[currentMaskIndex];
+      const score = allScores[currentMaskIndex];
+
+      // You'll need to implement this function based on how your masks are stored
+      // and how they should be displayed
+      const overlayData = convertMaskToOverlay(selectedMask);
+
+      // Draw the overlay on the canvas
+      const overlayImg = new Image();
+      overlayImg.src = overlayData;
+      overlayImg.onload = () => {
+          annoctx.drawImage(overlayImg, 0, 0);
+      };
+
+      // Optionally display the mask score somewhere
+      console.log(`Displaying mask ${currentMaskIndex} (${getMaskSizeLabel(currentMaskIndex)}), score: ${score}`);
+  }
 
 // Function to convert a binary mask to an overlay image
 // This is a placeholder - you'll need to implement based on your specific needs
@@ -1322,193 +1692,186 @@ function convertMaskToOverlay(mask) {
     }
 });
 
-annotationCanvas.addEventListener('pointermove', function(e) {
-    if (!drawing) return;
-    
-    // Calculate position with proper scaling
-    const rect = annotationCanvas.getBoundingClientRect();
-    const scaleX = annotationCanvas.width / rect.width;
-    const scaleY = annotationCanvas.height / rect.height;
-    
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-    
-    const ctx = annotationCanvas.getContext('2d');
-    
-    if (currentTool === 'pen') {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = brushColor;
-        ctx.lineWidth = brushSize;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-    } else if (currentTool === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.lineWidth = brushSize * 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-    } else if (currentTool === 'rect' || currentTool === 'circle') {
-        // Optional: preview of shape while drawing
-        // Requires saving and restoring canvas between moves
-    } else if (currentTool === "aipoint") {
-        
-    }
-    
-    lastX = x;
-    lastY = y;
-});
+  annotationCanvas.addEventListener('pointermove', function(e) {
+      if (!drawing) return;
 
-annotationCanvas.addEventListener('pointerup', function(e) {
-    if (!drawing) return;
-    
-    drawing = false;
-    
-    // Calculate final position with proper scaling
-    const rect = annotationCanvas.getBoundingClientRect();
-    const scaleX = annotationCanvas.width / rect.width;
-    const scaleY = annotationCanvas.height / rect.height;
-    
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-    
-    const ctx = annotationCanvas.getContext('2d');
-    
-    if (currentTool === 'rect') {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = brushColor;
-        ctx.lineWidth = brushSize;
-        ctx.strokeRect(startX, startY, x - startX, y - startY);
-    syncAnnotation();
-    } else if (currentTool === 'circle') {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = brushColor;
-        ctx.lineWidth = brushSize;
-        const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
-        ctx.beginPath();
-        ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
-        ctx.stroke();
-    syncAnnotation();
-    } else if (currentTool === 'pen') {
-        syncAnnotation()
-    }
-    
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.beginPath();
-    
-    // Sync annotation to server
-    
-    // Release pointer capture
-    this.releasePointerCapture(e.pointerId);
-});
+      // Calculate position with proper scaling
+      const rect = annotationCanvas.getBoundingClientRect();
+      const scaleX = annotationCanvas.width / rect.width;
+      const scaleY = annotationCanvas.height / rect.height;
 
-annotationCanvas.addEventListener('pointercancel', function(e) {
-    if (!drawing) return;
-    
-    drawing = false;
-    
-    try {
-        // Make sure we have a valid pointerId before releasing
-        if (e && e.pointerId) {
-            this.releasePointerCapture(e.pointerId);
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+
+      const ctx = annotationCanvas.getContext('2d');
+
+      // Your rewritten if block using circular brush
+if (currentTool === 'pen' || currentTool === 'eraser') {
+    const ctx = annotationCanvas.getContext('2d');
+    const size = currentTool === 'eraser' ? brushSize * 2 : brushSize;
+
+    ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.fillStyle = brushColor;
+
+    // Use the circular brush function
+    const result = drawWithCircularBrush(ctx, x, y, lastX, lastY, size);
+    lastX = result.x;
+    lastY = result.y;
+} else if (currentTool === 'rect' || currentTool === 'circle') {
+          // Optional: preview of shape while drawing
+          // Requires saving and restoring canvas between moves
+      } else if (currentTool === "aipoint") {
+
+      }
+
+      lastX = x;
+      lastY = y;
+  });
+
+  annotationCanvas.addEventListener('pointerup', function(e) {
+      if (!drawing){
+        syncAnnotation();
+        return;
         }
-    } catch (err) {
-        console.log('Error releasing pointer capture:', err);
-    }
-    
-    const ctx = annotationCanvas.getContext('2d');
-    ctx.beginPath();
-});
 
-// Add these additional event listeners for better mobile support
-annotationCanvas.addEventListener('touchstart', function(e) {
-    e.preventDefault(); // Prevent scrolling and zooming
-}, { passive: false });
+      drawing = false;
 
-annotationCanvas.addEventListener('touchmove', function(e) {
-    e.preventDefault(); // Prevent scrolling and zooming
-}, { passive: false });
+      // Calculate final position with proper scaling
+      const rect = annotationCanvas.getBoundingClientRect();
+      const scaleX = annotationCanvas.width / rect.width;
+      const scaleY = annotationCanvas.height / rect.height;
 
-// Prevent scrolling when touching the canvas
-document.body.addEventListener('touchstart', function(e) {
-    if (e.target === annotationCanvas) {
-        e.preventDefault();
-    }
-}, { passive: false });
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
 
-// Optional: Add this function to handle window resizing
-window.addEventListener('resize', function() {
-    // Resize canvas elements properly
-    const imageWidth = imageCanvas.width;
-    const imageHeight = imageCanvas.height;
-    
-    // Update wrapper dimensions to match screen size while maintaining aspect ratio
-    const wrapper = imageCanvas.parentElement;
-    const maxWidth = wrapper.parentElement.clientWidth * 0.95; // 95% of container width
-    
-    let newWidth = imageWidth;
-    let newHeight = imageHeight;
-    
-    if (newWidth > maxWidth) {
-        const ratio = maxWidth / newWidth;
-        newWidth = maxWidth;
-        newHeight = imageHeight * ratio;
-    }
-    
-    wrapper.style.width = newWidth + 'px';
-    wrapper.style.height = newHeight + 'px';
-    
-    // Update canvas display sizes (not pixel dimensions)
-    imageCanvas.style.width = annotationCanvas.style.width = newWidth + 'px';
-    imageCanvas.style.height = annotationCanvas.style.height = newHeight + 'px';
-});
+      const ctx = annotationCanvas.getContext('2d');
 
-    document.getElementById('export-stl').addEventListener('click', function() {
-        const params = getMeshVolumeParams();
-        const url = `/process/export-volume/${dsId}?` + new URLSearchParams({
-            method: params.method,
-            threshold: params.threshold,
-            num_interp: params.numInterp,
-            smooth: params.smooth,
-            smooth_factor: params.smoothFactor,
-            fill_holes: params.fillHoles
-        });
-        window.location.href = url;
-    });
+      if (currentTool === 'rect') {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.strokeStyle = brushColor;
+          ctx.lineWidth = brushSize;
+          ctx.strokeRect(startX, startY, x - startX, y - startY);
+      } else if (currentTool === 'circle') {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.strokeStyle = brushColor;
+          ctx.lineWidth = brushSize;
+          const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+          ctx.beginPath();
+          ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+          ctx.stroke();
+      } else if (currentTool === 'pen') {
+      }
+        syncAnnotation();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.beginPath();
 
-    document.getElementById('reconstruct-volume').addEventListener('click', async function() {
-        const params = getMeshVolumeParams();
-        try {
-            const response = await fetch(`/process/volume/${dsId}?` + new URLSearchParams({
-                method: params.method,
-                threshold: params.threshold,
-                num_interp: params.numInterp,
-                smooth: params.smooth,
-                smooth_factor: params.smoothFactor,
-                fill_holes: params.fillHoles
-            }));
-            const data = await response.json();
-            if (data.error) {
-                alert(data.error);
-                return;
-            }
-            renderMesh(data.vertices, data.faces, data.volume_shape);
-        } catch (error) {
-            console.error('Error reconstructing volume:', error);
-            alert('Failed to reconstruct volume');
-        }
-    });
-});
+      // Sync annotation to server
 
-  // Pass data to JavaScript
-  window.datasetId = {{ dataset.id|tojson }};
-  window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
+      // Release pointer capture
+      this.releasePointerCapture(e.pointerId);
+  });
+
+  annotationCanvas.addEventListener('pointercancel', function(e) {
+      if (!drawing) return;
+
+      drawing = false;
+
+      try {
+          // Make sure we have a valid pointerId before releasing
+          if (e && e.pointerId) {
+              this.releasePointerCapture(e.pointerId);
+          }
+      } catch (err) {
+          console.log('Error releasing pointer capture:', err);
+      }
+
+      const ctx = annotationCanvas.getContext('2d');
+      ctx.beginPath();
+  });
+
+  // Add these additional event listeners for better mobile support
+  annotationCanvas.addEventListener('touchstart', function(e) {
+      e.preventDefault(); // Prevent scrolling and zooming
+  }, { passive: false });
+
+  annotationCanvas.addEventListener('touchmove', function(e) {
+      e.preventDefault(); // Prevent scrolling and zooming
+  }, { passive: false });
+
+  // Prevent scrolling when touching the canvas
+  document.body.addEventListener('touchstart', function(e) {
+      if (e.target === annotationCanvas) {
+          e.preventDefault();
+      }
+  }, { passive: false });
+
+  // Optional: Add this function to handle window resizing
+  window.addEventListener('resize', function() {
+      // Resize canvas elements properly
+      const imageWidth = imageCanvas.width;
+      const imageHeight = imageCanvas.height;
+
+      // Update wrapper dimensions to match screen size while maintaining aspect ratio
+      const wrapper = imageCanvas.parentElement;
+      const maxWidth = wrapper.parentElement.clientWidth * 0.95; // 95% of container width
+
+      let newWidth = imageWidth;
+      let newHeight = imageHeight;
+
+      if (newWidth > maxWidth) {
+          const ratio = maxWidth / newWidth;
+          newWidth = maxWidth;
+          newHeight = imageHeight * ratio;
+      }
+
+      wrapper.style.width = newWidth + 'px';
+      wrapper.style.height = newHeight + 'px';
+
+      // Update canvas display sizes (not pixel dimensions)
+      imageCanvas.style.width = annotationCanvas.style.width = newWidth + 'px';
+      imageCanvas.style.height = annotationCanvas.style.height = newHeight + 'px';
+  });
+
+      document.getElementById('export-stl').addEventListener('click', function() {
+          const params = getMeshVolumeParams();
+          const url = `/process/export-volume/${dsId}?` + new URLSearchParams({
+              method: params.method,
+              threshold: params.threshold,
+              num_interp: params.numInterp,
+              smooth: params.smooth,
+              smooth_factor: params.smoothFactor,
+              fill_holes: params.fillHoles
+          });
+          window.location.href = url;
+      });
+
+      document.getElementById('reconstruct-volume').addEventListener('click', async function() {
+          const params = getMeshVolumeParams();
+          try {
+              const response = await fetch(`/process/volume/${dsId}?` + new URLSearchParams({
+                  method: params.method,
+                  threshold: params.threshold,
+                  num_interp: params.numInterp,
+                  smooth: params.smooth,
+                  smooth_factor: params.smoothFactor,
+                  fill_holes: params.fillHoles
+              }));
+              const data = await response.json();
+              if (data.error) {
+                  alert(data.error);
+                  return;
+              }
+              renderMesh(data.vertices, data.faces, data.volume_shape);
+          } catch (error) {
+              console.error('Error reconstructing volume:', error);
+              alert('Failed to reconstruct volume');
+          }
+      });
+  });
+
+    // Pass data to JavaScript
+    window.datasetId = {{ dataset.id|tojson }};
+    window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
 </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
