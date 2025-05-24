@@ -704,6 +704,10 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               toolbarEl.innerHTML = '';
               slider.value = idx + 1;
 
+              // Save current annotation content
+              const annotationCtx = annotationCanvas.getContext('2d');
+              const annotationData = annotationCtx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height);
+
               // Check if the first file is a DICOM file by checking its extension
               const firstFile = {{ files[0].path|tojson|safe }};
               const isDicom = firstFile.toLowerCase().endsWith('.dcm');
@@ -719,6 +723,9 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
 
               // Load image and reset annotation canvas
               loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, async function() {
+                  // Restore annotation content
+                  annotationCtx.putImageData(annotationData, 0, 0);
+
                   // Set up drawing tools on annotationCanvas only
                   const imageManager = {
                       getContext: () => annotationCanvas.getContext('2d'),
@@ -728,7 +735,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
                   };
                   const cursorManager = CursorManager(imageManager);
                   toolbarEl.innerHTML = ""; // Clear previous buttons
-                  //toolbarEl.appendChild(cursorManager.getElement());
                   cursorManager.bindCanvas(annotationCanvas);
 
                   // --- Draw contours ---
@@ -739,8 +745,27 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           }
 
           async function drawExtendedContours(idx, annotationCanvas) {
-              const ctx = annotationCanvas.getContext('2d');
-              ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+              // Create a temporary canvas for contours if it doesn't exist
+              let contourCanvas = document.getElementById('contour-canvas');
+              if (!contourCanvas) {
+                  contourCanvas = document.createElement('canvas');
+                  contourCanvas.id = 'contour-canvas';
+                  contourCanvas.style.position = 'absolute';
+                  contourCanvas.style.top = '0';
+                  contourCanvas.style.left = '0';
+                  contourCanvas.style.zIndex = '3';
+                  contourCanvas.style.width = '100%';
+                  contourCanvas.style.height = '100%';
+                  annotationCanvas.parentElement.appendChild(contourCanvas);
+              }
+
+              // Set contour canvas size to match annotation canvas
+              contourCanvas.width = annotationCanvas.width;
+              contourCanvas.height = annotationCanvas.height;
+
+              const ctx = contourCanvas.getContext('2d');
+              ctx.clearRect(0, 0, contourCanvas.width, contourCanvas.height);
+
               const method = document.getElementById('contour-method')?.value || 'adaptive';
               const threshold = document.getElementById('contour-threshold')?.value || 50;
 
@@ -848,19 +873,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
                       const finalUrl = `${imageUrl}?t=${timestamp}`;
 
                       // Reload the current image to show the applied filter
-                      loadImageToCanvas(finalUrl, imageCanvas, annotationCanvas, function() {
-                          // Set up drawing tools on annotationCanvas only
-                          const imageManager = {
-                              getContext: () => annotationCanvas.getContext('2d'),
-                              getCanvas: () => annotationCanvas,
-                              getRegions: () => [], // You can implement region tracking if needed
-                              addRegion: () => {},
-                          };
-                          const cursorManager = CursorManager(imageManager);
-                          toolbarEl.innerHTML = ""; // Clear previous buttons
-                          toolbarEl.appendChild(cursorManager.getElement());
-                          cursorManager.bindCanvas(annotationCanvas);
-                      });
+                      updateImage();
                   } else {
                       console.error('Failed to apply filter:', data.message);
                   }
@@ -949,7 +962,16 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           document.getElementById('toggle-contours').addEventListener('click', function() {
               contoursVisible = !contoursVisible;
               this.textContent = contoursVisible ? 'Hide Contours' : 'Show Contours';
-              updateImage();
+              
+              // Show/hide contour canvas instead of redrawing everything
+              const contourCanvas = document.getElementById('contour-canvas');
+              if (contourCanvas) {
+                  contourCanvas.style.display = contoursVisible ? 'block' : 'none';
+              }
+              
+              if (contoursVisible) {
+                  updateImage();
+              }
           });
 
         // Add event listeners to update image on slider change
