@@ -161,6 +161,13 @@
         >
           [X] Fill
         </button>
+        <button
+          class="btn btn-outline-light btn-sm"
+          id="tool-colorpicker"
+          title="Color Picker"
+        >
+          🎨 Color Picker
+        </button>
       </div>
 
       <!-- Brush controls -->
@@ -583,6 +590,7 @@
       let currentTool = 'pen';
       let brushSize = 5;
       let brushColor = '#00ff00';
+      window.brushColor = brushColor;
       let drawing = false;
       let startX = 0, startY = 0;
       let lastX = 0, lastY = 0;
@@ -601,7 +609,16 @@
       let allScores = []; // Store scores for all masks
       let currentMaskIndex = 0; // Current mask index being displayed
 
-
+        function hexToRgba(hex, alpha = 255) {
+            hex = hex.replace('#', '');
+            if (hex.length === 3) {
+                hex = hex.split('').map(c => c + c).join('');
+            }
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return [r, g, b, alpha];
+        }
       function applyTempCanvasToAnnotation(){
           const tempCtx = tempCanvas2.getContext("2d");
           const annotationCtx = annotationCanvas.getContext("2d");
@@ -1112,6 +1129,7 @@
       document.getElementById('tool-eraser').onclick = () => currentTool = 'eraser';
       document.getElementById('tool-aipoint').onclick = () => currentTool = 'aipoint';
       document.getElementById('tool-fill').onclick = () => currentTool = 'fill';
+      document.getElementById('tool-colorpicker').onclick = () => currentTool = 'colorpicker';
       document.getElementById('brush-size').oninput = function() {
           brushSize = parseInt(this.value, 10);
           document.getElementById('brush-size-value').textContent = this.value;
@@ -1169,6 +1187,62 @@
               });
           }, "image/png");
       }
+      
+      function floodFill(startX, startY, selectedColor, targetColor) {
+        const ctx = annotationCanvas.getContext('2d');
+        const canvasWidth = annotationCanvas.width;
+        const canvasHeight = annotationCanvas.height;
+
+        const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+        const data = imageData.data;
+
+        const toVisit = [];
+        const visited = new Set();
+
+        const pixelIndex = (x, y) => (y * canvasWidth + x) * 4;
+        const pixelKey = (x, y) => `${x},${y}`;
+
+        function colorsMatch(a, b) {
+            return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+        }
+
+        function getPixelColor(x, y) {
+            const index = pixelIndex(x, y);
+            return [data[index], data[index + 1], data[index + 2], data[index + 3]];
+        }
+
+        function setPixelColor(x, y, color) {
+            const index = pixelIndex(x, y);
+            data[index] = color[0];
+            data[index + 1] = color[1];
+            data[index + 2] = color[2];
+            data[index + 3] = color[3];
+        }
+
+        const originalColor = getPixelColor(startX, startY);
+        if (colorsMatch(originalColor, targetColor)) return;
+
+        toVisit.push([startX, startY]);
+        while (toVisit.length > 0) {
+            const [x, y] = toVisit.pop();
+
+            const key = pixelKey(x, y);
+            if (visited.has(key)) continue;
+            visited.add(key);
+            
+            const currentColor = getPixelColor(x, y);
+            if (colorsMatch(currentColor, targetColor)) continue;
+            if (!colorsMatch(currentColor, selectedColor)) continue;
+            setPixelColor(x, y, targetColor);
+
+            if (x > 0) toVisit.push([x - 1, y]);
+            if (x < canvasWidth - 1) toVisit.push([x + 1, y]);
+            if (y > 0) toVisit.push([x, y - 1]);
+            if (y < canvasHeight - 1) toVisit.push([x, y + 1]);
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+    }
 
       // Helper to save the current annotation state
       function saveAnnotationState() {
@@ -1236,23 +1310,30 @@
       startY = lastY = (e.clientY - rect.top) * scaleY;
 
       if (currentTool === 'pen' || currentTool === 'eraser') {
-          const ctx = annotationCanvas.getContext('2d');
-          ctx.beginPath();
-          ctx.moveTo(startX, startY);
+    const ctx = annotationCanvas.getContext('2d');
+    const size = currentTool === 'eraser' ? brushSize * 2 : brushSize;
+    const half = size / 2;
 
-          // For mobile, draw a dot on tap to ensure something appears
-          ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
-          ctx.strokeStyle = brushColor;
-          ctx.lineWidth = currentTool === 'eraser' ? brushSize * 2 : brushSize;
-          ctx.lineCap = 'round';
-          ctx.arc(startX, startY, 0.5, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.moveTo(startX, startY);
-      } else if(currentTool === 'fill') {
+    ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.fillStyle = brushColor;
+
+    ctx.fillRect(
+        Math.floor(startX - half),
+        Math.floor(startY - half),
+        size,
+        size
+    );
+
+    lastX = startX;
+    lastY = startY;
+} else if(currentTool === 'fill') {
         const ctx = annotationCanvas.getContext('2d');
         let selectedPixel = ctx.getImageData(startX,startY,1,1).data
-        console.log(selectedPixel);
+        floodFill(Math.floor(startX), Math.floor(startY), selectedPixel, hexToRgba(brushColor));
+      } else if(currentTool = 'colorpicker'){
+        const ctx = annotationCanvas.getContext('2d');
+        let selectedPixel = ctx.getImageData(startX,startY,1,1).data
+        console.log(selectedPixel)
       }
       else if (currentTool === "aipoint") {
           const ctx = imageCanvas.getContext('2d');
@@ -1539,26 +1620,35 @@
 
       const ctx = annotationCanvas.getContext('2d');
 
-      if (currentTool === 'pen') {
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.strokeStyle = brushColor;
-          ctx.lineWidth = brushSize;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.lineTo(x, y);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-      } else if (currentTool === 'eraser') {
-          ctx.globalCompositeOperation = 'destination-out';
-          ctx.lineWidth = brushSize * 2;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.lineTo(x, y);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-      } else if (currentTool === 'rect' || currentTool === 'circle') {
+      if (currentTool === 'pen' || currentTool === 'eraser') {
+    const ctx = annotationCanvas.getContext('2d');
+    const size = currentTool === 'eraser' ? brushSize * 2 : brushSize;
+    const half = size / 2;
+
+    ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.fillStyle = brushColor;
+
+    const dx = x - lastX;
+    const dy = y - lastY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const steps = Math.ceil(distance / (size / 2));
+
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const interpX = lastX + dx * t;
+        const interpY = lastY + dy * t;
+
+        ctx.fillRect(
+            Math.floor(interpX - half),
+            Math.floor(interpY - half),
+            size,
+            size
+        );
+    }
+
+    lastX = x;
+    lastY = y;
+} else if (currentTool === 'rect' || currentTool === 'circle') {
           // Optional: preview of shape while drawing
           // Requires saving and restoring canvas between moves
       } else if (currentTool === "aipoint") {
