@@ -249,58 +249,6 @@
               </tr>
             </thead>
             <tbody id="annotations-tbody">
-              <!-- Sample data -->
-              <tr data-id="1" style="cursor: pointer;">
-                <td>1</td>
-                <td>
-                  <div class="color-box" 
-                       style="width: 30px; height: 30px; background-color: #ff0000; 
-                              border: 2px solid #ccc; border-radius: 4px; cursor: pointer; 
-                              display: inline-block;" 
-                       data-color="#ff0000"
-                       title="Click to change color"></div>
-                </td>
-                <td class="label-text">Tumor</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr data-id="2" style="cursor: pointer;">
-                <td>2</td>
-                <td>
-                  <div class="color-box" 
-                       style="width: 30px; height: 30px; background-color: #00ff00; 
-                              border: 2px solid #ccc; border-radius: 4px; cursor: pointer; 
-                              display: inline-block;" 
-                       data-color="#00ff00"
-                       title="Click to change color"></div>
-                </td>
-                <td class="label-text">Healthy Tissue</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr data-id="3" style="cursor: pointer;">
-                <td>3</td>
-                <td>
-                  <div class="color-box" 
-                       style="width: 30px; height: 30px; background-color: #0000ff; 
-                              border: 2px solid #ccc; border-radius: 4px; cursor: pointer; 
-                              display: inline-block;" 
-                       data-color="#0000ff"
-                       title="Click to change color"></div>
-                </td>
-                <td class="label-text">Blood Vessel</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -1207,7 +1155,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           brushSize = parseInt(this.value, 10);
           document.getElementById('brush-size-value').textContent = this.value;
       };
-      document.getElementById('brush-color').oninput = function() { brushColor = this.value; };
+      document.getElementById('brush-color').oninput = function() { brushColor = this.value; window.brushColor = brushColor};
 
       function loadPastAnnotations() {
           const ctx = annotationCanvas.getContext('2d');
@@ -1884,6 +1832,7 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
     
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the simple annotations table
+    window.colorMappings = {}
     const annotationsTable = new SimpleAnnotationsTable({
         tableId: 'annotations-table',
         tbodyId: 'annotations-tbody',
@@ -1923,6 +1872,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('selected-color').textContent = '-';
         }
     });
+    window.annotationsTable = annotationsTable;
 
     // Example function to get currently selected color
     window.getSelectedAnnotationColor = function() {
@@ -1947,8 +1897,23 @@ document.addEventListener('DOMContentLoaded', function() {
     window.selectAnnotationById = function(id) {
         annotationsTable.selectRowById(id);
     };
+
+    const annotationCanvas = document.getElementById('annotation-canvas');
+    annotationCanvas.addEventListener('pointerup', function(e) {
+        const rows = annotationsTable.getAllRows()
+
+        const colorExists = rows.some(row => row.color === window.brushColor);
+
+        if(!colorExists){
+            annotationsTable.addRow({
+            id: rows.length + 1,
+            color: window.brushColor,
+            label: "New Label"
+        });
+        }
+    });
 });
-</script>
+    </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
 {% endblock %}
