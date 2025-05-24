@@ -260,7 +260,7 @@ class SimpleAnnotationsTable {
                        title="Click to edit label">
             </td>
             <td>
-                <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete"> 🗑️
                     <i class="fas fa-trash"></i>
                 </button>
             </td>

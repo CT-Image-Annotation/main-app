@@ -228,11 +228,10 @@
     <div class="card bg-dark text-light h-100">
       <div class="card-header">
         <h5 class="mb-0">Annotations</h5>
-        <small class="text-muted">Click rows to select • Click colors to change</small>
         <button id="annot-new-color">New Color</button>
       </div>
       <div class="card-body p-0">
-        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
           <table class="table table-dark table-hover mb-0" id="annotations-table">
             <thead class="table-secondary sticky-top">
               <tr>
@@ -245,16 +244,6 @@
             <tbody id="annotations-tbody">
             </tbody>
           </table>
-        </div>
-      </div>
-      <div class="card-footer">
-        <div class="row">
-          <div class="col">
-            <small class="text-muted">Selected: <span id="selected-info">None</span></small>
-          </div>
-          <div class="col text-end">
-            <small class="text-muted">Color: <span id="selected-color">-</span></small>
-          </div>
         </div>
       </div>
     </div>
@@ -1636,16 +1625,17 @@ function convertMaskToOverlay(mask) {
     
     // Create an ImageData object
     const imageData = tempCtx.createImageData(width, height);
+    let b = hexToRgb(brushColor)
     
     // Fill the imageData based on the mask
     for (let i = 0; i < mask.length; i++) {
         const pixelIndex = i * 4;
         if (mask[i]) {
             // Set pixel to semi-transparent color AI MEDSAM SEGMENTATION COLOR VALUES
-            imageData.data[pixelIndex] = 255;      // R
-            imageData.data[pixelIndex + 1] = 0;  // G
-            imageData.data[pixelIndex + 2] = 0;// B
-            imageData.data[pixelIndex + 3] = 255;// A
+            imageData.data[pixelIndex] = b.r
+            imageData.data[pixelIndex + 1] = b.g
+            imageData.data[pixelIndex + 2] = b.b
+            imageData.data[pixelIndex + 3] = 255
         } else {
             // Set pixel to transparent
             imageData.data[pixelIndex + 3] = 0;  // A
@@ -1842,28 +1832,28 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           }
       });
 
-     function hexToRgb(hex) {
-            // Remove the hash if present
-            hex = hex.replace('#', '');
+      function hexToRgb(hex) {       
+        // Remove the hash if present
+        hex = hex.replace('#', '');
 
-            // Parse hex string
-            if (hex.length === 3) {
-                // Short hex format (e.g., "F0A" -> "FF00AA")
-                hex = hex.split('').map(char => char + char).join('');
-            }
+        // Parse hex string
+        if (hex.length === 3) {
+            // Short hex format (e.g., "F0A" -> "FF00AA")
+            hex = hex.split('').map(char => char + char).join('');
+        }
 
-            if (hex.length !== 6) {
-                return null;
-            }
+        if (hex.length !== 6) {
+            return null;
+        }
 
-            const r = parseInt(hex.substring(0, 2), 16);
-            const g = parseInt(hex.substring(2, 4), 16);
-            const b = parseInt(hex.substring(4, 6), 16);
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
 
-            return { r, g, b };
-            }
+        return { r, g, b };
+        }
 
-      function replaceColor(canvas, oldColor, newColor) {
+      function replaceColor(canvas, oldColor, newColor, remove = false) {
         const ctx = canvas.getContext('2d');
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
@@ -1872,7 +1862,7 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
         const oldRGB = hexToRgb(oldColor);
         const newRGB = hexToRgb(newColor);
 
-        console.log(oldColor, newColor)
+        console.log(oldRGB, newRGB)
         
         if (!oldRGB || !newRGB) {
             console.error('Invalid hex color format. Use format like "#FF0000"');
@@ -1891,6 +1881,9 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
                 data[i] = newRGB.r;     // Red
                 data[i + 1] = newRGB.g; // Green
                 data[i + 2] = newRGB.b; // Blue
+                if (remove) {
+                  data[i+3] = 0;
+                }
                 // Keep the same alpha value (data[i + 3])
             }
         }
@@ -1905,10 +1898,6 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           tableId: 'annotations-table',
           tbodyId: 'annotations-tbody',
           onRowSelect: function(rowData) {
-              // Update the selected info display
-              document.getElementById('selected-info').textContent = `ID ${rowData.id} - ${rowData.label}`;
-              document.getElementById('selected-color').textContent = rowData.color;
-              
               // Log the selected row data and color for your use
               console.log('Selected row:', rowData);
               console.log('Selected color:', rowData.color);
@@ -1918,23 +1907,25 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           },
           onColorChange: function(rowData, row) {
               // Handle color change
-              if (annotationsTable.selectedRowId === rowData.id) {
-                  document.getElementById('selected-color').textContent = rowData.color;
-              }
               brushColor = rowData.color;
               replaceColor(annotationCanvas, row.getAttribute('data-color'), brushColor)
+              syncAnnotation()
+              saveAnnotationState()
           },
           onRowDelete: function(rowData) {
               // Handle row deletion
               console.log('Row deleted:', rowData);
               
               // Clear selection info if deleted row was selected
-              document.getElementById('selected-info').textContent = 'None';
-              document.getElementById('selected-color').textContent = '-';
+              replaceColor(annotationCanvas, rowData.color, '#000000', true)
+              syncAnnotation()
+              saveAnnotationState()
           },
           onLabelChange: function(rowData, row, oldValue) {
               // Handle label change
               console.log('Label changed from:', oldValue, 'to:', rowData.label);
+              syncAnnotation()
+              saveAnnotationState()
           }
       });
 
