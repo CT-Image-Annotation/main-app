@@ -52,22 +52,30 @@
   <!-- Stack controls vertically on mobile -->
   <div class="card bg-dark p-3 mb-3 rounded">
     <div class="row g-2">
-      <!-- Brightness control -->
-      <div class="col-12 col-md-6">
-        <div class="d-flex align-items-center gap-2">
-          <label class="text-light mb-0 flex-shrink-0 me-1" for="brightness-slider">Brightness</label>
-          <input type="range" id="brightness-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
-          <span id="brightness-value" class="text-light flex-shrink-0" style="min-width: 2rem; text-align: right;">0</span>
-        </div>
-      </div>
-      <!-- Contrast control -->
-      <div class="col-12 col-md-6">
-        <div class="d-flex align-items-center gap-2">
-          <label class="text-light mb-0 flex-shrink-0 me-1" for="contrast-slider">Contrast</label>
-          <input type="range" id="contrast-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
-          <span id="contrast-value" class="text-light flex-shrink-0" style="min-width: 2rem; text-align: right;">0</span>
-        </div>
-      </div>
+        <!-- Brightness -->
+  <div class="col-12 col-md-4">
+    <div class="d-flex align-items-center gap-2">
+      <label class="text-light mb-0 flex-shrink-0 me-1" for="brightness-slider">Brightness</label>
+      <input type="range" id="brightness-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+      <span id="brightness-value" class="text-light flex-shrink-0" style="min-width:2rem;text-align:right;">0</span>
+    </div>
+  </div>
+
+  <!-- Contrast -->
+  <div class="col-12 col-md-4">
+    <div class="d-flex align-items-center gap-2">
+      <label class="text-light mb-0 flex-shrink-0 me-1" for="contrast-slider">Contrast</label>
+      <input type="range" id="contrast-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+      <span id="contrast-value" class="text-light flex-shrink-0" style="min-width:2rem;text-align:right;">0</span>
+    </div>
+  </div>
+
+  <!-- Annotation Opacity -->
+  <div class="col-12 col-md-4">
+    <div class="d-flex align-items-center gap-2">
+      <label class="text-light mb-0 flex-shrink-0 me-1" for="opacity-slider">Annotation Visibilty</label>
+      <input type="range" id="opacity-slider" min="0" max="100" value="50" class="form-range flex-grow-1">
+      <span id="opacity-value" class="text-light flex-shrink-0" style="min-width:2rem;text-align:right;">50%</span>
     </div>
   </div>
 </div>
@@ -111,27 +119,129 @@
 
 </div>
 
-<!-- Editor Section -->
-<div
-  class="editor-container d-flex flex-row justify-content-center align-items-center flex-wrap w-100 overflow-hidden my-4"
-  style="gap: 3%;"
->
-    <canvas id="image-canvas2" style="position:relative; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
+<!-- Main Editor Section with Two-Column Layout -->
+<div class="row my-4">
+  <!-- Left Column: Image Editor -->
+  <div class="col-lg-8">
+    <div class="editor-container d-flex flex-column align-items-center w-100">
+      <canvas id="image-canvas2" style="position:relative; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
 
-  <div class="editor-toolbar mb-2"></div>
-  <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
-    <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
-    <canvas id="temp-canvas2" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
-    <canvas id="annotation-canvas" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
+      <div class="editor-toolbar mb-2"></div>
+      <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
+        <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
+        <canvas id="temp-canvas2" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
+        <canvas id="annotation-canvas" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas> 
+      </div>   
+    </div>
+
+    <p class="text-center text-light mt-3">
+      Image <span id="current-index">1</span> of {{ files|length }}
+      {% if files and files[0].mime == 'application/dicom' %}
+      | Slice <span id="current-slice">1</span> of <span id="total-slices">1</span>
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Right Column: Annotations Table -->
+  <div class="col-lg-4">
+    <div class="card bg-dark text-light h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Annotations</h5>
+        <button class="btn btn-sm btn-outline-light" id="add-annotation" title="Add New Annotation">
+          <i class="fas fa-plus"></i> Add
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+          <table class="table table-dark table-hover mb-0" id="annotations-table">
+            <thead class="table-secondary sticky-top">
+              <tr>
+                <th scope="col" style="width: 15%;">ID</th>
+                <th scope="col" style="width: 20%;">Color</th>
+                <th scope="col" style="width: 50%;">Label</th>
+                <th scope="col" style="width: 15%;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="annotations-tbody">
+              <!-- Sample data - replace with dynamic content -->
+              <tr data-annotation-id="1">
+                <td>1</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="color-preview" style="width: 20px; height: 20px; background-color: #ff0000; border-radius: 3px; border: 1px solid #ccc;"></div>
+                    <small class="text-muted">#ff0000</small>
+                  </div>
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Tumor" readonly>
+                </td>
+                <td>
+                  <div class="btn-group-vertical btn-group-sm">
+                    <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr data-annotation-id="2">
+                <td>2</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="color-preview" style="width: 20px; height: 20px; background-color: #00ff00; border-radius: 3px; border: 1px solid #ccc;"></div>
+                    <small class="text-muted">#00ff00</small>
+                  </div>
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Healthy Tissue" readonly>
+                </td>
+                <td>
+                  <div class="btn-group-vertical btn-group-sm">
+                    <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr data-annotation-id="3">
+                <td>3</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="color-preview" style="width: 20px; height: 20px; background-color: #0000ff; border-radius: 3px; border: 1px solid #ccc;"></div>
+                    <small class="text-muted">#0000ff</small>
+                  </div>
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Blood Vessel" readonly>
+                </td>
+                <td>
+                  <div class="btn-group-vertical btn-group-sm">
+                    <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-footer text-center">
+        <small class="text-muted">
+          <span id="annotation-count">3</span> annotations
+        </small>
+      </div>
+    </div>
   </div>
 </div>
-
-<p class="text-center text-light">
-  Image <span id="current-index">1</span> of {{ files|length }}
-  {% if files and files[0].mime == 'application/dicom' %}
-  | Slice <span id="current-slice">1</span> of <span id="total-slices">1</span>
-  {% endif %}
-</p>
 
 <!-- Slim, professional toolbar -->
 <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 py-2 mb-3" style="background: #23272b; border-radius: 0.5rem;">
@@ -666,6 +776,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const brightness = parseInt(document.getElementById('brightness-slider').value, 10);
             const contrast = parseInt(document.getElementById('contrast-slider').value, 10);
             imageCanvas.style.filter = `brightness(${1 + brightness/100}) contrast(${1 + contrast/100})`;
+            // Opacity
+            const opacity = parseInt(document.getElementById('opacity-slider').value, 10);
+            annotationCanvas.style.opacity = opacity / 100;
         }
 
         document.getElementById('brightness-slider').addEventListener('input', function() {
@@ -676,7 +789,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('contrast-value').textContent = this.value;
             updateCanvasFilter();
         });
-
+        document.getElementById('opacity-slider').addEventListener('input', function() {
+            document.getElementById('opacity-value').textContent = this.value;
+            updateCanvasFilter();
+        });
         // Add event listeners for interpolation controls
         document.getElementById('interpolation-slices').addEventListener('change', function() {
             interpolationSlices = parseInt(this.value) || 0;
@@ -909,8 +1025,7 @@ document.addEventListener('DOMContentLoaded', function() {
     this.setPointerCapture(e.pointerId);
     
     drawing = true;
-    
-    // Calculate position relative to canvas
+        // Calculate position relative to canvas
     const rect = annotationCanvas.getBoundingClientRect();
     const scaleX = annotationCanvas.width / rect.width;
     const scaleY = annotationCanvas.height / rect.height;
@@ -921,6 +1036,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (currentTool === 'pen' || currentTool === 'eraser') {
         const ctx = annotationCanvas.getContext('2d');
+        //ctx.globalAlpha = currentTool === 'pen' ? 0.3 : 1.0;
         ctx.beginPath();
         ctx.moveTo(startX, startY);
         
