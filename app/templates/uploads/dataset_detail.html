@@ -560,7 +560,6 @@
       let currentTool = 'pen';
       let brushSize = 5;
       let brushColor = '#00ff00';
-      window.brushColor = brushColor;
       let drawing = false;
       let startX = 0, startY = 0;
       let lastX = 0, lastY = 0;
@@ -1173,7 +1172,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           brushSize = parseInt(this.value, 10);
           document.getElementById('brush-size-value').textContent = this.value;
       };
-      document.getElementById('brush-color').onclick = function() { brushColor = this.value; window.brushColor = brushColor};
+      document.getElementById('brush-color').onclick = function() { brushColor = this.value};
 
       function loadPastAnnotations() {
           const ctx = annotationCanvas.getContext('2d');
@@ -1209,6 +1208,8 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               const formData = new FormData();
               formData.append("file", blob, "annotation.png");
               formData.append("resource_id", RELATED_RESOURCE_ID);
+
+              formData.append("mappings", JSON.stringify(annotationsTable.getAllRows()))
 
               fetch("/api/annotation/create", {
                   method: "POST",
@@ -1823,6 +1824,94 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
               alert('Failed to reconstruct volume');
           }
       });
+
+
+      window.colorMappings = {}
+      const annotationsTable = new SimpleAnnotationsTable({
+          tableId: 'annotations-table',
+          tbodyId: 'annotations-tbody',
+          onRowSelect: function(rowData) {
+              // Update the selected info display
+              document.getElementById('selected-info').textContent = `ID ${rowData.id} - ${rowData.label}`;
+              document.getElementById('selected-color').textContent = rowData.color;
+              
+              // Log the selected row data and color for your use
+              console.log('Selected row:', rowData);
+              console.log('Selected color:', rowData.color);
+              
+              // You can use the selected color here for your drawing tools
+              // For example, update the brush color:
+              const brushColorInput = document.getElementById('brush-color');
+              if (brushColorInput) {
+                  brushColorInput.value = rowData.color;
+              }
+              
+              return rowData.color; // Return the color
+          },
+          onColorChange: function(rowData, row) {
+              // Handle color change
+              
+              if (annotationsTable.selectedRowId === rowData.id) {
+                  document.getElementById('selected-color').textContent = rowData.color;
+              }
+          },
+          onRowDelete: function(rowData) {
+              // Handle row deletion
+              console.log('Row deleted:', rowData);
+              
+              // Clear selection info if deleted row was selected
+              document.getElementById('selected-info').textContent = 'None';
+              document.getElementById('selected-color').textContent = '-';
+          },
+          onLabelChange: function(rowData, row, oldValue) {
+              // Handle label change
+              console.log('Label changed from:', oldValue, 'to:', rowData.label);
+          }
+      });
+
+          // Set up label editing for existing rows
+      document.querySelectorAll('.label-input').forEach(input => {
+          const row = input.closest('tr');
+          annotationsTable.setupLabelEditing(input, row);
+      });
+      
+      // Example function to get currently selected color
+      window.getSelectedAnnotationColor = function() {
+          return annotationsTable.getSelectedColor();
+      };
+
+      // Example function to get selected row data
+      window.getSelectedAnnotationData = function() {
+          return annotationsTable.getSelectedRowData();
+      };
+
+      // Example function to add new annotation
+      window.addNewAnnotation = function(id, color, label) {
+          return annotationsTable.addRow({
+              id: id,
+              color: color,
+              label: label
+          });
+      };
+
+      // Example function to select row by ID
+      window.selectAnnotationById = function(id) {
+          annotationsTable.selectRowById(id);
+      };
+
+      annotationCanvas.addEventListener('pointerup', function(e) {
+          const rows = annotationsTable.getAllRows()
+
+          const colorExists = rows.some(row => row.color === window.brushColor);
+
+          if(!colorExists){
+              annotationsTable.addRow({
+              id: rows.length + 1,
+              color: window.brushColor,
+              label: "New Label"
+          });
+          }
+      });
   });
 
     // Pass data to JavaScript
@@ -1830,102 +1919,24 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
     window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
 </script>
 
+<style>
+.selected-row {
+    background-color: rgba(0, 123, 255, 0.3) !important;
+    border-left: 4px solid #007bff !important;
+}
+
+.selected-row:hover {
+    background-color: rgba(0, 123, 255, 0.4) !important;
+}
+
+#annotations-tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+</style>
+
 <!-- JavaScript for Simple Table Functionality -->
 <script src="{{ url_for('static', filename='js/editor/tableManager.js') }}"></script>
 
-<script>
-    
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the simple annotations table
-    window.colorMappings = {}
-    const annotationsTable = new SimpleAnnotationsTable({
-        tableId: 'annotations-table',
-        tbodyId: 'annotations-tbody',
-        onRowSelect: function(rowData) {
-            // Update the selected info display
-            document.getElementById('selected-info').textContent = `ID ${rowData.id} - ${rowData.label}`;
-            document.getElementById('selected-color').textContent = rowData.color;
-            
-            // Log the selected row data and color for your use
-            console.log('Selected row:', rowData);
-            console.log('Selected color:', rowData.color);
-            
-            // You can use the selected color here for your drawing tools
-            // For example, update the brush color:
-            const brushColorInput = document.getElementById('brush-color');
-            if (brushColorInput) {
-                brushColorInput.value = rowData.color;
-            }
-            
-            return rowData.color; // Return the color
-        },
-        onColorChange: function(rowData, row) {
-            // Handle color change
-            
-            if (annotationsTable.selectedRowId === rowData.id) {
-                document.getElementById('selected-color').textContent = rowData.color;
-            }
-        },
-        onRowDelete: function(rowData) {
-            // Handle row deletion
-            console.log('Row deleted:', rowData);
-            
-            // Clear selection info if deleted row was selected
-            document.getElementById('selected-info').textContent = 'None';
-            document.getElementById('selected-color').textContent = '-';
-        },
-        onLabelChange: function(rowData, row, oldValue) {
-            // Handle label change
-            console.log('Label changed from:', oldValue, 'to:', rowData.label);
-        }
-    });
-
-        // Set up label editing for existing rows
-    document.querySelectorAll('.label-input').forEach(input => {
-        const row = input.closest('tr');
-        annotationsTable.setupLabelEditing(input, row);
-    });
-    
-    // Example function to get currently selected color
-    window.getSelectedAnnotationColor = function() {
-        return annotationsTable.getSelectedColor();
-    };
-
-    // Example function to get selected row data
-    window.getSelectedAnnotationData = function() {
-        return annotationsTable.getSelectedRowData();
-    };
-
-    // Example function to add new annotation
-    window.addNewAnnotation = function(id, color, label) {
-        return annotationsTable.addRow({
-            id: id,
-            color: color,
-            label: label
-        });
-    };
-
-    // Example function to select row by ID
-    window.selectAnnotationById = function(id) {
-        annotationsTable.selectRowById(id);
-    };
-
-    const annotationCanvas = document.getElementById('annotation-canvas');
-    annotationCanvas.addEventListener('pointerup', function(e) {
-        const rows = annotationsTable.getAllRows()
-
-        const colorExists = rows.some(row => row.color === window.brushColor);
-
-        if(!colorExists){
-            annotationsTable.addRow({
-            id: rows.length + 1,
-            color: window.brushColor,
-            label: "New Label"
-        });
-        }
-    });
-});
-    </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
 {% endblock %}
