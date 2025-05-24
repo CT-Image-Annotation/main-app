@@ -685,6 +685,51 @@
       }
       const slider = document.getElementById('image-slider');
 
+      // Hard-coded circle generator for different brush sizes
+function drawCircle(ctx, centerX, centerY, radius) {
+    const diameter = radius * 2;
+    const startX = Math.floor(centerX - radius);
+    const startY = Math.floor(centerY - radius);
+    
+    // Pre-calculate radius squared for efficiency
+    const radiusSquared = radius * radius;
+    
+    // Draw pixel by pixel to avoid aliasing
+    for (let y = 0; y < diameter; y++) {
+        for (let x = 0; x < diameter; x++) {
+            // Calculate distance from center
+            const dx = x - radius;
+            const dy = y - radius;
+            const distanceSquared = dx * dx + dy * dy;
+            
+            // If pixel is within circle, draw it
+            if (distanceSquared <= radiusSquared) {
+                ctx.fillRect(startX + x, startY + y, 1, 1);
+            }
+        }
+    }
+}
+
+// Your modified drawing function
+function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
+    const half = size / 2;
+    const dx = x - lastX;
+    const dy = y - lastY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const steps = Math.ceil(distance / (size / 2));
+
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const interpX = lastX + dx * t;
+        const interpY = lastY + dy * t;
+
+        // Use circular brush instead of square
+        drawCircle(ctx, interpX, interpY, half);
+    }
+
+    return { x, y }; // Return new last position
+}
+
       if (true) {
           async function fetchDicomInfo(fileId) {
               try {
@@ -1310,22 +1355,22 @@
       startY = lastY = (e.clientY - rect.top) * scaleY;
 
       if (currentTool === 'pen' || currentTool === 'eraser') {
-    const ctx = annotationCanvas.getContext('2d');
-    const size = currentTool === 'eraser' ? brushSize * 2 : brushSize;
-    const half = size / 2;
+    // const ctx = annotationCanvas.getContext('2d');
+    // const size = currentTool === 'eraser' ? brushSize * 2 : brushSize;
+    // const half = size / 2;
 
-    ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
-    ctx.fillStyle = brushColor;
+    // ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    // ctx.fillStyle = brushColor;
 
-    ctx.fillRect(
-        Math.floor(startX - half),
-        Math.floor(startY - half),
-        size,
-        size
-    );
+    // ctx.fillRect(
+    //     Math.floor(startX - half),
+    //     Math.floor(startY - half),
+    //     size,
+    //     size
+    // );
 
-    lastX = startX;
-    lastY = startY;
+    // lastX = startX;
+    // lastY = startY;
 } else if(currentTool === 'fill') {
         const ctx = annotationCanvas.getContext('2d');
         let selectedPixel = ctx.getImageData(startX,startY,1,1).data
@@ -1620,34 +1665,18 @@
 
       const ctx = annotationCanvas.getContext('2d');
 
-      if (currentTool === 'pen' || currentTool === 'eraser') {
+      // Your rewritten if block using circular brush
+if (currentTool === 'pen' || currentTool === 'eraser') {
     const ctx = annotationCanvas.getContext('2d');
     const size = currentTool === 'eraser' ? brushSize * 2 : brushSize;
-    const half = size / 2;
 
     ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
     ctx.fillStyle = brushColor;
 
-    const dx = x - lastX;
-    const dy = y - lastY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const steps = Math.ceil(distance / (size / 2));
-
-    for (let i = 0; i <= steps; i++) {
-        const t = i / steps;
-        const interpX = lastX + dx * t;
-        const interpY = lastY + dy * t;
-
-        ctx.fillRect(
-            Math.floor(interpX - half),
-            Math.floor(interpY - half),
-            size,
-            size
-        );
-    }
-
-    lastX = x;
-    lastY = y;
+    // Use the circular brush function
+    const result = drawWithCircularBrush(ctx, x, y, lastX, lastY, size);
+    lastX = result.x;
+    lastY = result.y;
 } else if (currentTool === 'rect' || currentTool === 'circle') {
           // Optional: preview of shape while drawing
           // Requires saving and restoring canvas between moves
