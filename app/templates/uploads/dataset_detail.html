@@ -1501,7 +1501,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       upButton.style.fontSize = '16px'; // Bigger text
       upButton.addEventListener('click', () => {
           console.log("Up button clicked");
-          selectPreviousMask();
+          selectNextMask();
       });
 
       // Create down button
@@ -1512,7 +1512,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       downButton.style.fontSize = '16px'; // Bigger text
       downButton.addEventListener('click', () => {
           console.log("Down button clicked");
-          selectNextMask();
+          selectPreviousMask();
       });
 
       // Create save button
