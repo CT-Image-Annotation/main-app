@@ -112,6 +112,19 @@ html, body {
   overflow: auto;
 }
 
+.selected-row {
+    background-color: rgba(0, 123, 255, 0.3) !important;
+    border-left: 4px solid #007bff !important;
+}
+
+.selected-row:hover {
+    background-color: rgba(0, 123, 255, 0.4) !important;
+}
+
+#annotations-tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
 @media (max-width: 767.98px) {
   /* Adjust button text on very small screens */
   @media (max-width: 400px) {

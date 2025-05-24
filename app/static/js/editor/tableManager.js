@@ -11,6 +11,7 @@ class SimpleAnnotationsTable {
         this.onRowSelect = options.onRowSelect || null;
         this.onColorChange = options.onColorChange || null;
         this.onRowDelete = options.onRowDelete || null;
+        this.onLabelChange = options.onLabelChange || null;
         
         this.init();
     }
@@ -90,7 +91,8 @@ class SimpleAnnotationsTable {
         const id = row.getAttribute('data-id');
         const colorBox = row.querySelector('.color-box');
         const color = colorBox.style.backgroundColor || colorBox.getAttribute('data-color');
-        const label = row.querySelector('.label-text').textContent;
+        const labelInput = row.querySelector('.label-input');
+        const label = labelInput ? labelInput.value : row.querySelector('.label-text')?.textContent || '';
         
         return {
             id: id,
@@ -242,13 +244,23 @@ class SimpleAnnotationsTable {
                      data-color="${data.color}"
                      title="Click to change color"></div>
             </td>
-            <td class="label-text">${data.label}</td>
+            <td>
+                <input type="text" 
+                       class="label-input form-control form-control-sm bg-dark text-light border-secondary" 
+                       value="${data.label}" 
+                       style="background: transparent; border: none; color: inherit; width: 100%;"
+                       title="Click to edit label">
+            </td>
             <td>
                 <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
         `;
+        
+        // Set up label editing functionality
+        const labelInput = row.querySelector('.label-input');
+        this.setupLabelEditing(labelInput, row);
         
         return row;
     }
@@ -288,10 +300,71 @@ class SimpleAnnotationsTable {
     }
 
     /**
-     * Convert RGB color to hex format
-     * @param {string} rgb - RGB color string
-     * @returns {string} Hex color string
+     * Set up label editing functionality for an input field
+     * @param {HTMLElement} labelInput - The label input element
+     * @param {HTMLElement} row - The table row element
      */
+    setupLabelEditing(labelInput, row) {
+        let originalValue = labelInput.value;
+        
+        // Handle focus - store original value
+        labelInput.addEventListener('focus', () => {
+            originalValue = labelInput.value;
+            labelInput.style.background = 'rgba(255, 255, 255, 0.1)';
+            labelInput.style.border = '1px solid #0d6efd';
+        });
+        
+        // Handle blur - save changes automatically
+        labelInput.addEventListener('blur', () => {
+            labelInput.style.background = 'transparent';
+            labelInput.style.border = 'none';
+            
+            if (labelInput.value !== originalValue) {
+                this.saveLabelChange(row, labelInput.value, originalValue);
+            }
+        });
+        
+        // Handle Enter key - save and blur
+        labelInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                labelInput.blur();
+            } else if (e.key === 'Escape') {
+                // Cancel editing - restore original value
+                labelInput.value = originalValue;
+                labelInput.blur();
+            }
+        });
+        
+        // Prevent row selection when clicking on the input
+        labelInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    /**
+     * Save label change and trigger callback
+     * @param {HTMLElement} row - The table row element
+     * @param {string} newValue - The new label value
+     * @param {string} oldValue - The original label value
+     */
+    saveLabelChange(row, newValue, oldValue) {
+        // Trigger callback if provided
+        if (this.onLabelChange) {
+            const rowData = this.getRowData(row);
+            this.onLabelChange(rowData, row, oldValue);
+        }
+        
+        // Update selected info if this row is selected
+        if (this.selectedRowId === row.getAttribute('data-id')) {
+            const selectedInfo = document.getElementById('selected-info');
+            if (selectedInfo) {
+                const rowData = this.getRowData(row);
+                selectedInfo.textContent = `ID ${rowData.id} - ${rowData.label}`;
+            }
+        }
+        
+        console.log(`Label changed from "${oldValue}" to "${newValue}"`);
+    }
     rgbToHex(rgb) {
         if (!rgb || rgb.indexOf('rgb') === -1) return rgb;
         

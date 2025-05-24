@@ -1297,8 +1297,8 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       // Clear function
       function clearAnnotation() {
           const ctx = annotationCanvas.getContext('2d');
-          saveAnnotationState();
           ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+            syncAnnotation();
       }
 
       // Wire up the buttons
@@ -1351,10 +1351,11 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
         const ctx = annotationCanvas.getContext('2d');
         let selectedPixel = ctx.getImageData(startX,startY,1,1).data
         floodFill(Math.floor(startX), Math.floor(startY), selectedPixel, hexToRgba(brushColor));
-      } else if(currentTool = 'colorpicker'){
+      } else if(currentTool === 'colorpicker'){
         const ctx = annotationCanvas.getContext('2d');
         let selectedPixel = ctx.getImageData(startX,startY,1,1).data
         console.log(selectedPixel)
+
       }
       else if (currentTool === "aipoint") {
           const ctx = imageCanvas.getContext('2d');
@@ -1607,7 +1608,7 @@ function convertMaskToOverlay(mask) {
             imageData.data[pixelIndex] = 255;      // R
             imageData.data[pixelIndex + 1] = 0;  // G
             imageData.data[pixelIndex + 2] = 0;// B
-            imageData.data[pixelIndex + 3] = 128;// A
+            imageData.data[pixelIndex + 3] = 255;// A
         } else {
             // Set pixel to transparent
             imageData.data[pixelIndex + 3] = 0;  // A
@@ -1810,21 +1811,6 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
     window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
 </script>
 
-<style>
-.selected-row {
-    background-color: rgba(0, 123, 255, 0.3) !important;
-    border-left: 4px solid #007bff !important;
-}
-
-.selected-row:hover {
-    background-color: rgba(0, 123, 255, 0.4) !important;
-}
-
-#annotations-tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-</style>
-
 <!-- JavaScript for Simple Table Functionality -->
 <script src="{{ url_for('static', filename='js/editor/tableManager.js') }}"></script>
 
@@ -1856,9 +1842,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         onColorChange: function(rowData, row) {
             // Handle color change
-            console.log('Color changed for row:', rowData);
             
-            // Update selected color display if this row is selected
             if (annotationsTable.selectedRowId === rowData.id) {
                 document.getElementById('selected-color').textContent = rowData.color;
             }
@@ -1870,10 +1854,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // Clear selection info if deleted row was selected
             document.getElementById('selected-info').textContent = 'None';
             document.getElementById('selected-color').textContent = '-';
+        },
+        onLabelChange: function(rowData, row, oldValue) {
+            // Handle label change
+            console.log('Label changed from:', oldValue, 'to:', rowData.label);
         }
     });
-    window.annotationsTable = annotationsTable;
 
+        // Set up label editing for existing rows
+    document.querySelectorAll('.label-input').forEach(input => {
+        const row = input.closest('tr');
+        annotationsTable.setupLabelEditing(input, row);
+    });
+    
     // Example function to get currently selected color
     window.getSelectedAnnotationColor = function() {
         return annotationsTable.getSelectedColor();
