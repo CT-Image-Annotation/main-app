@@ -1243,6 +1243,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               });
           }, "image/png");
       }
+
       
       function floodFill(startX, startY, selectedColor, targetColor) {
         const ctx = annotationCanvas.getContext('2d');
@@ -1841,6 +1842,63 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           }
       });
 
+     function hexToRgb(hex) {
+            // Remove the hash if present
+            hex = hex.replace('#', '');
+
+            // Parse hex string
+            if (hex.length === 3) {
+                // Short hex format (e.g., "F0A" -> "FF00AA")
+                hex = hex.split('').map(char => char + char).join('');
+            }
+
+            if (hex.length !== 6) {
+                return null;
+            }
+
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+
+            return { r, g, b };
+            }
+
+      function replaceColor(canvas, oldColor, newColor) {
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        // Convert hex colors to RGB
+        const oldRGB = hexToRgb(oldColor);
+        const newRGB = hexToRgb(newColor);
+
+        console.log(oldColor, newColor)
+        
+        if (!oldRGB || !newRGB) {
+            console.error('Invalid hex color format. Use format like "#FF0000"');
+            return;
+        }
+        
+        // Loop through every pixel (4 values per pixel: R, G, B, A)
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const a = data[i + 3];
+            
+            // Check if current pixel matches the old color
+            if (r === oldRGB.r && g === oldRGB.g && b === oldRGB.b && a > 0) {
+                data[i] = newRGB.r;     // Red
+                data[i + 1] = newRGB.g; // Green
+                data[i + 2] = newRGB.b; // Blue
+                // Keep the same alpha value (data[i + 3])
+            }
+        }
+        
+        // Put the modified image data back to the canvas
+        ctx.putImageData(imageData, 0, 0);
+    }
+
 
       window.colorMappings = {}
       const annotationsTable = new SimpleAnnotationsTable({
@@ -1860,11 +1918,11 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           },
           onColorChange: function(rowData, row) {
               // Handle color change
-              
               if (annotationsTable.selectedRowId === rowData.id) {
                   document.getElementById('selected-color').textContent = rowData.color;
               }
               brushColor = rowData.color;
+              replaceColor(annotationCanvas, row.getAttribute('data-color'), brushColor)
           },
           onRowDelete: function(rowData) {
               // Handle row deletion

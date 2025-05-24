@@ -231,14 +231,17 @@ class SimpleAnnotationsTable {
      */
     createRow(data) {
         const row = document.createElement('tr');
-        row.setAttribute('data-id', data.id);
         row.style.cursor = 'pointer';
-
+        
         if (!data.id) {
             data.id = this.length() + 1
             console.log("GENERATING ID")
         }
         
+        row.setAttribute('data-id', data.id);
+        row.setAttribute('data-color', data.color)
+        row.setAttribute('data-label', data.label)
+
         row.innerHTML = `
             <td>${data.id}</td>
             <td>
