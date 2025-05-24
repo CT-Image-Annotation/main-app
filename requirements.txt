@@ -9,6 +9,7 @@ pydicom
 # numerical & data libraries
 numpy
 pandas
+scipy
 
 # image-drawing (PIL)
 Pillow

@@ -44,7 +44,10 @@ class AnnotationService(Base):
     @staticmethod
     def read_last(resource_id):
         resource = FileService.read(resource_id)
-
+        
+        if not resource:
+            return None
+            
         last_annotation = resource.annotations.order_by(Annotation.updated_at.desc()).first()
         return last_annotation
         

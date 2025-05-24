@@ -335,23 +335,6 @@
         >50</span
       >
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <label
-        class="text-light mb-0"
-        for="interpolation-slices"
-        style="font-size: 0.95em"
-        >Interp. Slices:</label
-      >
-      <input
-        type="number"
-        id="interpolation-slices"
-        min="0"
-        max="10"
-        value="0"
-        class="form-control form-control-sm"
-        style="width: 60px"
-      />
-    </div>
     <button id="toggle-contours" class="btn btn-outline-info btn-sm ms-2">
       Show Contours
     </button>
@@ -565,7 +548,6 @@
       let startX = 0, startY = 0;
       let lastX = 0, lastY = 0;
       let interpolationEnabled = false;
-      let interpolationSlices = 0;
       let annotationHistory = [];
       window.annotationHistory = annotationHistory;
       let redoStack = [];
@@ -798,44 +780,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               const currentContours = await fetchContours(idx);
               const nextContours = await fetchContours(idx + 1);
 
-              // Draw interpolated contours if enabled
-              if (interpolationEnabled && interpolationSlices > 0) {
-                  if (prevContours && currentContours) {
-                      // Interpolate between previous and current slice
-                      const response = await fetch('/process/interpolate-contours', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                              contour1: prevContours[0],
-                              contour2: currentContours[0],
-                              num_slices: interpolationSlices
-                          })
-                      });
-                      const data = await response.json();
-                      data.interpolated.forEach((contour, i) => {
-                          const alpha = 0.3 * (1 - (i + 1) / (interpolationSlices + 1));
-                          drawContours([contour], 'rgba(0,0,255,0.5)', 1, alpha);
-                      });
-                  }
-                  if (currentContours && nextContours) {
-                      // Interpolate between current and next slice
-                      const response = await fetch('/process/interpolate-contours', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                              contour1: currentContours[0],
-                              contour2: nextContours[0],
-                              num_slices: interpolationSlices
-                          })
-                      });
-                      const data = await response.json();
-                      data.interpolated.forEach((contour, i) => {
-                          const alpha = 0.3 * ((i + 1) / (interpolationSlices + 1));
-                          drawContours([contour], 'rgba(255,0,0,0.5)', 1, alpha);
-                      });
-                  }
-              }
-
               // Draw the main contours
               drawContours(prevContours, 'rgba(0,0,255,0.5)', 1, 0.5);
               drawContours(nextContours, 'rgba(255,0,0,0.5)', 1, 0.5);
@@ -1030,13 +974,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
             document.getElementById('opacity-value').textContent = this.value;
             updateCanvasFilter();
         });
-        // Add event listeners for interpolation controls
-        document.getElementById('interpolation-slices').addEventListener('change', function() {
-            interpolationSlices = parseInt(this.value) || 0;
-            if (contoursVisible) {
-                updateImage();
-            }
-        });
 
           document.getElementById('toggle-interpolation').addEventListener('click', function() {
               interpolationEnabled = !interpolationEnabled;
@@ -1055,7 +992,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           return {
               method: document.getElementById('contour-method').value,
               threshold: document.getElementById('contour-threshold').value,
-              numInterp: document.getElementById('interpolation-slices').value,
               smooth: document.getElementById('smooth-volume').checked,
               smoothFactor: document.getElementById('smooth-factor').value / 100,
               fillHoles: document.getElementById('fill-holes').checked
@@ -1774,7 +1710,6 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           const url = `/process/export-volume/${dsId}?` + new URLSearchParams({
               method: params.method,
               threshold: params.threshold,
-              num_interp: params.numInterp,
               smooth: params.smooth,
               smooth_factor: params.smoothFactor,
               fill_holes: params.fillHoles
@@ -1788,7 +1723,6 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
               const response = await fetch(`/process/volume/${dsId}?` + new URLSearchParams({
                   method: params.method,
                   threshold: params.threshold,
-                  num_interp: params.numInterp,
                   smooth: params.smooth,
                   smooth_factor: params.smoothFactor,
                   fill_holes: params.fillHoles

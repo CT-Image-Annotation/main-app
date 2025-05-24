@@ -1,5 +1,3 @@
-from dotenv import load_dotenv
-load_dotenv()   # <-- this reads .env into os.environ
 
 from flask import Flask
 from config import Config
