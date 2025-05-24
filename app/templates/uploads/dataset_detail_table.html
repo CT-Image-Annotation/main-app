@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+
+{% block title %}Dataset – {{ dataset.name }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-header mb-4">
+  <h1 class="mb-2">{{ dataset.name }}</h1>
+  {% if dataset.description %}
+    <p class="text-secondary">{{ dataset.description }}</p>
+  {% endif %}
+
+  <!-- Patient Information -->
+  {% if dataset.patient_name %}
+    <div class="card bg-dark text-light p-3 mb-3">
+      <h5 class="mb-3">Patient Information</h5>
+      <div class="row">
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Name:</strong> {{ dataset.patient_name }}</p>
+          <p class="mb-1"><strong>ID:</strong> {{ dataset.patient_id }}</p>
+        </div>
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Date of Birth:</strong> {{ dataset.patient_dob.strftime('%Y-%m-%d') if dataset.patient_dob }}</p>
+          <p class="mb-1"><strong>Gender:</strong> {{ dataset.patient_gender }}</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Scan Information -->
+  {% if dataset.scan_type %}
+    <div class="card bg-dark text-light p-3 mb-3">
+      <h5 class="mb-3">Scan Information</h5>
+      <div class="row">
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Type:</strong> {{ dataset.scan_type }}</p>
+          <p class="mb-1"><strong>Date:</strong> {{ dataset.scan_date.strftime('%Y-%m-%d') if dataset.scan_date }}</p>
+        </div>
+        <div class="col-md-6">
+          <p class="mb-1"><strong>Series Number:</strong> {{ dataset.scan_series_number }}</p>
+          {% if dataset.scan_description %}
+            <p class="mb-1"><strong>Description:</strong> {{ dataset.scan_description }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <p>Status: <span class="fw-bold text-info">{{ dataset.tags }}</span></p>
+
+<!-- Image Controls Section -->
+<div id="image-controls" class="mt-3">
+  <div class="card bg-dark p-3 mb-3 rounded">
+    <div class="row g-2">
+      <!-- Brightness control -->
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-light mb-0 flex-shrink-0 me-1" for="brightness-slider">Brightness</label>
+          <input type="range" id="brightness-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+          <span id="brightness-value" class="text-light flex-shrink-0" style="min-width: 2rem; text-align: right;">0</span>
+        </div>
+      </div>
+      <!-- Contrast control -->
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-light mb-0 flex-shrink-0 me-1" for="contrast-slider">Contrast</label>
+          <input type="range" id="contrast-slider" min="-100" max="100" value="0" class="form-range flex-grow-1">
+          <span id="contrast-value" class="text-light flex-shrink-0" style="min-width: 2rem; text-align: right;">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Drawing Tools Section -->
+<div id="drawing-tools" class="mt-3">
+  <div class="card bg-dark p-3 mb-3 rounded">
+    <!-- Drawing tools -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button class="btn btn-outline-light btn-sm" id="tool-pen" title="Freehand">✏️ Pen</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-rect" title="Rectangle">▭ Rect</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-circle" title="Circle">◯ Circle</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-eraser" title="Eraser">🧽 Eraser</button>
+      <button class="btn btn-outline-light btn-sm" id="tool-aipoint" title="AIPoint">:() AIPoint</button>
+    </div>
+    
+    <!-- Brush controls -->
+    <div class="row g-2">
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-light mb-0 flex-shrink-0 me-1" for="brush-size">Brush Size</label>
+          <input type="range" id="brush-size" min="1" max="30" value="5" class="form-range flex-grow-1">
+          <span id="brush-size-value" class="text-light flex-shrink-0" style="min-width: 1.5rem; text-align: right;">5</span>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <label class="text-light mb-0 flex-shrink-0" for="brush-color">Color</label>
+          <input type="color" id="brush-color" value="#00ff00" style="width: 30px; height: 30px;">
+          <div class="ms-auto d-flex gap-1">
+            <button class="btn btn-outline-warning btn-sm" id="tool-undo" title="Undo">↩️</button>
+            <button class="btn btn-outline-warning btn-sm" id="tool-redo" title="Redo">↪️</button>
+            <button class="btn btn-outline-danger btn-sm" id="tool-clear" title="Clear">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Main Editor Section with Two-Column Layout -->
+<div class="row my-4">
+  <!-- Left Column: Image Editor -->
+  <div class="col-lg-8">
+    <div class="editor-container d-flex flex-column align-items-center w-100">
+      <canvas id="image-canvas2" style="position:relative; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
+
+      <div class="editor-toolbar mb-2"></div>
+      <div class="editor-wrapper card bg-secondary bg-gradient p-3" style="position:relative;">
+        <canvas id="image-canvas" style="position:absolute; top:0; left:0; z-index:1; width:100%; height:100%;"></canvas>
+        <canvas id="temp-canvas2" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
+        <canvas id="annotation-canvas" style="position:absolute; top:0; left:0; z-index:2; width:100%; height:100%;"></canvas>
+      </div>
+    </div>
+
+    <p class="text-center text-light mt-3">
+      Image <span id="current-index">1</span> of {{ files|length }}
+      {% if files and files[0].mime == 'application/dicom' %}
+      | Slice <span id="current-slice">1</span> of <span id="total-slices">1</span>
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Right Column: Simple Annotations Table -->
+  <div class="col-lg-4">
+    <div class="card bg-dark text-light h-100">
+      <div class="card-header">
+        <h5 class="mb-0">Annotations</h5>
+        <small class="text-muted">Click rows to select • Click colors to change</small>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-dark table-hover mb-0" id="annotations-table">
+            <thead class="table-secondary sticky-top">
+              <tr>
+                <th scope="col" style="width: 15%;">ID</th>
+                <th scope="col" style="width: 20%;">Color</th>
+                <th scope="col" style="width: 50%;">Label</th>
+                <th scope="col" style="width: 15%;">Delete</th>
+              </tr>
+            </thead>
+            <tbody id="annotations-tbody">
+              <!-- Sample data -->
+              <tr data-id="1" style="cursor: pointer;">
+                <td>1</td>
+                <td>
+                  <div class="color-box" 
+                       style="width: 30px; height: 30px; background-color: #ff0000; 
+                              border: 2px solid #ccc; border-radius: 4px; cursor: pointer; 
+                              display: inline-block;" 
+                       data-color="#ff0000"
+                       title="Click to change color"></div>
+                </td>
+                <td class="label-text">Tumor</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr data-id="2" style="cursor: pointer;">
+                <td>2</td>
+                <td>
+                  <div class="color-box" 
+                       style="width: 30px; height: 30px; background-color: #00ff00; 
+                              border: 2px solid #ccc; border-radius: 4px; cursor: pointer; 
+                              display: inline-block;" 
+                       data-color="#00ff00"
+                       title="Click to change color"></div>
+                </td>
+                <td class="label-text">Healthy Tissue</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr data-id="3" style="cursor: pointer;">
+                <td>3</td>
+                <td>
+                  <div class="color-box" 
+                       style="width: 30px; height: 30px; background-color: #0000ff; 
+                              border: 2px solid #ccc; border-radius: 4px; cursor: pointer; 
+                              display: inline-block;" 
+                       data-color="#0000ff"
+                       title="Click to change color"></div>
+                </td>
+                <td class="label-text">Blood Vessel</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="row">
+          <div class="col">
+            <small class="text-muted">Selected: <span id="selected-info">None</span></small>
+          </div>
+          <div class="col text-end">
+            <small class="text-muted">Color: <span id="selected-color">-</span></small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slim, professional toolbar -->
+<div class="d-flex flex-wrap justify-content-center align-items-center gap-3 py-2 mb-3" style="background: #23272b; border-radius: 0.5rem;">
+  <div class="btn-group me-2" role="group" aria-label="Navigation">
+    <button id="prev" class="btn btn-outline-light btn-sm" title="Previous Image">◀</button>
+    <button id="next" class="btn btn-outline-light btn-sm" title="Next Image">▶</button>
+    <button id="prev-slice" class="btn btn-outline-light btn-sm" title="Previous Slice">↑</button>
+    <button id="next-slice" class="btn btn-outline-light btn-sm" title="Next Slice">↓</button>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <label class="text-light mb-0" for="contour-method" style="font-size: 0.95em;">Contour:</label>
+    <select id="contour-method" class="form-select form-select-sm w-auto">
+      <option value="adaptive">Adaptive</option>
+      <option value="canny">Canny</option>
+      <option value="manual">Manual Threshold</option>
+      <option value="otsu">Otsu</option>
+    </select>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <label class="text-light mb-0" for="contour-threshold" style="font-size: 0.95em;">Threshold:</label>
+    <input type="range" id="contour-threshold" min="0" max="255" value="50" class="form-range w-auto" style="width:120px;">
+    <span id="contour-threshold-value" class="text-light ms-1" style="font-size: 0.95em;">50</span>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <label class="text-light mb-0" for="interpolation-slices" style="font-size: 0.95em;">Interp. Slices:</label>
+    <input type="number" id="interpolation-slices" min="0" max="10" value="0" class="form-control form-control-sm" style="width:60px;">
+  </div>
+  <button id="toggle-contours" class="btn btn-outline-info btn-sm ms-2">Show Contours</button>
+  <button id="toggle-interpolation" class="btn btn-outline-warning btn-sm ms-2">Enable Interpolation</button>
+  <button id="reconstruct-volume" class="btn btn-outline-success btn-sm ms-2">Reconstruct Volume</button>
+</div>
+
+<div class="d-flex justify-content-center my-3">
+  <input type="range" id="image-slider" class="form-range" style="width:80%; max-width:500px;"
+         min="1" max="{{ files|length }}" value="1">
+</div>
+
+<!-- Edit Controls -->
+<div id="edit-controls" class="mt-4">
+  <form id="batch-filter-form" method="POST" action="{{ url_for('processing.batch_apply', ds_id=dataset.id) }}" class="d-flex flex-wrap gap-2 justify-content-center mb-3">
+    {% for name in filter_names %}
+      <button type="submit" name="filter_name" value="{{ name }}" class="btn btn-outline-info">{{ name }}</button>
+    {% endfor %}
+  </form>
+  <div class="d-flex gap-2 justify-content-center align-items-center mb-2">
+    <a href="{{ url_for('processing.batch_undo', ds_id=dataset.id) }}" class="btn btn-outline-warning">Undo All</a>
+    <a href="{{ url_for('processing.batch_reset', ds_id=dataset.id) }}" class="btn btn-outline-danger">Reset All</a>
+    <a href="{{ url_for('processing.batch_download', ds_id=dataset.id) }}" class="btn btn-outline-success">Download All</a>
+    {% if files and files[0].mime == 'application/dicom' %}
+    <button id="check-structure" class="btn btn-outline-info">Check Dataset Structure</button>
+    {% endif %}
+  </div>
+  {% if processes %}
+    <p class="mt-3"><strong>Applied Filters:</strong> <span class="text-info">{{ processes | join(' → ') }}</span></p>
+  {% endif %}
+  <div id="dataset-structure-info" class="mt-3 text-center" style="display: none;">
+      <div class="spinner-border text-info" role="status" style="display: none;">
+          <span class="visually-hidden">Loading...</span>
+      </div>
+  </div>
+</div>
+
+<!-- 3D Viewer Section -->
+<div class="mt-4">
+    <div id="mesh-viewer" style="width: 100%; height: 500px; background: #111; border-radius: 0.5rem;"></div>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-2">
+        <div class="d-flex align-items-center gap-2">
+            <button id="show-mesh" class="btn btn-outline-info btn-sm">Show Mesh</button>
+            <button id="reset-camera" class="btn btn-outline-light btn-sm">Reset View</button>
+            <button id="export-stl" class="btn btn-outline-success btn-sm">Export STL</button>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0" for="mesh-opacity" style="font-size: 0.95em;">Opacity:</label>
+            <input type="range" id="mesh-opacity" min="0" max="100" value="100" class="form-range" style="width:100px;">
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0" for="mesh-color" style="font-size: 0.95em;">Color:</label>
+            <select id="mesh-color" class="form-select form-select-sm" style="width:120px;">
+                <option value="blue">Blue</option>
+                <option value="red">Red</option>
+                <option value="green">Green</option>
+                <option value="yellow">Yellow</option>
+                <option value="purple">Purple</option>
+            </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0" for="render-mode" style="font-size: 0.95em;">Mode:</label>
+            <select id="render-mode" class="form-select form-select-sm" style="width:120px;">
+                <option value="solid">Solid</option>
+                <option value="wireframe">Wireframe</option>
+                <option value="points">Points</option>
+            </select>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-2">
+        <div class="d-flex align-items-center gap-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="smooth-volume">
+                <label class="form-check-label text-light" for="smooth-volume">Smooth Volume</label>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="text-light mb-0" for="smooth-factor" style="font-size: 0.95em;">Smooth Factor:</label>
+            <input type="range" id="smooth-factor" min="0" max="200" value="100" class="form-range" style="width:100px;">
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="fill-holes">
+                <label class="form-check-label text-light" for="fill-holes">Fill Holes</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS for selected row highlighting -->
+<style>
+.selected-row {
+    background-color: rgba(0, 123, 255, 0.3) !important;
+    border-left: 4px solid #007bff !important;
+}
+
+.selected-row:hover {
+    background-color: rgba(0, 123, 255, 0.4) !important;
+}
+
+#annotations-tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+</style>
+
+<!-- JavaScript for Simple Table Functionality -->
+<script src="{{ url_for('static', filename='js/editor/tableManager.js') }}"></script>
+
+<script>
+    
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the simple annotations table
+    const annotationsTable = new SimpleAnnotationsTable({
+        tableId: 'annotations-table',
+        tbodyId: 'annotations-tbody',
+        onRowSelect: function(rowData) {
+            // Update the selected info display
+            document.getElementById('selected-info').textContent = `ID ${rowData.id} - ${rowData.label}`;
+            document.getElementById('selected-color').textContent = rowData.color;
+            
+            // Log the selected row data and color for your use
+            console.log('Selected row:', rowData);
+            console.log('Selected color:', rowData.color);
+            
+            // You can use the selected color here for your drawing tools
+            // For example, update the brush color:
+            const brushColorInput = document.getElementById('brush-color');
+            if (brushColorInput) {
+                brushColorInput.value = rowData.color;
+            }
+            
+            return rowData.color; // Return the color
+        },
+        onColorChange: function(rowData, row) {
+            // Handle color change
+            console.log('Color changed for row:', rowData);
+            
+            // Update selected color display if this row is selected
+            if (annotationsTable.selectedRowId === rowData.id) {
+                document.getElementById('selected-color').textContent = rowData.color;
+            }
+        },
+        onRowDelete: function(rowData) {
+            // Handle row deletion
+            console.log('Row deleted:', rowData);
+            
+            // Clear selection info if deleted row was selected
+            document.getElementById('selected-info').textContent = 'None';
+            document.getElementById('selected-color').textContent = '-';
+        }
+    });
+
+    // Example function to get currently selected color
+    window.getSelectedAnnotationColor = function() {
+        return annotationsTable.getSelectedColor();
+    };
+
+    // Example function to get selected row data
+    window.getSelectedAnnotationData = function() {
+        return annotationsTable.getSelectedRowData();
+    };
+
+    // Example function to add new annotation
+    window.addNewAnnotation = function(id, color, label) {
+        return annotationsTable.addRow({
+            id: id,
+            color: color,
+            label: label
+        });
+    };
+
+    // Example function to select row by ID
+    window.selectAnnotationById = function(id) {
+        annotationsTable.selectRowById(id);
+    };
+});
+</script>
+
+{% endblock %}
