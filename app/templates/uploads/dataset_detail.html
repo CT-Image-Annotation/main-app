@@ -1689,7 +1689,10 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
   });
 
   annotationCanvas.addEventListener('pointerup', function(e) {
-      if (!drawing) return;
+      if (!drawing){
+        syncAnnotation();
+        return;
+        }
 
       drawing = false;
 
@@ -1708,7 +1711,6 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           ctx.strokeStyle = brushColor;
           ctx.lineWidth = brushSize;
           ctx.strokeRect(startX, startY, x - startX, y - startY);
-      syncAnnotation();
       } else if (currentTool === 'circle') {
           ctx.globalCompositeOperation = 'source-over';
           ctx.strokeStyle = brushColor;
@@ -1717,11 +1719,9 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
           ctx.beginPath();
           ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
           ctx.stroke();
-      syncAnnotation();
       } else if (currentTool === 'pen') {
-          syncAnnotation()
       }
-
+        syncAnnotation();
       ctx.globalCompositeOperation = 'source-over';
       ctx.beginPath();
 
