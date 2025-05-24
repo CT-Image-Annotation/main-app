@@ -230,106 +230,94 @@
       </p>
     </div>
 
-    <!-- Right Column: Annotations Table -->
-    <div class="col-lg-4">
-      <div class="card bg-dark text-light h-100">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Annotations</h5>
-          <button class="btn btn-sm btn-outline-light" id="add-annotation" title="Add New Annotation">
-            <i class="fas fa-plus"></i> Add
-          </button>
+    <!-- Right Column: Simple Annotations Table -->
+  <div class="col-lg-4">
+    <div class="card bg-dark text-light h-100">
+      <div class="card-header">
+        <h5 class="mb-0">Annotations</h5>
+        <small class="text-muted">Click rows to select • Click colors to change</small>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-dark table-hover mb-0" id="annotations-table">
+            <thead class="table-secondary sticky-top">
+              <tr>
+                <th scope="col" style="width: 15%;">ID</th>
+                <th scope="col" style="width: 20%;">Color</th>
+                <th scope="col" style="width: 50%;">Label</th>
+                <th scope="col" style="width: 15%;">Delete</th>
+              </tr>
+            </thead>
+            <tbody id="annotations-tbody">
+              <!-- Sample data -->
+              <tr data-id="1" style="cursor: pointer;">
+                <td>1</td>
+                <td>
+                  <div class="color-box" 
+                       style="width: 30px; height: 30px; background-color: #ff0000; 
+                              border: 2px solid #ccc; border-radius: 4px; cursor: pointer; 
+                              display: inline-block;" 
+                       data-color="#ff0000"
+                       title="Click to change color"></div>
+                </td>
+                <td class="label-text">Tumor</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr data-id="2" style="cursor: pointer;">
+                <td>2</td>
+                <td>
+                  <div class="color-box" 
+                       style="width: 30px; height: 30px; background-color: #00ff00; 
+                              border: 2px solid #ccc; border-radius: 4px; cursor: pointer; 
+                              display: inline-block;" 
+                       data-color="#00ff00"
+                       title="Click to change color"></div>
+                </td>
+                <td class="label-text">Healthy Tissue</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr data-id="3" style="cursor: pointer;">
+                <td>3</td>
+                <td>
+                  <div class="color-box" 
+                       style="width: 30px; height: 30px; background-color: #0000ff; 
+                              border: 2px solid #ccc; border-radius: 4px; cursor: pointer; 
+                              display: inline-block;" 
+                       data-color="#0000ff"
+                       title="Click to change color"></div>
+                </td>
+                <td class="label-text">Blood Vessel</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="card-body p-0">
-          <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-            <table class="table table-dark table-hover mb-0" id="annotations-table">
-              <thead class="table-secondary sticky-top">
-                <tr>
-                  <th scope="col" style="width: 15%;">ID</th>
-                  <th scope="col" style="width: 20%;">Color</th>
-                  <th scope="col" style="width: 50%;">Label</th>
-                  <th scope="col" style="width: 15%;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="annotations-tbody">
-                <!-- Sample data - replace with dynamic content -->
-                <tr data-annotation-id="1">
-                  <td>1</td>
-                  <td>
-                    <div class="d-flex align-items-center gap-2">
-                      <div class="color-preview" style="width: 20px; height: 20px; background-color: #ff0000; border-radius: 3px; border: 1px solid #ccc;"></div>
-                      <small class="text-muted">#ff0000</small>
-                    </div>
-                  </td>
-                  <td>
-                    <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Tumor" readonly>
-                  </td>
-                  <td>
-                    <div class="btn-group-vertical btn-group-sm">
-                      <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr data-annotation-id="2">
-                  <td>2</td>
-                  <td>
-                    <div class="d-flex align-items-center gap-2">
-                      <div class="color-preview" style="width: 20px; height: 20px; background-color: #00ff00; border-radius: 3px; border: 1px solid #ccc;"></div>
-                      <small class="text-muted">#00ff00</small>
-                    </div>
-                  </td>
-                  <td>
-                    <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Healthy Tissue" readonly>
-                  </td>
-                  <td>
-                    <div class="btn-group-vertical btn-group-sm">
-                      <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr data-annotation-id="3">
-                  <td>3</td>
-                  <td>
-                    <div class="d-flex align-items-center gap-2">
-                      <div class="color-preview" style="width: 20px; height: 20px; background-color: #0000ff; border-radius: 3px; border: 1px solid #ccc;"></div>
-                      <small class="text-muted">#0000ff</small>
-                    </div>
-                  </td>
-                  <td>
-                    <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" value="Blood Vessel" readonly>
-                  </td>
-                  <td>
-                    <div class="btn-group-vertical btn-group-sm">
-                      <button class="btn btn-outline-warning btn-sm edit-annotation" title="Edit">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="btn btn-outline-danger btn-sm delete-annotation" title="Delete">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      </div>
+      <div class="card-footer">
+        <div class="row">
+          <div class="col">
+            <small class="text-muted">Selected: <span id="selected-info">None</span></small>
           </div>
-        </div>
-        <div class="card-footer text-center">
-          <small class="text-muted">
-            <span id="annotation-count">3</span> annotations
-          </small>
+          <div class="col text-end">
+            <small class="text-muted">Color: <span id="selected-color">-</span></small>
+          </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
   <!-- Slim, professional toolbar -->
   <div
@@ -1872,6 +1860,94 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
     // Pass data to JavaScript
     window.datasetId = {{ dataset.id|tojson }};
     window.fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
+</script>
+
+<style>
+.selected-row {
+    background-color: rgba(0, 123, 255, 0.3) !important;
+    border-left: 4px solid #007bff !important;
+}
+
+.selected-row:hover {
+    background-color: rgba(0, 123, 255, 0.4) !important;
+}
+
+#annotations-tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+</style>
+
+<!-- JavaScript for Simple Table Functionality -->
+<script src="{{ url_for('static', filename='js/editor/tableManager.js') }}"></script>
+
+<script>
+    
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the simple annotations table
+    const annotationsTable = new SimpleAnnotationsTable({
+        tableId: 'annotations-table',
+        tbodyId: 'annotations-tbody',
+        onRowSelect: function(rowData) {
+            // Update the selected info display
+            document.getElementById('selected-info').textContent = `ID ${rowData.id} - ${rowData.label}`;
+            document.getElementById('selected-color').textContent = rowData.color;
+            
+            // Log the selected row data and color for your use
+            console.log('Selected row:', rowData);
+            console.log('Selected color:', rowData.color);
+            
+            // You can use the selected color here for your drawing tools
+            // For example, update the brush color:
+            const brushColorInput = document.getElementById('brush-color');
+            if (brushColorInput) {
+                brushColorInput.value = rowData.color;
+            }
+            
+            return rowData.color; // Return the color
+        },
+        onColorChange: function(rowData, row) {
+            // Handle color change
+            console.log('Color changed for row:', rowData);
+            
+            // Update selected color display if this row is selected
+            if (annotationsTable.selectedRowId === rowData.id) {
+                document.getElementById('selected-color').textContent = rowData.color;
+            }
+        },
+        onRowDelete: function(rowData) {
+            // Handle row deletion
+            console.log('Row deleted:', rowData);
+            
+            // Clear selection info if deleted row was selected
+            document.getElementById('selected-info').textContent = 'None';
+            document.getElementById('selected-color').textContent = '-';
+        }
+    });
+
+    // Example function to get currently selected color
+    window.getSelectedAnnotationColor = function() {
+        return annotationsTable.getSelectedColor();
+    };
+
+    // Example function to get selected row data
+    window.getSelectedAnnotationData = function() {
+        return annotationsTable.getSelectedRowData();
+    };
+
+    // Example function to add new annotation
+    window.addNewAnnotation = function(id, color, label) {
+        return annotationsTable.addRow({
+            id: id,
+            color: color,
+            label: label
+        });
+    };
+
+    // Example function to select row by ID
+    window.selectAnnotationById = function(id) {
+        annotationsTable.selectRowById(id);
+    };
+});
 </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
