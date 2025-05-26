@@ -13,11 +13,20 @@ services:
       - FLASK_ENV
       - DATABASE_URL
       - SECRET_KEY
+      - AI_SERVICE_URL=http://ai-service:5000
     depends_on:
       - db
     volumes:
       - .:/app
+      - uploads-data:/app/uploads
     command: sh -c "flask db upgrade && gunicorn --bind 0.0.0.0:8000 app.wsgi:app"
+
+  ai-service:
+    image: ct-annotation/ai-service:latest
+    ports:
+      - "5001:5000"
+    command: ["conda", "run", "--no-capture-output", "-n", "medsam2", "gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
+    restart: unless-stopped
 
   db:
     image: postgres:15
@@ -35,3 +44,4 @@ services:
 
 volumes:
   pgdata:
+  uploads-data:
