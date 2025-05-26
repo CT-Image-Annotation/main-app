@@ -19,14 +19,11 @@ from scipy.interpolate import interp1d
 
 from app.models.Resource import Resource
 from app.services.FileService import FileService
-from app.services.medsam_service import MedSAMService
 from app.filters import DicomFilters, Thresholding, GMM, apply_segmentation
 
 # Blueprint for image processing routes
 bp = Blueprint('processing', __name__, url_prefix='/process')
 
-# Initialize MedSAM service (will be initialized lazily when needed)
-medsam_service = MedSAMService()
 
 # Filter names available in workspace
 FILTER_NAMES = [
@@ -370,92 +367,6 @@ def image(file_id):
     except Exception as e:
         print(f"Unexpected error in image endpoint: {str(e)}")  # Debug log
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
-
-
-@bp.route('/<int:file_id>/segment', methods=['POST'])
-def segment_with_medsam(file_id):
-    """Apply MedSAM segmentation using the provided rectangle coordinates."""
-    global global_current_image
-    
-    try:
-        # Get rectangle coordinates from request
-        data = request.get_json()
-        box = data.get('box')  # [x1, y1, x2, y2]
-        
-        if not box or len(box) != 4:
-            return jsonify({'error': 'Invalid box coordinates'}), 400
-            
-        # Get the current image
-        if global_current_image is None:
-            return jsonify({'error': 'No image loaded'}), 400
-            
-        # Apply MedSAM segmentation
-        mask = medsam_service.segment_image(global_current_image, box)
-        
-        # Overlay the mask on the image
-        result = medsam_service.overlay_mask(global_current_image, mask)
-        
-        # Update the current image
-        global_current_image = result
-        
-        # Encode the result for display
-        _, buf = cv2.imencode('.png', result)
-        img_b64 = base64.b64encode(buf).decode('utf-8')
-        
-        return jsonify({
-            'success': True,
-            'image': img_b64
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-@bp.route('/test-medsam')
-def test_medsam():
-    """Test page for MedSAM segmentation."""
-    return render_template(
-        'test_medsam.html'
-    )
-
-@bp.route('/test-medsam/segment', methods=['POST'])
-def test_medsam_segment():
-    """Test endpoint for MedSAM segmentation."""
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'}), 400
-    
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
-    
-    try:
-        # Get box coordinates from request
-        box = request.form.get('box')
-        if not box:
-            return jsonify({'error': 'No box coordinates provided'}), 400
-        
-        # Parse box coordinates
-        box = json.loads(box)
-        if not isinstance(box, list) or len(box) != 4:
-            return jsonify({'error': 'Invalid box coordinates'}), 400
-        
-        # Read image
-        img = Image.open(file.stream)
-        
-        # Apply segmentation
-        result = medsam_service.segment_image(img, box)
-        
-        # Convert result to base64 for display
-        buffered = BytesIO()
-        result.save(buffered, format="PNG")
-        img_str = base64.b64encode(buffered.getvalue()).decode()
-        
-        return jsonify({
-            'success': True,
-            'image': f'data:image/png;base64,{img_str}'
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @bp.route('/dicom-info/<int:file_id>')
 def dicom_info(file_id):

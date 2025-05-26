@@ -2,42 +2,12 @@ import os
 from flask import Blueprint, current_app, jsonify, request, send_file, send_from_directory, session, Response
 from PIL import Image
 from app.services.AnnotationService import AnnotationService
-from app.services.BoundingBoxSegmentationService import BoundingBoxSegmentationService
 from app.services.DatasetService import DatasetService
 from app.services.FileService import FileService
 from app.services.UserService import UserService
 import io
 bp = Blueprint("api", __name__)
 
-
-@bp.route("/ai", methods=["GET"])
-def ai():
-    resource_id = request.args.get("resource_id", type=int)
-    xmin = request.args.get("xmin", type=int)
-    ymin = request.args.get("ymin", type=int)
-    xmax = request.args.get("xmax", type=int)
-    ymax = request.args.get("ymax", type=int)
-
-    if None in [resource_id, xmin, ymin, xmax, ymax]:
-        return {"error": "Missing parameters"}, 400
-    
-    resource = FileService.find(resource_id)
-
-    image_buffer = FileService.load(resource.path)
-
-    box_coords = [[xmin, ymin, xmax, ymax]] #[[75, 75, 240, 420]]
-
-    pil_image = Image.fromarray(BoundingBoxSegmentationService.segmentBox(image_buffer, box_coords))
-    
-    # Save the image to a BytesIO object in PNG format
-    img_io = io.BytesIO()
-    pil_image.save(img_io, 'PNG')
-    img_io.seek(0)  # Go to the beginning of the BytesIO buffer
-    
-    # Return the image as a response
-    return Response(img_io, mimetype='image/png')
-
-    return 
 
 # USER
 @bp.route("/user/create", methods=["POST"])
