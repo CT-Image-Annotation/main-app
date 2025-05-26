@@ -6,10 +6,13 @@ services:
     image: ct-annotation/main-app:latest
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-      - FLASK_APP=app.py
-      - FLASK_ENV=production
-      - DATABASE_URL=postgresql://postgres:password@db:5432/ctdb
+      - FLASK_APP
+      - FLASK_ENV
+      - DATABASE_URL
+      - SECRET_KEY
     depends_on:
       - db
     volumes:
@@ -19,10 +22,12 @@ services:
   db:
     image: postgres:15
     restart: always
+    env_file:
+      - .pgenv
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: ctdb
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
     ports:
       - "5432:5432"
     volumes:
