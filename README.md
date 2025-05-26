@@ -2,6 +2,7 @@
 
 ## Setup
 
+### Local
 For local development, we need conda, and local database.
 
 ```bash
@@ -19,3 +20,8 @@ flask db migrate -m "init"
 flask db upgrade
 flask run
 ```
+
+### Production
+Install docker, docker compose, then
+
+`docker compose up --build`

@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  main-app:
+    build: .
+    image: ct-annotation/main-app:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@db:5432/ctdb
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    command: sh -c "flask db upgrade && gunicorn --bind 0.0.0.0:8000 app.wsgi:app"
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ctdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

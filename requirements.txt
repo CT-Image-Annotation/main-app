@@ -13,14 +13,11 @@ pandas
 # image-drawing (PIL)
 Pillow
 
-# GMM / machine-learning
-scikit-learn
-
-# AI
-torch
-torchvision
-torchaudio
 scikit-image
-segment-anything
+scikit-learn
+python-dotenv
+requests
 
-gdown
+# Deployment
+gunicorn
+psycopg2-binary
