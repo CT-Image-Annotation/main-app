@@ -21,6 +21,9 @@ from app.models.Resource import Resource
 from app.services.FileService import FileService
 from app.filters import DicomFilters, Thresholding, GMM, apply_segmentation
 
+from app.services.ContourInterpolationService import ContourInterpolationService
+
+
 # Blueprint for image processing routes
 bp = Blueprint('processing', __name__, url_prefix='/process')
 
@@ -503,20 +506,6 @@ def extract_contours_from_dicom(dicom_path, method='adaptive', user_threshold=50
         print(f"Error extracting contours: {e}")
         return []
 
-@bp.route('/contours/<int:file_id>')
-def get_contours(file_id):
-    method = request.args.get('method', 'adaptive')
-    try:
-        user_threshold = int(request.args.get('threshold', 50))
-    except Exception:
-        user_threshold = 50
-    file = Resource.query.get_or_404(file_id)
-    base = current_app.config['UPLOAD_FOLDER']
-    if file.dataset_id:
-        base = os.path.join(base, str(file.dataset_id))
-    path = os.path.join(base, file.path)
-    contours = extract_contours_from_dicom(path, method=method, user_threshold=user_threshold)
-    return jsonify({'contours': contours})
 
 def extract_mask_from_dicom(dicom_path, method='adaptive', user_threshold=50):
     dcm = pydicom.dcmread(dicom_path, force=True)
@@ -533,36 +522,6 @@ def extract_mask_from_dicom(dicom_path, method='adaptive', user_threshold=50):
     else:
         _, mask = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return (mask > 0).astype(np.uint8)
-
-@bp.route('/mesh/<int:ds_id>')
-def get_mesh(ds_id):
-    method = request.args.get('method', 'adaptive')
-    try:
-        user_threshold = int(request.args.get('threshold', 50))
-    except Exception:
-        user_threshold = 50
-
-    files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
-    masks = []
-    for f in files:
-        base = current_app.config['UPLOAD_FOLDER']
-        if f.dataset_id:
-            base = os.path.join(base, str(f.dataset_id))
-        path = os.path.join(base, f.path)
-        mask = extract_mask_from_dicom(path, method, user_threshold)
-        if mask is not None:
-            masks.append(mask)
-    if not masks:
-        return jsonify({'error': 'No valid masks found'}), 400
-
-    volume = np.stack(masks, axis=0)
-    # Downsample to 64x64 for speed
-    volume_small = resize(volume, (volume.shape[0], 64, 64), order=0, preserve_range=True, anti_aliasing=False).astype(volume.dtype)
-    verts, faces, normals, values = measure.marching_cubes(volume_small, level=0.5)
-    return jsonify({
-        'vertices': verts.tolist(),
-        'faces': faces.tolist()
-    })
 
 def resample_contour(contour, num_points=100):
     contour = np.array(contour)
@@ -586,14 +545,6 @@ def interpolate_contours(contour1, contour2, num_slices):
         interpolated.append(interp.tolist())
     return interpolated
 
-@bp.route('/interpolate-contours', methods=['POST'])
-def interpolate_contours_api():
-    data = request.get_json()
-    contour1 = data['contour1']  # list of [x, y]
-    contour2 = data['contour2']  # list of [x, y]
-    num_slices = int(data['num_slices'])
-    result = interpolate_contours(contour1, contour2, num_slices)
-    return jsonify({'interpolated': result})
 
 def create_volume_from_contours(contours_list, num_slices, image_shape):
     """
@@ -657,142 +608,266 @@ def process_volume(volume, options):
     
     return processed
 
-@bp.route('/volume/<int:ds_id>')
-def get_volume(ds_id):
-    """Generate a 3D volume from interpolated contours."""
-    method = request.args.get('method', 'adaptive')
-    try:
-        user_threshold = int(request.args.get('threshold', 50))
-        num_interp = int(request.args.get('num_interp', 5))
-        smooth = request.args.get('smooth', 'false').lower() == 'true'
-        smooth_factor = float(request.args.get('smooth_factor', 1.0))
-        fill_holes = request.args.get('fill_holes', 'false').lower() == 'true'
-    except Exception as e:
-        return jsonify({'error': f'Invalid parameters: {str(e)}'}), 400
 
+@bp.route('/contours/<int:file_id>')
+def get_contours(file_id):
+    """Get contours for a specific slice using the selected method."""
+    method = request.args.get('method', 'adaptive')
+    threshold = int(request.args.get('threshold', 50))
+    
+    # Get the file
+    file = Resource.query.get_or_404(file_id)
+    if not file:
+        return jsonify({'error': 'File not found'}), 404
+    
+    # Read the DICOM file
+    base_folder = current_app.config['UPLOAD_FOLDER']
+    if file.dataset_id:
+        base_folder = os.path.join(base_folder, str(file.dataset_id))
+    dicom_path = os.path.join(base_folder, file.path)
+    dicom = pydicom.dcmread(dicom_path)
+    image = dicom.pixel_array
+    
+    # Normalize image
+    image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX)
+    image = image.astype(np.uint8)
+    
+    # Apply selected contour method
+    if method == 'adaptive':
+        binary = cv2.adaptiveThreshold(
+            image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+            cv2.THRESH_BINARY, 11, 2
+        )
+    elif method == 'canny':
+        binary = cv2.Canny(image, threshold, threshold * 2)
+    elif method == 'manual':
+        _, binary = cv2.threshold(image, threshold, 255, cv2.THRESH_BINARY)
+    elif method == 'otsu':
+        _, binary = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    else:
+        return jsonify({'error': 'Invalid contour method'}), 400
+    
+    # Find contours
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Convert contours to list format
+    contour_list = []
+    for contour in contours:
+        if len(contour) > 2:  # Only include contours with more than 2 points
+            contour_list.append(contour.reshape(-1, 2).tolist())
+    
+    return jsonify({'contours': contour_list})
+
+@bp.route('/interpolate-contours', methods=['POST'])
+def interpolate_contours_api():
+    """Interpolate contours between two slices."""
+    data = request.get_json()
+    if not data or 'contour1' not in data or 'contour2' not in data:
+        return jsonify({'error': 'Missing contour data'}), 400
+    
+    contour1 = np.array(data['contour1'])
+    contour2 = np.array(data['contour2'])
+    num_slices = int(data.get('num_slices', 1))
+    
+    try:
+        interpolated = ContourInterpolationService.interpolate_between_slices(
+            source_slice=0,
+            target_slice=1,
+            contours={0: contour1, 1: contour2},
+            num_intermediate=num_slices
+        )
+        
+        # Convert numpy arrays to lists for JSON serialization
+        result = {
+            'interpolated': [
+                contour.tolist() for contour in interpolated.values()
+            ]
+        }
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/mesh/<int:ds_id>')
+def get_mesh(ds_id):
+    """Generate a 3D mesh from contours."""
+    method = request.args.get('method', 'adaptive')
+    threshold = int(request.args.get('threshold', 50))
+    
+    # Get all files in the dataset
     files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
     if not files:
-        return jsonify({'error': 'No files found in dataset'}), 400
-
-    # Get contours for all slices
-    contours_list = []
-    image_shape = None
+        return jsonify({'error': 'No files found in dataset'}), 404
     
-    for f in files:
-        base = current_app.config['UPLOAD_FOLDER']
-        if f.dataset_id:
-            base = os.path.join(base, str(f.dataset_id))
-        path = os.path.join(base, f.path)
+    # Get contours for all slices
+    all_contours = []
+    for file in files:
+        base_folder = current_app.config['UPLOAD_FOLDER']
+        if file.dataset_id:
+            base_folder = os.path.join(base_folder, str(file.dataset_id))
+        dicom_path = os.path.join(base_folder, file.path)
         
         # Get contours for this slice
-        contours = extract_contours_from_dicom(path, method, user_threshold)
+        contours = extract_contours_from_dicom(dicom_path, method, threshold)
         if contours:
-            contours_list.append(contours)
-            
-            # Get image shape from first valid contour
-            if image_shape is None:
-                dcm = pydicom.dcmread(path, force=True)
-                if hasattr(dcm, 'pixel_array'):
-                    image_shape = dcm.pixel_array.shape
-
-    if not contours_list or image_shape is None:
-        return jsonify({'error': 'No valid contours found'}), 400
-
+            all_contours.append(contours[0])  # Take the largest contour
+    
+    if not all_contours:
+        return jsonify({'error': 'No contours found'}), 404
+    
     # Create volume from contours
-    volume = create_volume_from_contours(contours_list, num_interp, image_shape)
-    
-    # Apply processing
-    processed_volume = process_volume(volume, {
-        'smooth': smooth,
-        'smooth_factor': smooth_factor,
-        'fill_holes': fill_holes,
-        'threshold': user_threshold / 255.0
-    })
-    
-    # Downsample volume for performance
-    volume_small = resize(processed_volume, (processed_volume.shape[0], 64, 64), 
-                         order=0, preserve_range=True, anti_aliasing=False).astype(processed_volume.dtype)
+    volume = create_volume_from_contours(all_contours, len(all_contours), (512, 512))
     
     # Generate mesh using marching cubes
-    verts, faces, normals, values = measure.marching_cubes(volume_small, level=0.5)
+    vertices, faces, normals, _ = measure.marching_cubes(volume, level=0.5)
     
     return jsonify({
-        'vertices': verts.tolist(),
+        'vertices': vertices.tolist(),
         'faces': faces.tolist(),
-        'volume_shape': processed_volume.shape
+        'normals': normals.tolist()
+    })
+
+@bp.route('/volume/<int:ds_id>')
+def get_volume(ds_id):
+    """Reconstruct a 3D volume from contours."""
+    method = request.args.get('method', 'adaptive')
+    threshold = int(request.args.get('threshold', 50))
+    num_interp = int(request.args.get('num_interp', 0))
+    smooth = request.args.get('smooth', 'false').lower() == 'true'
+    smooth_factor = float(request.args.get('smooth_factor', 1.0))
+    fill_holes = request.args.get('fill_holes', 'false').lower() == 'true'
+    
+    # Get all files in the dataset
+    files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
+    if not files:
+        return jsonify({'error': 'No files found in dataset'}), 404
+    
+    # Get contours for all slices
+    all_contours = []
+    for file in files:
+        base_folder = current_app.config['UPLOAD_FOLDER']
+        if file.dataset_id:
+            base_folder = os.path.join(base_folder, str(file.dataset_id))
+        dicom_path = os.path.join(base_folder, file.path)
+        
+        # Get contours for this slice
+        contours = extract_contours_from_dicom(dicom_path, method, threshold)
+        if contours:
+            all_contours.append(contours[0])  # Take the largest contour
+    
+    if not all_contours:
+        return jsonify({'error': 'No contours found'}), 404
+    
+    # Create volume from contours
+    volume = create_volume_from_contours(all_contours, len(all_contours), (512, 512))
+    
+    # Process volume based on options
+    volume = process_volume(volume, {
+        'smooth': smooth,
+        'smooth_factor': smooth_factor,
+        'fill_holes': fill_holes
+    })
+    
+    # Generate mesh using marching cubes
+    vertices, faces, normals, _ = measure.marching_cubes(volume, level=0.5)
+    
+    return jsonify({
+        'vertices': vertices.tolist(),
+        'faces': faces.tolist(),
+        'normals': normals.tolist(),
+        'volume_shape': volume.shape
     })
 
 @bp.route('/export-volume/<int:ds_id>')
 def export_volume(ds_id):
-    """Export the 3D volume as an STL file."""
-    # Get the same parameters as get_volume
+    """Export the reconstructed volume as STL."""
     method = request.args.get('method', 'adaptive')
-    try:
-        user_threshold = int(request.args.get('threshold', 50))
-        num_interp = int(request.args.get('num_interp', 5))
-        smooth = request.args.get('smooth', 'false').lower() == 'true'
-        smooth_factor = float(request.args.get('smooth_factor', 1.0))
-        fill_holes = request.args.get('fill_holes', 'false').lower() == 'true'
-    except Exception as e:
-        return jsonify({'error': f'Invalid parameters: {str(e)}'}), 400
-
-    # Get the dataset name for the filename
-    from app.services.DatasetService import DatasetService
-    ds = DatasetService.read_for_user(ds_id, session.get('user_id'))
-    if not ds:
-        return jsonify({'error': 'Dataset not found'}), 404
-
-    # Generate the volume (reuse the code from get_volume)
-    files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
-    if not files:
-        return jsonify({'error': 'No files found in dataset'}), 400
-
-    contours_list = []
-    image_shape = None
+    threshold = int(request.args.get('threshold', 50))
+    num_interp = int(request.args.get('num_interp', 0))
+    smooth = request.args.get('smooth', 'false').lower() == 'true'
+    smooth_factor = float(request.args.get('smooth_factor', 1.0))
+    fill_holes = request.args.get('fill_holes', 'false').lower() == 'true'
     
-    for f in files:
-        base = current_app.config['UPLOAD_FOLDER']
-        if f.dataset_id:
-            base = os.path.join(base, str(f.dataset_id))
-        path = os.path.join(base, f.path)
-        contours = extract_contours_from_dicom(path, method, user_threshold)
-        if contours:
-            contours_list.append(contours)
-            if image_shape is None:
-                dcm = pydicom.dcmread(path, force=True)
-                if hasattr(dcm, 'pixel_array'):
-                    image_shape = dcm.pixel_array.shape
-
-    if not contours_list or image_shape is None:
-        return jsonify({'error': 'No valid contours found'}), 400
-
-    volume = create_volume_from_contours(contours_list, num_interp, image_shape)
-    processed_volume = process_volume(volume, {
-        'smooth': smooth,
-        'smooth_factor': smooth_factor,
-        'fill_holes': fill_holes,
-        'threshold': user_threshold / 255.0
-    })
-
-    # Generate the mesh
-    verts, faces, normals, values = measure.marching_cubes(processed_volume, level=0.5)
+    # Get volume data
+    response = get_volume(ds_id)
+    if response.status_code != 200:
+        return response
+    
+    data = response.get_json()
+    vertices = np.array(data['vertices'])
+    faces = np.array(data['faces'])
     
     # Create STL file
     from stl import mesh
     volume_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
-    for i, f in enumerate(faces):
+    for i, face in enumerate(faces):
         for j in range(3):
-            volume_mesh.vectors[i][j] = verts[f[j]]
+            volume_mesh.vectors[i][j] = vertices[face[j]]
     
     # Save to BytesIO
-    stl_data = BytesIO()
-    volume_mesh.save(stl_data)
-    stl_data.seek(0)
+    stl_file = BytesIO()
+    volume_mesh.save(stl_file)
+    stl_file.seek(0)
     
-    # Send the file
     return send_file(
-        stl_data,
+        stl_file,
         mimetype='application/octet-stream',
         as_attachment=True,
-        download_name=f'{ds.name}_volume.stl'
+        download_name=f'volume_{ds_id}.stl'
     )
+
+# Helper functions
+def extract_contours_from_dicom(dicom_path, method='adaptive', user_threshold=50):
+    """Extract contours from a DICOM file using the specified method."""
+    dicom = pydicom.dcmread(dicom_path)
+    image = dicom.pixel_array
+    
+    # Normalize image
+    image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX)
+    image = image.astype(np.uint8)
+    
+    # Apply selected contour method
+    if method == 'adaptive':
+        binary = cv2.adaptiveThreshold(
+            image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+            cv2.THRESH_BINARY, 11, 2
+        )
+    elif method == 'canny':
+        binary = cv2.Canny(image, user_threshold, user_threshold * 2)
+    elif method == 'manual':
+        _, binary = cv2.threshold(image, user_threshold, 255, cv2.THRESH_BINARY)
+    elif method == 'otsu':
+        _, binary = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    else:
+        return []
+    
+    # Find contours
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Sort contours by area (largest first)
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)
+    
+    return contours
+
+def create_volume_from_contours(contours_list, num_slices, image_shape):
+    """Create a 3D volume from a list of contours."""
+    volume = np.zeros((num_slices, *image_shape), dtype=np.uint8)
+    
+    for i, contour in enumerate(contours_list):
+        if contour is not None and len(contour) > 2:
+            mask = np.zeros(image_shape, dtype=np.uint8)
+            cv2.drawContours(mask, [contour], -1, 255, -1)
+            volume[i] = mask
+    
+    return volume
+
+def process_volume(volume, options):
+    """Process the volume based on the given options."""
+    if options.get('smooth', False):
+        from scipy.ndimage import gaussian_filter
+        volume = gaussian_filter(volume, sigma=options.get('smooth_factor', 1.0))
+    
+    if options.get('fill_holes', False):
+        from scipy.ndimage import binary_fill_holes
+        volume = binary_fill_holes(volume)
+    
+    return volume

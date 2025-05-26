@@ -318,23 +318,6 @@
         >50</span
       >
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <label
-        class="text-light mb-0"
-        for="interpolation-slices"
-        style="font-size: 0.95em"
-        >Interp. Slices:</label
-      >
-      <input
-        type="number"
-        id="interpolation-slices"
-        min="0"
-        max="10"
-        value="0"
-        class="form-control form-control-sm"
-        style="width: 60px"
-      />
-    </div>
     <button id="toggle-contours" class="btn btn-outline-info btn-sm ms-2">
       Show Contours
     </button>
@@ -547,7 +530,6 @@
       let startX = 0, startY = 0;
       let lastX = 0, lastY = 0;
       let interpolationEnabled = false;
-      let interpolationSlices = 0;
       let annotationHistory = [];
       window.annotationHistory = annotationHistory;
       let redoStack = [];
@@ -722,21 +704,15 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               toolbarEl.innerHTML = '';
               slider.value = idx + 1;
 
-              // Check if the first file is a DICOM file by checking its extension
-              const firstFile = {{ files[0].path|tojson|safe }};
-              const isDicom = firstFile.toLowerCase().endsWith('.dcm');
-              console.log('First file:', firstFile);  // Debug log
-              console.log('Is DICOM:', isDicom);  // Debug log
+              // Save current annotation content
+              const annotationCtx = annotationCanvas.getContext('2d');
+              const annotationData = annotationCtx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height);
 
-              if (isDicom) {
-                  // Fetch DICOM info for the current file
-                  const dicomInfo = await fetchDicomInfo(fileIds[idx]);
-                  if (totalSlicesEl) totalSlicesEl.textContent = dicomInfo.total_slices || total;
-                  if (currentSliceEl) currentSliceEl.textContent = idx + 1;
-              }
 
               // Load image and reset annotation canvas
               loadImageToCanvas(imageUrl, imageCanvas, annotationCanvas, async function() {
+                  annotationCtx.putImageData(annotationData, 0, 0);
+
                   // Set up drawing tools on annotationCanvas only
                   const imageManager = {
                       getContext: () => annotationCanvas.getContext('2d'),
@@ -757,8 +733,28 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           }
 
           async function drawExtendedContours(idx, annotationCanvas) {
-              const ctx = annotationCanvas.getContext('2d');
-              ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+            // Create a temporary canvas for contours if it doesn't exist
+              let contourCanvas = document.getElementById('contour-canvas');
+              if (!contourCanvas) {
+                  contourCanvas = document.createElement('canvas');
+                  contourCanvas.id = 'contour-canvas';
+                  contourCanvas.style.position = 'absolute';
+                  contourCanvas.style.top = '0';
+                  contourCanvas.style.left = '0';
+                  contourCanvas.style.zIndex = '3';
+                  contourCanvas.style.width = '100%';
+                  contourCanvas.style.height = '100%';
+                  contourCanvas.style.pointerEvents = 'none';
+                  annotationCanvas.parentElement.appendChild(contourCanvas);
+              }
+
+              // Set contour canvas size to match annotation canvas
+              contourCanvas.width = annotationCanvas.width;
+              contourCanvas.height = annotationCanvas.height;
+
+              const ctx = contourCanvas.getContext('2d');
+              ctx.clearRect(0, 0, contourCanvas.width, contourCanvas.height);
+
               const method = document.getElementById('contour-method')?.value || 'adaptive';
               const threshold = document.getElementById('contour-threshold')?.value || 50;
 
@@ -797,44 +793,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               const prevContours = await fetchContours(idx - 1);
               const currentContours = await fetchContours(idx);
               const nextContours = await fetchContours(idx + 1);
-
-              // Draw interpolated contours if enabled
-              if (interpolationEnabled && interpolationSlices > 0) {
-                  if (prevContours && currentContours) {
-                      // Interpolate between previous and current slice
-                      const response = await fetch('/process/interpolate-contours', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                              contour1: prevContours[0],
-                              contour2: currentContours[0],
-                              num_slices: interpolationSlices
-                          })
-                      });
-                      const data = await response.json();
-                      data.interpolated.forEach((contour, i) => {
-                          const alpha = 0.3 * (1 - (i + 1) / (interpolationSlices + 1));
-                          drawContours([contour], 'rgba(0,0,255,0.5)', 1, alpha);
-                      });
-                  }
-                  if (currentContours && nextContours) {
-                      // Interpolate between current and next slice
-                      const response = await fetch('/process/interpolate-contours', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                              contour1: currentContours[0],
-                              contour2: nextContours[0],
-                              num_slices: interpolationSlices
-                          })
-                      });
-                      const data = await response.json();
-                      data.interpolated.forEach((contour, i) => {
-                          const alpha = 0.3 * ((i + 1) / (interpolationSlices + 1));
-                          drawContours([contour], 'rgba(255,0,0,0.5)', 1, alpha);
-                      });
-                  }
-              }
 
               // Draw the main contours
               drawContours(prevContours, 'rgba(0,0,255,0.5)', 1, 0.5);
@@ -904,19 +862,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
                       const finalUrl = `${imageUrl}?t=${timestamp}`;
 
                       // Reload the current image to show the applied filter
-                      loadImageToCanvas(finalUrl, imageCanvas, annotationCanvas, function() {
-                          // Set up drawing tools on annotationCanvas only
-                          const imageManager = {
-                              getContext: () => annotationCanvas.getContext('2d'),
-                              getCanvas: () => annotationCanvas,
-                              getRegions: () => [], // You can implement region tracking if needed
-                              addRegion: () => {},
-                          };
-                          const cursorManager = CursorManager(imageManager);
-                          toolbarEl.innerHTML = ""; // Clear previous buttons
-                          toolbarEl.appendChild(cursorManager.getElement());
-                          cursorManager.bindCanvas(annotationCanvas);
-                      });
+                      updateImage();
                   } else {
                       console.error('Failed to apply filter:', data.message);
                   }
@@ -1005,7 +951,16 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           document.getElementById('toggle-contours').addEventListener('click', function() {
               contoursVisible = !contoursVisible;
               this.textContent = contoursVisible ? 'Hide Contours' : 'Show Contours';
-              updateImage();
+              
+              // Show/hide contour canvas instead of redrawing everything
+              const contourCanvas = document.getElementById('contour-canvas');
+              if (contourCanvas) {
+                  contourCanvas.style.display = contoursVisible ? 'block' : 'none';
+              }
+              
+              if (contoursVisible) {
+                  updateImage();
+              }
           });
 
         // Add event listeners to update image on slider change
@@ -1030,13 +985,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
             document.getElementById('opacity-value').textContent = this.value;
             updateCanvasFilter();
         });
-        // Add event listeners for interpolation controls
-        document.getElementById('interpolation-slices').addEventListener('change', function() {
-            interpolationSlices = parseInt(this.value) || 0;
-            if (contoursVisible) {
-                updateImage();
-            }
-        });
 
           document.getElementById('toggle-interpolation').addEventListener('click', function() {
               interpolationEnabled = !interpolationEnabled;
@@ -1055,7 +1003,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           return {
               method: document.getElementById('contour-method').value,
               threshold: document.getElementById('contour-threshold').value,
-              numInterp: document.getElementById('interpolation-slices').value,
               smooth: document.getElementById('smooth-volume').checked,
               smoothFactor: document.getElementById('smooth-factor').value / 100,
               fillHoles: document.getElementById('fill-holes').checked
