@@ -74,6 +74,8 @@ def logout():
 
 @bp.route('/uploads/<filename>')
 def uploaded_file(filename):
+    if filename != UserService.currentUser().profile_photo:
+        return {},404
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 @bp.route("/profile", methods=["GET"])
