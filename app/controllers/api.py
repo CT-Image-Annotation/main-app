@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, current_app, jsonify, request, send_file, send_from_directory, session, Response
+from flask import Blueprint, current_app, jsonify, make_response, request, send_file, send_from_directory, session, Response
 from PIL import Image
 from app.services.AnnotationService import AnnotationService
 from app.services.DatasetService import DatasetService
@@ -114,8 +114,10 @@ def downloadLastAnnotation(resource_id):
     if not annotation_resource:
         return {},404
 
-    return send_file(os.path.join(current_app.config['UPLOAD_FOLDER'],annotation_resource.file.path))
-
+    response = make_response(send_file(os.path.join(current_app.config['UPLOAD_FOLDER'],annotation_resource.file.path)))
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
+    return 
 @bp.route("/annotation/load-last/<int:resource_id>/mapping")
 def mappingOfLastAnnotation(resource_id):
     annotation_resource = AnnotationService.read_last(resource_id)

@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 import pydicom
 from flask import (
-    Blueprint, current_app, render_template, request,
+    Blueprint, current_app, make_response, render_template, request,
     redirect, session, url_for, send_file, abort, flash, jsonify
 )
 from PIL import Image
@@ -265,11 +265,11 @@ def image(file_id):
     Returns the slide image with all batch filters applied in order
     before sending it back as a PNG (or original mime-type).
     """
+
     try:
         print(f"Starting image endpoint for file_id: {file_id}")  # Early debug log
         
         file = Resource.query.get_or_404(file_id)
-        print(f"Found file: {file.path}, mime: {file.mime}")  # Debug log
 
         # figure out dataset folder
         base = current_app.config['UPLOAD_FOLDER']
@@ -362,7 +362,10 @@ def image(file_id):
             bio = BytesIO(buf.tobytes())
             bio.seek(0)
             print(f"Successfully encoded image to PNG, size: {len(buf.tobytes())} bytes")  # Debug log
-            return send_file(bio, mimetype='image/png')
+
+            response = make_response(send_file(bio, mimetype='image/png'))
+            response.headers['Cache-Control'] = 'public, max-age=86400'
+            return response
         except Exception as e:
             print(f"Error encoding image to PNG: {str(e)}")  # Debug log
             return jsonify({'error': f'Error encoding image: {str(e)}'}), 500
