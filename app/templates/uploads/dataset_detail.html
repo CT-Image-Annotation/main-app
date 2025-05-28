@@ -1119,35 +1119,39 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               // Draw the annotation image on the annotation canvas
               ctx.clearRect(0, 0, img.width, img.height);
               ctx.drawImage(img, 0, 0);
+
+              const url2 = `/api/annotation/load-last/${RELATED_RESOURCE_ID}/mapping`;
+
+              fetch(url2)
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error('Network response was not OK');
+                  }
+                  return response.json();
+                })
+                .then(data => {
+                  // Assume data is an array of objects with "color" and "label"
+                  annotationsTable.clearRows();
+                  data.forEach((item, index) => {
+                    annotationsTable.addRow({
+                      color: item.color || brushColor, // fallback to brushColor if undefined
+                      label: item.label || "New Label"
+                    });
+                  });
+                })
+                .catch(error => {
+                  console.error('Fetching or processing failed:', error);
+                });
           };
 
           img.onerror = function(err) {
-              console.error('Failed to load annotation image:', err);
+              const ctx = annotationCanvas.getContext('2d');
+              ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
           };
 
           img.src = url;
 
-          const url2 = `/api/annotation/load-last/${RELATED_RESOURCE_ID}/mapping`;
-
-          fetch(url2)
-            .then(response => {
-              if (!response.ok) {
-                throw new Error('Network response was not OK');
-              }
-              return response.json();
-            })
-            .then(data => {
-              // Assume data is an array of objects with "color" and "label"
-              data.forEach((item, index) => {
-                annotationsTable.addRow({
-                  color: item.color || brushColor, // fallback to brushColor if undefined
-                  label: item.label || "New Label"
-                });
-              });
-            })
-            .catch(error => {
-              console.error('Fetching or processing failed:', error);
-            });
+          
           
       }
       function syncAnnotation() {
