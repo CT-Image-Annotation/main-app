@@ -280,10 +280,8 @@ def batch_download(ds_id):
 
 # ── Raw image bytes endpoint for slideshow ────────────────────────────────
 
-@bp.route('/image/multiple', methods=['POST'])
-def image_multiple():
-    data = request.get_json()
-    image_ids = data.get('image_ids', [])
+# @bp.route('/image/multiple', methods=['POST'])
+def image_multiple(image_ids):
     if not image_ids:
         return {"error": "No image_ids provided"}, 400
 
@@ -303,7 +301,7 @@ def image_multiple():
 
     zip_stream.seek(0)
 
-    return send_file(zip_stream)
+    return zip_stream
 
 @bp.route('/image/<int:file_id>')
 def image(file_id):

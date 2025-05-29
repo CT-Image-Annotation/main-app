@@ -1380,29 +1380,25 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
         const ctx = annotationCanvas.getContext('2d');
         console.log("ai3Dpoint:", startX, ":", startY);
         // ADD FOLDER TO SEND TO ai3D 
-        // 1. grab the full canvas image as a data URL
-    const imageDataURL = annotationCanvas.toDataURL("image/png");
 
-    // 2. build the payload for your one-shot endpoint
-    const payload = {
-        video_dir: videoDir,                // e.g. "/data/my_video_frames"
-        image: imageDataURL,
-        point_coords: [[startX, startY]],
-        point_labels: [1]
-    };
+        const chunk = fileIds.slice(idx, Math.min(idx + 10, fileIds.length));
+        const data = { 
+          image_ids: chunk, 
+          point_coords: [[startX, startY]],
+          point_labels: [1] 
+        };
 
-    // 3. fire off the request
-    fetch("/medsam3d/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.error) {
-            console.error("MEDSAM3D error:", data.error);
-            return;
-        }
+        fetch("/medsam2/predict_video", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log("Response:", data);
+        })
 
         // 4. draw the initial mask
         const overlayImg = new Image();
