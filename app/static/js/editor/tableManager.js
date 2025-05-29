@@ -273,6 +273,24 @@ class SimpleAnnotationsTable {
         return row;
     }
 
+    clearRows() {
+        const tbody = document.getElementById(this.tbodyId);
+        if (!tbody) return;
+
+        // Remove all children (rows)
+        while (tbody.firstChild) {
+            tbody.removeChild(tbody.firstChild);
+        }
+
+        // Also clear selection state
+        this.selectedRowId = null;
+    }
+
+    addRows(rows) {
+        for (const row of rows) {
+            this.addRow(row);
+        }
+    }
     /**
      * Select row by ID
      * @param {string|number} id - Row ID to select

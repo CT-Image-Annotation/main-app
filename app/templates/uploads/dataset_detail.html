@@ -1147,6 +1147,8 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           img.onerror = function(err) {
               const ctx = annotationCanvas.getContext('2d');
               ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+              annotationsTable.clearRows();
+
           };
 
           img.src = url;
@@ -1244,7 +1246,11 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       // Helper to save the current annotation state
       function saveAnnotationState() {
           const ctx = annotationCanvas.getContext('2d');
-          annotationHistory.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+          let data = {
+            "canvas": ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height),
+            "table": annotationsTable.getAllRows(),
+          }
+          annotationHistory.push(data);
           // Clear redo stack on new action
           redoStack = [];
 
@@ -1254,9 +1260,17 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       function undoAnnotation() {
           if (annotationHistory.length > 0) {
               const ctx = annotationCanvas.getContext('2d');
-              redoStack.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+              let data = {
+                "canvas": ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height),
+                "table": annotationsTable.getAllRows(),
+              }
+
+              redoStack.push(data);
               const prev = annotationHistory.pop();
-              ctx.putImageData(prev, 0, 0);
+              ctx.putImageData(prev['canvas'], 0, 0);
+
+              annotationsTable.clearRows();
+              annotationsTable.addRows(prev['table']);
           }
       }
 
@@ -1264,17 +1278,31 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       function redoAnnotation() {
           if (redoStack.length > 0) {
               const ctx = annotationCanvas.getContext('2d');
-              annotationHistory.push(ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+              let data = {
+                "canvas": ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height),
+                "table": annotationsTable.getAllRows(),
+              }
+              annotationHistory.push(data);
               const next = redoStack.pop();
-              ctx.putImageData(next, 0, 0);
+              ctx.putImageData(next['canvas'], 0, 0);
+
+              annotationsTable.clearRows();
+              annotationsTable.addRows(next['table']);
           }
       }
 
       // Clear function
       function clearAnnotation() {
           const ctx = annotationCanvas.getContext('2d');
+
+          let data = {
+                "canvas": ctx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height),
+                "table": annotationsTable.getAllRows(),
+          }
+          annotationHistory.push(data);
+          
           ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
-            syncAnnotation();
+          annotationsTable.clearRows()          
       }
 
       // Wire up the buttons
