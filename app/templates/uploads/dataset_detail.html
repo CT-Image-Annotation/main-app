@@ -511,7 +511,7 @@
       const dsId = {{ dataset.id|tojson }};
       const fileIds = {{ files|default([])|map(attribute='id')|list|tojson }};
       console.log(fileIds)
-      let idx = 0;
+      let idx = parseInt(localStorage.getItem(dsId + '-last_img') ?? '0', 10);
       const currentIndexEl = document.getElementById('current-index');
       const currentSliceEl = document.getElementById('current-slice');
       const totalSlicesEl = document.getElementById('total-slices');
@@ -704,6 +704,8 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
               currentIndexEl.textContent = idx + 1;
               toolbarEl.innerHTML = '';
               slider.value = idx + 1;
+
+              localStorage.setItem(dsId + '-last_img', idx);
 
               // Save current annotation content
               const annotationCtx = annotationCanvas.getContext('2d');
