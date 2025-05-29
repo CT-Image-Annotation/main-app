@@ -1382,13 +1382,19 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
         // ADD FOLDER TO SEND TO ai3D 
 
         const chunk = fileIds.slice(idx, Math.min(idx + 10, fileIds.length));
+        console.log("AIpoint:", startX, ":", startY);
+
+        // 1. Get canvas image as data URL
+        const imageDataURL = imageCanvas.getContext('2d').canvas.toDataURL("image/png");
+
         const data = { 
-          image_ids: chunk, 
+          image_ids: chunk,
+          image: imageDataURL,
           point_coords: [[startX, startY]],
           point_labels: [1] 
         };
 
-        fetch("/medsam3d/run", {
+        fetch("/medsam2/predict_video", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1415,7 +1421,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
         console.log("Propagated segments:", data.video_segments);
     })
     .catch(err => console.error("Fetch failed:", err))
-      } else if (currentTool === "aipoint") {
+      }else if (currentTool === "aipoint") {
           const ctx = imageCanvas.getContext('2d');
           console.log("AIpoint:", startX, ":", startY);
 

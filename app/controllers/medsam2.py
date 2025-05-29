@@ -22,14 +22,13 @@ def predict_video():
     image_ids = req_data.get('image_ids', [])
     zip_stream = processing.image_multiple(image_ids)
 
-    post_body = {
-        'x': 0
-    }
+    post_body = req_data#.get('data', {})
 
     files = {
-        'zip': ('images.zip', zip_stream, 'application/zip')
+        'zip': zip_stream
     }
+
     response = requests.post(f"{AI_SERVICE_URL}/medsam3d/run", files=files, data=post_body )
 
     # Return AI service response
-    return response.json()
+    return response.text
