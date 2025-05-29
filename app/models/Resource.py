@@ -1,7 +1,10 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
+from app.models.Annotation import Annotation
 from app.models.BaseModel import BaseModel
 from app.extensions import db
+from sqlalchemy import select, func, and_
+from sqlalchemy.orm import aliased
 
 class Resource(BaseModel):
     __tablename__ = "resources"
@@ -43,3 +46,33 @@ class Resource(BaseModel):
             "annotations": [a.serialize() for a in self.annotations.all()],
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+    
+    @classmethod
+    def export_annotations(cls, resources):
+        resource_ids = [r.id for r in resources]
+        subq = (
+        select(
+            Annotation.resource_id,
+            func.max(Annotation.created_at).label("max_created_at")
+        )
+        .where(Annotation.resource_id.in_(resource_ids))
+        .group_by(Annotation.resource_id)
+        .subquery()
+        )
+
+        LatestAnnotation = aliased(Annotation)
+        ResourceAlias = aliased(Resource)
+
+        stmt = (
+            select(ResourceAlias, LatestAnnotation)
+            .select_from(ResourceAlias)
+            .outerjoin(subq, ResourceAlias.id == subq.c.resource_id)
+            .outerjoin(LatestAnnotation, and_(
+                LatestAnnotation.resource_id == subq.c.resource_id,
+                LatestAnnotation.created_at == subq.c.max_created_at
+            ))
+            .where(ResourceAlias.id.in_(resource_ids))
+        )
+
+        return db.session.execute(stmt).scalars().all()
+

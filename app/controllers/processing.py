@@ -240,14 +240,35 @@ def batch_download(ds_id):
         abort(403)
 
     files = FileService.getUserFiles(type='AImage', dataset_id=ds_id)
+
+    annotations = Resource.export_annotations(files)
+    annotations = [a for a in annotations if a]
+    # return [a.resource.path for a in annotations if a]
     memory_zip = BytesIO()
     with zipfile.ZipFile(memory_zip, 'w') as zipf:
+        dsid = None
         for f in files:
             base_folder = current_app.config['UPLOAD_FOLDER']
             if f.dataset_id:
                 base_folder = os.path.join(base_folder, str(f.dataset_id))
+                dsid = f.dataset_id
             filepath = os.path.join(base_folder, f.path)
-            zipf.write(filepath, arcname=f.path)
+            zipf.write(filepath, arcname=f.name)
+        
+        for a in annotations:
+            base_folder = current_app.config['UPLOAD_FOLDER']
+            path = os.path.join(base_folder, a.file.path)
+            zipf.write(path, arcname=a.resource.name + "_a")
+        
+        data = [{
+            "annotation_path": a.resource.name + "_a",
+            "resource_path": a.resource.name,
+            "mappings": [mapping.serialize() for mapping in a.mappings],
+        }
+            for a in annotations
+        ]
+        json_str = json.dumps(data, indent=2)
+        zipf.writestr('data.json', json_str)
     memory_zip.seek(0)
     return send_file(
         memory_zip,
