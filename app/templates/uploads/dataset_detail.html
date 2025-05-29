@@ -576,6 +576,7 @@
           const annotationCtx = annotationCanvas.getContext("2d");
 
           // Copy the temp canvas content onto the annotation canvas
+          saveAnnotationState()
           annotationCtx.drawImage(tempCanvas2, 0, 0);
 
           // Clear the temporary canvas
@@ -1271,6 +1272,8 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
 
               annotationsTable.clearRows();
               annotationsTable.addRows(prev['table']);
+
+              syncAnnotation()
           }
       }
 
@@ -1288,6 +1291,8 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
 
               annotationsTable.clearRows();
               annotationsTable.addRows(next['table']);
+              syncAnnotation()
+
           }
       }
 
@@ -1300,7 +1305,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
                 "table": annotationsTable.getAllRows(),
           }
           annotationHistory.push(data);
-          
+
           ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
           annotationsTable.clearRows()          
       }
@@ -1405,6 +1410,10 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           // Store all masks and scores
           allMasks = data.all_masks;
           allScores = data.all_scores;
+
+          allMasks = allMasks.map(maskStr => 
+            maskStr.split('').map(char => char === '1')
+          );
 
           // Sort masks by size (number of true pixels) - smallest first
           const maskSizes = allMasks.map(mask => mask.filter(Boolean).length);
@@ -2002,5 +2011,4 @@ if (currentTool === 'pen' || currentTool === 'eraser') {
 <script src="{{ url_for('static', filename='js/editor/tableManager.js') }}"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
 {% endblock %}
