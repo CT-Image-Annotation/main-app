@@ -94,11 +94,11 @@ def createAnnotation():
     if not annotation:
         return {},400
     
-    last_modified = annotation.created_at
-    last_modified_http = last_modified.strftime('%a, %d %b %Y %H:%M:%S GMT')
+    # last_modified = annotation.created_at
+    # last_modified_http = last_modified.strftime('%a, %d %b %Y %H:%M:%S GMT')
 
     response = make_response(annotation.serialize(), 201)
-    response.headers['Last-Modified'] = last_modified_http
+    # response.headers['Last-Modified'] = last_modified_http
     
     return response
 
@@ -120,19 +120,19 @@ def downloadLastAnnotation(resource_id):
     annotation_resource = AnnotationService.read_last(resource_id)
     if not annotation_resource:
         return {},404
-    last_modified = annotation_resource.created_at
-    last_modified_http = last_modified.strftime('%a, %d %b %Y %H:%M:%S GMT')
+    # last_modified = annotation_resource.created_at
+    # last_modified_http = last_modified.strftime('%a, %d %b %Y %H:%M:%S GMT')
 
-    # Check If-Modified-Since header
-    if_modified_since = request.headers.get('If-Modified-Since')
-    if if_modified_since:
-        since_dt = datetime.strptime(if_modified_since, '%a, %d %b %Y %H:%M:%S GMT')
-        if last_modified <= since_dt:
-            return Response(status=304)
+    # # Check If-Modified-Since header
+    # if_modified_since = request.headers.get('If-Modified-Since')
+    # if if_modified_since:
+    #     since_dt = datetime.strptime(if_modified_since, '%a, %d %b %Y %H:%M:%S GMT')
+    #     if last_modified <= since_dt:
+    #         return Response(status=304)
         
     response = make_response(send_file(os.path.join(current_app.config['UPLOAD_FOLDER'],annotation_resource.file.path)))
-    response.headers['Cache-Control'] = 'public, max-age=86400'
-    response.headers['Last-Modified'] = last_modified_http
+    # response.headers['Cache-Control'] = 'public, max-age=86400'
+    # response.headers['Last-Modified'] = last_modified_http
     return response
     
 @bp.route("/annotation/load-last/<int:resource_id>/mapping")
@@ -142,5 +142,5 @@ def mappingOfLastAnnotation(resource_id):
         return {},404
     
     response = make_response([mp.serialize() for mp in annotation_resource.mappings])
-    response.headers['Cache-Control'] = 'public, max-age=86400'
+    # response.headers['Cache-Control'] = 'public, max-age=86400'
     return response
