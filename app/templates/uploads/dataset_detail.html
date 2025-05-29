@@ -145,6 +145,13 @@
           >
             🎨 Color Picker
           </button>
+          <button
+            class="btn btn-outline-light btn-sm"
+            id="tool-ai3D"
+            title="3D Selection"
+          >
+            🔸 3D Select
+          </button>
         </div>
 
         <!-- Brush controls -->
@@ -1101,6 +1108,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
       document.getElementById('tool-aipoint').onclick = () => currentTool = 'aipoint';
       document.getElementById('tool-fill').onclick = () => currentTool = 'fill';
       document.getElementById('tool-colorpicker').onclick = () => currentTool = 'colorpicker';
+      document.getElementById('tool-ai3D').onclick = () => currentTool = 'ai3D';
       document.getElementById('brush-size').oninput = function() {
           brushSize = parseInt(this.value, 10);
           document.getElementById('brush-size-value').textContent = this.value;
@@ -1368,6 +1376,14 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
         let newBrushColor = rgbaToHex(selectedPixel);
         brushColor = newBrushColor;
         console.log("Brush changed to: ", newBrushColor);
+      } else if(currentTool === 'ai3D'){ // 3D AI tool propagation etc
+        const ctx = annotationCanvas.getContext('2d');
+        console.log("ai3Dpoint:", startX, ":", startY);
+        // ADD FOLDER TO SEND TO ai3D 
+        
+
+
+
       }
       else if (currentTool === "aipoint") {
           const ctx = imageCanvas.getContext('2d');
