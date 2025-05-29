@@ -628,9 +628,16 @@ def get_contours(file_id):
     if file.dataset_id:
         base_folder = os.path.join(base_folder, str(file.dataset_id))
     dicom_path = os.path.join(base_folder, file.path)
-    dicom = pydicom.dcmread(dicom_path)
-    image = dicom.pixel_array
-    
+    try:
+        dicom = pydicom.dcmread(dicom_path)
+        image = dicom.pixel_array
+    except:
+        image = np.array(Image.open(dicom_path))
+        if len(image.shape) == 3 and image.shape[2] == 3:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        if image.dtype != np.uint8:
+            image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
     # Normalize image
     image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX)
     image = image.astype(np.uint8)
