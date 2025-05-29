@@ -280,6 +280,31 @@ def batch_download(ds_id):
 
 # ── Raw image bytes endpoint for slideshow ────────────────────────────────
 
+@bp.route('/image/multiple', methods=['POST'])
+def image_multiple():
+    data = request.get_json()
+    image_ids = data.get('image_ids', [])
+    if not image_ids:
+        return {"error": "No image_ids provided"}, 400
+
+    files = Resource.query.filter(Resource.id.in_(image_ids)).all()
+    if not files:
+        return {"error": "No valid images found"}, 404
+
+    zip_stream = BytesIO()
+    with zipfile.ZipFile(zip_stream, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for f in files:
+            base_folder = current_app.config['UPLOAD_FOLDER']
+            if f.dataset_id:
+                base_folder = os.path.join(base_folder, str(f.dataset_id))
+            filepath = os.path.join(base_folder, f.path)
+            if os.path.exists(filepath):
+                zipf.write(filepath, arcname=f.name)
+
+    zip_stream.seek(0)
+
+    return send_file(zip_stream)
+
 @bp.route('/image/<int:file_id>')
 def image(file_id):
     """
