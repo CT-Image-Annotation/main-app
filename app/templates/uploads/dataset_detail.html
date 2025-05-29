@@ -1388,7 +1388,7 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
           point_labels: [1] 
         };
 
-        fetch("/medsam2/predict_video", {
+        fetch("/medsam3d/run", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
