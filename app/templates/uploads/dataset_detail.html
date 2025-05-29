@@ -1398,7 +1398,6 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
         .then(response => response.json())
         .then(data => {
           console.log("Response:", data);
-        })
 
         // 4. draw the initial mask
         const overlayImg = new Image();
@@ -1415,9 +1414,8 @@ function drawWithCircularBrush(ctx, x, y, lastX, lastY, size) {
 
         console.log("Propagated segments:", data.video_segments);
     })
-    .catch(err => console.error("Fetch failed:", err));
-
-      }else if (currentTool === "aipoint") {
+    .catch(err => console.error("Fetch failed:", err))
+      } else if (currentTool === "aipoint") {
           const ctx = imageCanvas.getContext('2d');
           console.log("AIpoint:", startX, ":", startY);
 
